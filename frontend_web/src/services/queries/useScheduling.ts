@@ -7,6 +7,7 @@ import {
 } from '../../types/models';
 import {
     schedulingApi,
+    AplanoCompareResponse,
     ShiftDefinitionsQueryParams,
     ShiftInstancesQueryParams,
     UnplannedShiftInstancesQueryParams,
@@ -47,6 +48,10 @@ export const schedulingKeys = {
         list: (params?: AssignmentsQueryParams) => [...schedulingKeys.assignments.lists(), params] as const,
         details: () => [...schedulingKeys.assignments.all, 'detail'] as const,
         detail: (id: number) => [...schedulingKeys.assignments.details(), id] as const,
+    },
+    aplanoCompare: {
+        all: ['scheduling', 'aplano-compare'] as const,
+        month: (month: string) => [...schedulingKeys.aplanoCompare.all, month] as const,
     },
 };
 
@@ -215,5 +220,20 @@ export const useResetPlanning = () => {
             queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all });  // unplanned count updates
             queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
         },
+    });
+};
+
+export const useAplanoCompare = (month: string | null) => {
+    return useQuery<AplanoCompareResponse>({
+        queryKey: schedulingKeys.aplanoCompare.month(month ?? ''),
+        queryFn: () => schedulingApi.compareAplanoMonth(month!),
+        enabled: !!month,
+        refetchOnMount: 'always',
+        refetchOnWindowFocus: true,
+        refetchOnReconnect: true,
+        // Keep compare view in sync with external changes in Aplano while dialog is open.
+        refetchInterval: month ? 60_000 : false,
+        // Continue polling even when tab/window is not focused.
+        refetchIntervalInBackground: true,
     });
 };

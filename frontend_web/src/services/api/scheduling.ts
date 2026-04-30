@@ -115,6 +115,33 @@ export interface ResetPlanningData {
     end_date: string;    // YYYY-MM-DD
 }
 
+export interface AplanoCompareEntry {
+    status: 'equal' | 'missing_in_aplano' | 'different';
+    reason?: string | null;
+    date: string;
+    category: ShiftCategory;
+    role: ShiftRole;
+    area: ShiftArea;
+    time_of_day: ShiftTimeOfDay;
+    employee_internal: { id: number | null; name: string | null } | null;
+    employee_aplano: { id: number | null; name: string | null } | null;
+}
+
+export interface AplanoCompareResponse {
+    month: string;
+    message: string;
+    error?: string;
+    summary?: {
+        total_compared: number;
+        equal_count: number;
+        missing_in_aplano_count: number;
+        different_count: number;
+        aplano_shift_rows: number;
+        aplano_skipped: Record<string, number>;
+    };
+    details?: AplanoCompareEntry[];
+}
+
 export const schedulingApi = {
     // Shift Definitions
     async getShiftDefinitions(params?: ShiftDefinitionsQueryParams): Promise<ShiftDefinition[]> {
@@ -267,6 +294,16 @@ export const schedulingApi = {
             return response.data;
         } catch (error) {
             console.error('Failed to reset planning:', error);
+            throw error;
+        }
+    },
+
+    async compareAplanoMonth(month: string): Promise<AplanoCompareResponse> {
+        try {
+            const response = await api.get('/scheduling/aplano-compare', { params: { month } });
+            return response.data;
+        } catch (error) {
+            console.error('Failed to compare Aplano month:', error);
             throw error;
         }
     },

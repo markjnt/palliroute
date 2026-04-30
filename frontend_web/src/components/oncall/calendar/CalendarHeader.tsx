@@ -10,7 +10,6 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   TableChart as TableChartIcon,
   CalendarToday as CalendarTodayIcon,
-  BarChart as BarChartIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +22,6 @@ interface CalendarHeaderProps {
   unplannedCount?: number;
   onAutoPlanningOpen?: () => void;
   onUnplannedOpen?: () => void;
-  onCapacityOverviewOpen?: () => void;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -31,7 +29,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   unplannedCount = 0,
   onAutoPlanningOpen,
   onUnplannedOpen,
-  onCapacityOverviewOpen,
 }) => {
   const { viewMode, displayType, currentDate, setViewMode, setDisplayType, setCurrentDate, goToPrevious, goToNext, goToToday } = useOnCallPlanningStore();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -144,33 +141,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           }}
         >
           Automatische Planung
-        </Button>
-
-        <Button
-          variant="outlined"
-          startIcon={<BarChartIcon sx={{ fontSize: 18 }} />}
-          onClick={() => onCapacityOverviewOpen?.()}
-          size="small"
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 2.5,
-            py: 1,
-            borderRadius: 2.5,
-            borderColor: 'divider',
-            color: 'text.primary',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: 'action.hover',
-              borderColor: 'primary.main',
-              transform: 'translateY(-1px)',
-            },
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-          }}
-        >
-          Kapazitäten
         </Button>
 
         <ToggleButtonGroup

@@ -451,3 +451,25 @@ def auto_plan():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@scheduling_bp.route('/aplano-compare', methods=['GET'])
+def aplano_compare():
+    """Compare internal RB/AW month planning with Aplano month shifts"""
+    try:
+        month = request.args.get('month', type=str)
+        if not month:
+            return jsonify({'error': 'Missing required query param: month (YYYY-MM)'}), 400
+
+        from app.services.aplano_compare_service import compare_month_with_aplano
+
+        result = compare_month_with_aplano(month)
+
+        if result.get('error') == 'BAD_MONTH_FORMAT':
+            return jsonify(result), 400
+        if result.get('error') == 'APLANO_UNAVAILABLE':
+            return jsonify(result), 200
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

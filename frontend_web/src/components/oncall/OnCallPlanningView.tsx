@@ -1,5 +1,9 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { Box, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { Box, CircularProgress, Snackbar, Alert, Button } from '@mui/material';
+import {
+  CompareArrows as CompareArrowsIcon,
+  BarChart as BarChartIcon,
+} from '@mui/icons-material';
 import { useOnCallPlanningStore } from '../../stores/useOnCallPlanningStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import {
@@ -13,6 +17,7 @@ import {
   useShiftDefinitions,
   useGenerateShiftInstances,
   useUnplannedShiftInstances,
+  useAplanoCompare,
 } from '../../services/queries/useScheduling';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { Assignment, DutyType, OnCallArea, Employee, ShiftDefinition, AssignmentSource } from '../../types/models';
@@ -23,6 +28,7 @@ import { AssignmentDialog } from './dialogs/AssignmentDialog';
 import { CapacityOverviewDialog } from './dialogs/CapacityOverviewDialog';
 import { AutoPlanningDialog } from './dialogs/AutoPlanningDialog';
 import { UnplannedShiftsDialog } from './dialogs/UnplannedShiftsDialog';
+import { AplanoCompareDialog } from './dialogs/AplanoCompareDialog';
 import { EmployeeTable } from './table/EmployeeTable';
 import { formatDate, formatMonthYear, getCalendarDays, getWeekDays } from '../../utils/oncall/dateUtils';
 import { findShiftDefinition, shiftDefinitionToDutyType } from '../../utils/oncall/shiftMapping';
@@ -37,6 +43,7 @@ export const OnCallPlanningView: React.FC = () => {
   const [capacityDialogOpen, setCapacityDialogOpen] = useState(false);
   const [autoPlanningDialogOpen, setAutoPlanningDialogOpen] = useState(false);
   const [unplannedDialogOpen, setUnplannedDialogOpen] = useState(false);
+  const [aplanoCompareOpen, setAplanoCompareOpen] = useState(false);
 
   // Get dates to display
   const displayDates = useMemo(() => {
@@ -73,6 +80,12 @@ export const OnCallPlanningView: React.FC = () => {
   const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   const { data: employeeCapacities = [] } = useEmployeeCapacities({ month: monthString });
   const { data: unplannedShifts = [], isLoading: isLoadingUnplanned } = useUnplannedShiftInstances({ month: monthString });
+  const {
+    data: aplanoCompareData,
+    isLoading: isLoadingAplanoCompare,
+    isFetching: isFetchingAplanoCompare,
+    refetch: refetchAplanoCompare,
+  } = useAplanoCompare(aplanoCompareOpen ? monthString : null);
   
   const createAssignment = useCreateAssignment();
   const updateAssignment = useUpdateAssignment();
@@ -379,11 +392,45 @@ export const OnCallPlanningView: React.FC = () => {
           unplannedCount={unplannedShifts.length}
           onAutoPlanningOpen={() => setAutoPlanningDialogOpen(true)}
           onUnplannedOpen={() => setUnplannedDialogOpen(true)}
-          onCapacityOverviewOpen={() => setCapacityDialogOpen(true)}
         />
 
-        {displayType === 'calendar' ? (
-          <>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {displayType === 'calendar' ? (
+            <>
+              <Box
+                sx={{
+                  backgroundColor: 'background.paper',
+                  borderRadius: 3,
+                  pt: 0,
+                  px: 3,
+                  pb: 3,
+                  boxShadow: 'none',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  height: '100%',
+                  overflow: 'auto',
+                }}
+              >
+                <CalendarGrid
+                  viewMode={viewMode}
+                  currentDate={currentDate}
+                  assignmentsMap={assignmentsMap}
+                  onDutyClick={handleDutyClick}
+                />
+              </Box>
+              <AssignmentDialog
+                open={assignmentDialogOpen}
+                selectedDate={selectedDate}
+                selectedDuty={selectedDuty}
+                assignment={currentAssignment}
+                availableEmployees={availableEmployees}
+                employeeCapacities={employeeCapacities}
+                shiftDefinitions={shiftDefinitions}
+                onClose={handleDialogClose}
+                onEmployeeChange={handleEmployeeChange}
+              />
+            </>
+          ) : (
             <Box
               sx={{
                 backgroundColor: 'background.paper',
@@ -394,59 +441,93 @@ export const OnCallPlanningView: React.FC = () => {
                 boxShadow: 'none',
                 border: '1px solid',
                 borderColor: 'divider',
-                flex: 1,
-                minHeight: 0,
+                height: '100%',
                 overflow: 'auto',
               }}
             >
-              <CalendarGrid
+              <EmployeeTable
+                employees={employees}
+                dates={actualDates}
+                assignments={assignments}
                 viewMode={viewMode}
-                currentDate={currentDate}
-                assignmentsMap={assignmentsMap}
-                onDutyClick={handleDutyClick}
+                employeeCapacities={employeeCapacities}
+                shiftDefinitions={shiftDefinitions}
+                onCreateAssignment={handleCreateAssignment}
+                onUpdateAssignment={handleUpdateAssignment}
+                onDeleteAssignment={handleDeleteAssignment}
               />
             </Box>
-            <AssignmentDialog
-              open={assignmentDialogOpen}
-              selectedDate={selectedDate}
-              selectedDuty={selectedDuty}
-              assignment={currentAssignment}
-              availableEmployees={availableEmployees}
-              employeeCapacities={employeeCapacities}
-              shiftDefinitions={shiftDefinitions}
-              onClose={handleDialogClose}
-              onEmployeeChange={handleEmployeeChange}
-            />
-          </>
-        ) : (
-          <Box
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            mt: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 2,
+            position: 'sticky',
+            bottom: 12,
+            zIndex: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              startIcon={<BarChartIcon sx={{ fontSize: 18 }} />}
+              onClick={() => setCapacityDialogOpen(true)}
+              size="small"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2.5,
+                py: 1,
+                borderRadius: 2.5,
+                borderColor: 'divider',
+                color: 'text.primary',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  borderColor: 'primary.main',
+                  transform: 'translateY(-1px)',
+                },
+                '&:active': {
+                  transform: 'translateY(0)',
+                },
+              }}
+            >
+              Kapazitäten
+            </Button>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<CompareArrowsIcon sx={{ fontSize: 18 }} />}
+            onClick={() => setAplanoCompareOpen(true)}
+            size="small"
             sx={{
-              backgroundColor: 'background.paper',
-              borderRadius: 3,
-              pt: 0,
-              px: 3,
-              pb: 3,
-              boxShadow: 'none',
-              border: '1px solid',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 2.5,
+              py: 1,
+              borderRadius: 2.5,
               borderColor: 'divider',
-              flex: 1,
-              minHeight: 0,
-              overflow: 'auto',
+              color: 'text.primary',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                borderColor: 'primary.main',
+                transform: 'translateY(-1px)',
+              },
+              '&:active': {
+                transform: 'translateY(0)',
+              },
             }}
           >
-            <EmployeeTable
-              employees={employees}
-              dates={actualDates}
-              assignments={assignments}
-              viewMode={viewMode}
-              employeeCapacities={employeeCapacities}
-              shiftDefinitions={shiftDefinitions}
-              onCreateAssignment={handleCreateAssignment}
-              onUpdateAssignment={handleUpdateAssignment}
-              onDeleteAssignment={handleDeleteAssignment}
-            />
-          </Box>
-        )}
+            Aplano-Abgleich
+          </Button>
+        </Box>
 
         <CapacityOverviewDialog
           open={capacityDialogOpen}
@@ -484,6 +565,18 @@ export const OnCallPlanningView: React.FC = () => {
             setNotification('Schicht zugewiesen', 'success');
           }}
           monthLabel={formatMonthYear(currentDate)}
+        />
+
+        <AplanoCompareDialog
+          open={aplanoCompareOpen}
+          onClose={() => setAplanoCompareOpen(false)}
+          monthLabel={formatMonthYear(currentDate)}
+          compareData={aplanoCompareData}
+          isLoading={isLoadingAplanoCompare}
+          isRefreshing={isFetchingAplanoCompare}
+          onRefresh={() => {
+            void refetchAplanoCompare();
+          }}
         />
 
         {/* Notification Snackbar */}
