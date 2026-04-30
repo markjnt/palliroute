@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { alpha } from '@mui/material/styles';
-import { Box, Chip, Collapse, Paper, Typography } from '@mui/material';
+import { Box, Chip, Collapse, Paper, Tooltip, Typography } from '@mui/material';
 import {
     Straighten as StraightenIcon,
     AccessTime as AccessTimeIcon,
@@ -47,6 +47,9 @@ interface AreaAgg {
     tourCount: number;
 }
 
+const UTILIZATION_FILTER_TOOLTIP =
+    'Für die Bereichs-Auslastung zählen nur Pflege-Touren mit mehr als 50% Auslastung.';
+
 function aggregateForArea(
     employees: Employee[],
     routes: Route[],
@@ -63,9 +66,13 @@ function aggregateForArea(
 
     for (const emp of list) {
         const r = routeForEmployee(routes, emp.id, weekday);
-        sumTarget += targetMinutes(emp);
-        if (r && typeof r.total_duration === 'number') {
-            sumDuration += r.total_duration;
+        const target = targetMinutes(emp);
+        if (r && typeof r.total_duration === 'number' && target > 0) {
+            const empUtilization = (r.total_duration / target) * 100;
+            if (empUtilization > 50) {
+                sumTarget += target;
+                sumDuration += r.total_duration;
+            }
         }
         if (r && typeof r.total_distance === 'number') {
             totalKm += r.total_distance;
@@ -156,19 +163,21 @@ export const NursingAreaRouteSummary: React.FC<NursingAreaRouteSummaryProps> = (
                         {formatKm(row.totalKm)}
                     </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <AccessTimeIcon fontSize="small" color="primary" />
-                    <Typography
-                        variant="body2"
-                        fontWeight={row.utilizationPct !== undefined ? 700 : 600}
-                        sx={{ color: utilizationColorKey(row.utilizationPct) }}
-                    >
-                        {formatPct(row.utilizationPct)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        Auslastung
-                    </Typography>
-                </Box>
+                <Tooltip title={UTILIZATION_FILTER_TOOLTIP} arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <AccessTimeIcon fontSize="small" color="primary" />
+                        <Typography
+                            variant="body2"
+                            fontWeight={row.utilizationPct !== undefined ? 700 : 600}
+                            sx={{ color: utilizationColorKey(row.utilizationPct) }}
+                        >
+                            {formatPct(row.utilizationPct)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            Auslastung
+                        </Typography>
+                    </Box>
+                </Tooltip>
             </Box>
         </Paper>
     );
@@ -191,21 +200,27 @@ export const NursingAreaRouteSummary: React.FC<NursingAreaRouteSummaryProps> = (
                     size="small"
                     sx={{ ...areaChipSx(row), flexShrink: 0 }}
                 />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.35, flexShrink: 0 }}>
-                    <AccessTimeIcon fontSize="small" sx={{ color: 'primary.main' }} />
-                    <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{
-                            color:
-                                hasTours && row.utilizationPct !== undefined ? uc : 'text.secondary',
-                            fontWeight:
-                                hasTours && row.utilizationPct !== undefined ? 'bold' : 'normal',
-                        }}
-                    >
-                        {hasTours ? formatPct(row.utilizationPct) : '–'}
-                    </Typography>
-                </Box>
+                <Tooltip title={UTILIZATION_FILTER_TOOLTIP} arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.35, flexShrink: 0 }}>
+                        <AccessTimeIcon fontSize="small" sx={{ color: 'primary.main' }} />
+                        <Typography
+                            variant="body2"
+                            component="span"
+                            sx={{
+                                color:
+                                    hasTours && row.utilizationPct !== undefined
+                                        ? uc
+                                        : 'text.secondary',
+                                fontWeight:
+                                    hasTours && row.utilizationPct !== undefined
+                                        ? 'bold'
+                                        : 'normal',
+                            }}
+                        >
+                            {hasTours ? formatPct(row.utilizationPct) : '–'}
+                        </Typography>
+                    </Box>
+                </Tooltip>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.35, minWidth: 0 }}>
                     <StraightenIcon fontSize="small" sx={{ color: 'primary.main', flexShrink: 0 }} />
                     <Typography variant="body2" color="text.secondary" noWrap component="span">
