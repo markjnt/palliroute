@@ -293,6 +293,14 @@ def build_model(
     for (e_idx, s_idx) in pairs:
         objective_terms.append(-fill_bonus * x[(e_idx, s_idx)])
 
+    # Aplano-Vormonat als weiche Historie:
+    # Bevorzuge (MA, Schicht)-Paare aus external history, erzwinge sie aber nicht hart.
+    preferred = getattr(ctx, 'preferred_assignments', set()) or set()
+    preferred_bonus = 350
+    for key in preferred:
+        if key in x:
+            objective_terms.append(-preferred_bonus * x[key])
+
     # W1: RB weekday per week: prefer at most 1; 2 allowed with penalty
     # Auxiliary: aux[e,w] = 1 if employee e has >= 2 RB_WEEKDAY in week w
     rb_weekday_shifts_by_week: Dict[int, List[int]] = defaultdict(list)

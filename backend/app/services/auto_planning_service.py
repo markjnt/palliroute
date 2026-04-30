@@ -3,7 +3,6 @@ Auto-Planning Service: monthly duty scheduling (on-call and weekend shifts) via 
 """
 
 import logging
-import os
 import re
 from calendar import monthrange
 from datetime import date, datetime, timedelta
@@ -11,6 +10,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from app import db
 from app.models.employee import Employee
+from config import Config
 
 from .aplano_sync import (
     aplano_user_display_name,
@@ -31,6 +31,7 @@ from .auto_planning import (
     run_solver,
     write_assignments,
 )
+from .auto_planning.diagnostics import collect_infeasibility_hints
 
 logger = logging.getLogger(__name__)
 
@@ -72,25 +73,30 @@ class AutoPlanningService:
         self.bonus_friday_weekend_rb_coupling = bonus_friday_weekend_rb_coupling
 
     def _build_absent_dates(self, start_date: date) -> Set[Tuple[int, date]]:
-        """Fetch Aplano absences (status=active) for planning range and return (employee_id, date) set."""
+        """
+        Fetch Aplano absences for planning month hard exclusions.
+
+        If the month ends on Saturday, `load_planning_context` also includes the following
+        Sunday for H6/H7 weekend coupling. We must include that Sunday in absence markers too,
+        otherwise solver variables are created for absent employees on that day.
+        """
         absent_dates: Set[Tuple[int, date]] = set()
         year, month_num = start_date.year, start_date.month
         ctx_start = date(year, month_num, 1)
-        if month_num == 1:
-            prev_year, prev_month = year - 1, 12
-        else:
-            prev_year, prev_month = year, month_num - 1
-        prev_month_start = date(prev_year, prev_month, 1)
         _, last_day = monthrange(year, month_num)
         ctx_end = date(year, month_num, last_day)
         load_end = ctx_end + timedelta(days=1) if ctx_end.weekday() == 5 else ctx_end
-        abs_horizon_start = prev_month_start
-        abs_horizon_end = load_end
 
         try:
-            raw_absences: list = []
-            raw_absences.extend(fetch_aplano_absences_for_month(prev_month_start))
+            raw_absences: List[Dict[str, Any]] = []
             raw_absences.extend(fetch_aplano_absences_for_month(ctx_start))
+            # Sunday after month-end Saturday lives in next month -> load that month as well.
+            if load_end > ctx_end:
+                if month_num == 12:
+                    next_month_start = date(year + 1, 1, 1)
+                else:
+                    next_month_start = date(year, month_num + 1, 1)
+                raw_absences.extend(fetch_aplano_absences_for_month(next_month_start))
         except Exception as e:
             logger.warning('Failed to fetch Aplano absences: %s', e)
             raise AplanoUnavailableError(str(e)) from e
@@ -109,8 +115,8 @@ class AutoPlanningService:
                 end_d = datetime.strptime(end_str, '%Y-%m-%d').date()
             except ValueError:
                 continue
-            eff_start = max(start_d, abs_horizon_start)
-            eff_end = min(end_d, abs_horizon_end)
+            eff_start = max(start_d, ctx_start)
+            eff_end = min(end_d, load_end)
             if eff_start > eff_end:
                 continue
             emp = match_employee_by_name(user_name, employees)
@@ -122,8 +128,8 @@ class AutoPlanningService:
                 current = date.fromordinal(current.toordinal() + 1)
 
         logger.info(
-            'Aplano absences: %s (employee,date) marks in horizon %s..%s',
-            len(absent_dates), abs_horizon_start, abs_horizon_end,
+            'Aplano absences (planning month + coupling Sunday if needed): %s (employee,date) marks in %s..%s',
+            len(absent_dates), ctx_start, load_end,
         )
 
         return absent_dates
@@ -227,38 +233,18 @@ class AutoPlanningService:
         out: List[Dict[str, Any]] = []
         skip_reasons: Dict[str, int] = {}
         unmatched_names: Set[str] = set()
-        dbg = os.environ.get('PALLIROUTE_APLANO_AUTO_PLAN_DEBUG', '').lower() in (
-            '1', 'true', 'yes',
-        )
 
         for shift in raw_shifts:
             user_name = aplano_user_display_name(shift.get('user'))
-            ws_label = aplano_workspace_label(
-                shift.get('workSpace') or shift.get('name') or shift.get('title')
-            )
             mapped_slots, skip = self._map_aplano_shift_to_solver_slots(shift)
             if skip:
                 skip_reasons[skip] = skip_reasons.get(skip, 0) + 1
-            if dbg or logger.isEnabledFor(logging.DEBUG):
-                log_fn = logger.info if dbg else logger.debug
-                log_fn(
-                    'aplano_prev_month_shift id=%s date=%s user=%r workspace=%r -> slots=%s skip=%r',
-                    shift.get('id'),
-                    shift.get('date'),
-                    user_name,
-                    ws_label,
-                    mapped_slots,
-                    skip,
-                )
             if not mapped_slots:
                 continue
             emp = match_employee_by_name(user_name, employees)
             if emp is None:
                 unmatched_names.add(user_name)
                 skip_reasons['unmatched_employee'] = skip_reasons.get('unmatched_employee', 0) + 1
-                if dbg or logger.isEnabledFor(logging.DEBUG):
-                    log_fn = logger.info if dbg else logger.debug
-                    log_fn('aplano_prev_month_shift no Employee match for name=%r', user_name)
                 continue
             for mapped in mapped_slots:
                 mapped['employee_id'] = emp.id
@@ -396,6 +382,14 @@ class AutoPlanningService:
         runtime_seconds = time.perf_counter() - t0
 
         if status_name == 'INFEASIBLE':
+            verbose_hints = bool(getattr(Config, 'AUTO_PLAN_VERBOSE_INFEASIBLE', False))
+            hints = None
+            if verbose_hints:
+                hints = collect_infeasibility_hints(
+                    ctx,
+                    planning_model,
+                    allow_overplanning=self.allow_overplanning,
+                )
             result = {
                 'message': 'No feasible solution found; constraints may be too strict or data inconsistent',
                 'assignments_created': 0,
@@ -405,7 +399,19 @@ class AutoPlanningService:
                 'runtime_seconds': round(runtime_seconds, 2),
                 'error': 'INFEASIBLE',
             }
+            if verbose_hints:
+                result['infeasibility_hints'] = hints
+                result['infeasibility_summary'] = hints.get('human_readable', [])
             logger.warning('Auto-planning: %s', result['message'])
+            if verbose_hints:
+                for line in hints.get('human_readable', []):
+                    logger.warning('INFEASIBLE hint: %s', line)
+                if hints.get('fixed_conflict_same_shift'):
+                    logger.warning(
+                        'INFEASIBLE fixed_conflict_same_shift (structured): %s',
+                        hints['fixed_conflict_same_shift'],
+                    )
+                logger.warning('INFEASIBLE diagnostics summary: %s', hints.get('summary'))
             if self.include_aplano:
                 ad = ctx.absent_dates
                 pm0, pm1 = ctx.start_date, ctx.end_date

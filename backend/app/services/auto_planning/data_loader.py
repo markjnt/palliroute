@@ -68,15 +68,6 @@ class ShiftInfo:
     is_weekend: bool
 
 
-def _shift_slot_key(s: ShiftInfo) -> Tuple[str, str, str]:
-    """Category + role + time_of_day — same logical slot type (AW vs RB Tag/Nacht etc.)."""
-    return (
-        (s.category or '').upper(),
-        (s.role or '').upper(),
-        (s.time_of_day or '').upper(),
-    )
-
-
 def _pick_single_external_shift(
     candidates: List[int],
     e_idx: int,
@@ -112,6 +103,8 @@ class PlanningContext:
     capacity_max: Dict[int, Dict[str, int]] = field(default_factory=dict)
     # fixed (e_idx, s_idx) when existing_assignments_handling == RESPECT
     fixed_assignments: Set[Tuple[int, int]] = field(default_factory=set)
+    # Soft preferences (typically Aplano previous-month history), not hard constraints.
+    preferred_assignments: Set[Tuple[int, int]] = field(default_factory=set)
     # employee_id -> e_idx, shift_instance_id -> s_idx
     employee_id_to_idx: Dict[int, int] = field(default_factory=dict)
     shift_id_to_idx: Dict[int, int] = field(default_factory=dict)
@@ -241,8 +234,10 @@ def load_planning_context(
     # Feste Assignments (nur Solver-Input; nichts wird in der DB überschrieben):
     # - Planungsmonat bei RESPECT: aus DB
     # - Folgetag (z. B. So nach Monatsende): aus DB
-    # - Vormonat: aus DB; wenn Aplano-Historie mitmatcht, wird für diesen Tag nur der
-    #   Solver-Fix durch den Aplano-Match ersetzt (DB-Zeilen bleiben unverändert).
+    # - Vormonat:
+    #   - OHNE Aplano-Historie: aus DB
+    #   - MIT Aplano-Historie: DB-Fixes im Vormonat ignorieren; Aplano wirkt nur als
+    #     SOFT-Präferenz (preferred_assignments), nicht als harte x==1-Fixierung.
     # RESPECT/OVERWRITE gilt nur für den ausgewählten Planungsmonat.
     fixed_assignments: Set[Tuple[int, int]] = set()
     existing = (
@@ -261,11 +256,18 @@ def load_planning_context(
         if e_idx is None or s_idx is None:
             continue
         shift_date = a.shift_instance.date
-        if shift_date < ctx_start or shift_date > ctx_end:
+        if shift_date < ctx_start:
+            # Vormonat aus DB nur verwenden, wenn keine Aplano-Historie vorliegt.
+            if not external_fixed_assignments:
+                fixed_assignments.add((e_idx, s_idx))
+        elif shift_date > ctx_end:
+            # Folgetag(e) nach Monatsende weiterhin aus DB übernehmen.
             fixed_assignments.add((e_idx, s_idx))
         elif existing_assignments_handling.lower() == 'respect':
             # Planungsmonat: nur bei RESPECT fixieren
             fixed_assignments.add((e_idx, s_idx))
+
+    preferred_assignments: Set[Tuple[int, int]] = set()
 
     if external_fixed_assignments:
         # Lookup für Shift-Matching aus Aplano-Historie:
@@ -323,17 +325,8 @@ def load_planning_context(
             if chosen_s_idx is None:
                 continue
 
-            # Nur DB-„Konflikt“ für denselben Schicht-Typ ersetzen (AW vs. RB), nicht den ganzen Tag.
-            slot_key = _shift_slot_key(shift_infos[chosen_s_idx])
-            to_remove = [
-                pair for pair in fixed_assignments
-                if pair[0] == e_idx
-                and shift_infos[pair[1]].date == assign_date
-                and _shift_slot_key(shift_infos[pair[1]]) == slot_key
-            ]
-            for pair in to_remove:
-                fixed_assignments.discard(pair)
-            fixed_assignments.add((e_idx, chosen_s_idx))
+            # Aplano-Vormonat nur als Präferenz (soft), nicht als harte Fixierung.
+            preferred_assignments.add((e_idx, chosen_s_idx))
 
     ctx = PlanningContext(
         planning_month=planning_month,
@@ -345,6 +338,7 @@ def load_planning_context(
         shifts=shift_infos,
         capacity_max=capacity_max,
         fixed_assignments=fixed_assignments,
+        preferred_assignments=preferred_assignments,
         employee_id_to_idx=employee_id_to_idx,
         shift_id_to_idx=shift_id_to_idx,
         absent_dates=absent_dates if absent_dates is not None else set(),

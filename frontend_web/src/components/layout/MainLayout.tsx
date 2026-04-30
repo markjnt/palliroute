@@ -501,7 +501,7 @@ export const MainLayout: React.FC = () => {
                     onClose={closeNotification} 
                     severity={notification.severity}
                     variant="filled"
-                    sx={{ width: '100%' }}
+                    sx={{ width: '100%', whiteSpace: 'pre-line' }}
                 >
                     {notification.message}
                 </Alert>

@@ -214,13 +214,29 @@ export const OnCallPlanningView: React.FC = () => {
       });
 
       // Backend returns 200 with solver_status/error for business errors (e.g. Aplano unavailable)
-      const data = result as { solver_status?: string; error?: string; message?: string };
+      const data = result as {
+        solver_status?: string;
+        error?: string;
+        message?: string;
+        infeasibility_summary?: string[];
+      };
       if (data.solver_status === 'ERROR' && data.error === 'APLANO_UNAVAILABLE') {
         setNotification(data.message ?? 'Aplano ist nicht verfügbar.', 'error');
         return;
       }
       if (data.solver_status === 'ERROR') {
         setNotification(data.message ?? 'Fehler bei der automatischen Planung', 'error');
+        return;
+      }
+      if (data.solver_status === 'INFEASIBLE') {
+        const lines = data.infeasibility_summary?.length
+          ? [data.message ?? 'Keine zulässige Lösung.', '', ...data.infeasibility_summary]
+          : [data.message ?? 'Keine zulässige Lösung (Solver: INFEASIBLE).'];
+        setNotification(lines.join('\n'), 'error');
+        return;
+      }
+      if (data.solver_status === 'SKIPPED') {
+        setNotification(data.message ?? 'Automatische Planung übersprungen', 'error');
         return;
       }
 
@@ -481,7 +497,7 @@ export const OnCallPlanningView: React.FC = () => {
             onClose={closeNotification} 
             severity={notification.severity}
             variant="filled"
-            sx={{ width: '100%' }}
+            sx={{ width: '100%', whiteSpace: 'pre-line' }}
           >
             {notification.message}
           </Alert>
