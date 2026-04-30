@@ -103,7 +103,8 @@ export const routesApi = {
                 responseType: 'blob',
             });
 
-            const contentType = response.headers['content-type'] || '';
+            const rawContentType = response.headers['content-type'];
+            const contentType = typeof rawContentType === 'string' ? rawContentType : '';
             const disposition = response.headers['content-disposition'] as string | undefined;
             let filename = disposition?.match(/filename="?([^";]+)"?/i)?.[1];
             if (!filename) {
