@@ -17,8 +17,12 @@ export const defaultCenter = {
 
 export const defaultZoom = 10;
 
+/** Google Maps: übliche Grenzen für Custom-Zoom-Buttons */
+export const MAP_MIN_ZOOM = 3;
+export const MAP_MAX_ZOOM = 20;
+
 export const mapOptions: google.maps.MapOptions = {
-  zoomControl: true,
+  zoomControl: false,
   mapTypeControl: false,
   scaleControl: true,
   streetViewControl: false,

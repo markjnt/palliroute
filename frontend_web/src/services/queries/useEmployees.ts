@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Employee, EmployeeFormData, EmployeeImportResponse } from '../../types/models';
 import { employeesApi } from '../api/employees';
+import { patientsApi } from '../api/patients';
 import { patientKeys } from './usePatients';
 import { appointmentKeys } from './useAppointments';
 import { routeKeys } from './useRoutes';
@@ -103,11 +104,11 @@ export const useDeleteEmployee = () => {
 export const useImportEmployees = () => {
   const queryClient = useQueryClient();
   const { setLastEmployeeImportTime } = useLastUpdateStore();
-  const { clearSelection } = useCalendarWeekStore();
+  const { setAvailableCalendarWeeks } = useCalendarWeekStore();
   
   return useMutation({
     mutationFn: () => employeesApi.import(),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate employees list to refresh after import
       queryClient.invalidateQueries({ queryKey: employeeKeys.all });
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
@@ -117,9 +118,16 @@ export const useImportEmployees = () => {
       
       // Update last import time in store
       setLastEmployeeImportTime(new Date());
-      
-      // Leere den Kalenderwochen-Store, da Mitarbeiter-Import alle Daten löscht (inkl. Patienten, Termine, Routen)
-      clearSelection();
+
+      // KW-Leiste (Touren): nicht mehr clearSelection — das blendete die KW aus, bis ein voller
+      // Query-Zyklus durch war. Frische KW aus dem API wie beim Patienten-Import setzen;
+      // der Store wählt bei Bedarf die aktuelle ISO-KW oder eine gültige Liste neu aus.
+      try {
+        const calendarWeeks = await patientsApi.getCalendarWeeks();
+        setAvailableCalendarWeeks(calendarWeeks);
+      } catch (error) {
+        console.error('Failed to load calendar weeks after employee import:', error);
+      }
     },
   });
 }; 

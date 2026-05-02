@@ -272,7 +272,7 @@ export const TourContainer: React.FC<TourContainerProps> = ({
             }}
             elevation={2} 
             sx={{ 
-                mb: 3, 
+                mb: 1,
                 p: 2,
                 transition: 'all 0.3s ease',
                 width: '100%',

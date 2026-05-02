@@ -478,24 +478,6 @@ export const OnCallPlanningView: React.FC = () => {
               startIcon={<BarChartIcon sx={{ fontSize: 18 }} />}
               onClick={() => setCapacityDialogOpen(true)}
               size="small"
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 2.5,
-                py: 1,
-                borderRadius: 2.5,
-                borderColor: 'divider',
-                color: 'text.primary',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                  borderColor: 'primary.main',
-                  transform: 'translateY(-1px)',
-                },
-                '&:active': {
-                  transform: 'translateY(0)',
-                },
-              }}
             >
               Kapazitäten
             </Button>
@@ -505,25 +487,7 @@ export const OnCallPlanningView: React.FC = () => {
             startIcon={<CompareArrowsIcon sx={{ fontSize: 18 }} />}
             onClick={() => setAplanoCompareOpen(true)}
             size="small"
-            sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2.5,
-              py: 1,
-              borderRadius: 2.5,
-              borderColor: 'divider',
-              color: 'text.primary',
-              transition: 'all 0.2s ease',
-              whiteSpace: 'nowrap',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-                borderColor: 'primary.main',
-                transform: 'translateY(-1px)',
-              },
-              '&:active': {
-                transform: 'translateY(0)',
-              },
-            }}
+            sx={{ whiteSpace: 'nowrap' }}
           >
             Aplano-Abgleich
           </Button>

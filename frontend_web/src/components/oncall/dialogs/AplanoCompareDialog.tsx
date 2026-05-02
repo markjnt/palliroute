@@ -347,24 +347,6 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                   startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
                   onClick={onRefresh}
                   disabled={!onRefresh || isRefreshing}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 1.75,
-                    py: 0.7,
-                    borderRadius: 2.5,
-                    borderColor: 'divider',
-                    color: 'text.primary',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                      borderColor: 'primary.main',
-                      transform: 'translateY(-1px)',
-                    },
-                    '&:active': {
-                      transform: 'translateY(0)',
-                    },
-                  }}
                 >
                   Aktualisieren
                 </Button>

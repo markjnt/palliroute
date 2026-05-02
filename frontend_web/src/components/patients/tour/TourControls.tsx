@@ -35,61 +35,57 @@ export const TourControls: React.FC<TourControlsProps> = ({
 }) => {
     if (!expanded) return null;
 
+    const controlHoverSx = {
+        '&:hover': {
+            backgroundColor: 'primary.light',
+            color: 'primary.contrastText',
+        },
+    } as const;
+
     return (
-        <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            gap: 1,
-            mt: 0.5
-        }}>
-            <Box sx={{ display: 'flex', gap: 0.5, mb: 2, alignItems: 'center' }}>
-                {/* Optimize button */}
-                <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<RouteIcon />}
-                    onClick={onOptimizeRoute}
-                    disabled={optimizeState.isOptimizing || tourPatientsCount === 0}
-                    sx={{ 
-                        textTransform: 'none',
-                        '&:hover': {
-                            backgroundColor: 'primary.light',
-                            color: 'primary.contrastText'
-                        }
-                    }}
-                >
-                    {optimizeState.isOptimizing ? 'Optimiert...' : 'Optimieren'}
-                </Button>
-                
-                
-                {/* Visibility toggle button */}
-                {routeId !== undefined && (
-                    <Tooltip title={isVisible ? 'Route ausblenden' : 'Route einblenden'} arrow>
-                        <span>
-                            <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={onToggleVisibility}
-                                sx={{
-                                    minWidth: '40px',
-                                    width: '40px',
-                                    height: '31px',
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    ml: 0.25,
-                                    '&:hover': {
-                                        backgroundColor: 'primary.light',
-                                        color: 'primary.contrastText'
-                                    }
-                                }}
-                            >
-                                {isVisible ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
-                            </Button>
-                        </span>
-                    </Tooltip>
-                )}
-            </Box>
+        <Box
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                mt: 0.5,
+                mb: 2,
+            }}
+        >
+            <Button
+                variant="outlined"
+                size="small"
+                startIcon={<RouteIcon />}
+                onClick={onOptimizeRoute}
+                disabled={optimizeState.isOptimizing || tourPatientsCount === 0}
+                sx={{
+                    height: 40,
+                    ...controlHoverSx,
+                }}
+            >
+                {optimizeState.isOptimizing ? 'Optimiert...' : 'Optimieren'}
+            </Button>
+
+            {routeId !== undefined && (
+                <Tooltip title={isVisible ? 'Route ausblenden' : 'Route einblenden'} arrow>
+                    <span>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={onToggleVisibility}
+                            sx={{
+                                minWidth: 40,
+                                width: 40,
+                                height: 40,
+                                p: 0,
+                                ...controlHoverSx,
+                            }}
+                        >
+                            {isVisible ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                        </Button>
+                    </span>
+                </Tooltip>
+            )}
         </Box>
     );
 };

@@ -14,38 +14,48 @@ import {
     ListItem,
     ListItemButton,
     ListItemText,
-    IconButton,
-    Tooltip,
-    CircularProgress
+    CircularProgress,
 } from '@mui/material';
 import {
     Refresh as RefreshIcon,
-    CalendarMonth as CalendarIcon,
+    DateRange as DateRangeIcon,
     Route as RouteIcon,
     DeleteForever as DeleteForeverIcon,
     Visibility as VisibilityIcon,
     VisibilityOff as VisibilityOffIcon,
-    Schedule as ScheduleIcon,
+    CalendarViewWeek as CalendarViewWeekIcon,
     ExpandMore as ExpandMoreIcon,
     RadioButtonChecked as RadioButtonCheckedIcon,
-    PictureAsPdf as PictureAsPdfIcon,
     WarningAmber as WarningIcon
 } from '@mui/icons-material';
 import { Employee } from '../../types/models';
 import { Weekday } from '../../stores/useWeekdayStore';
 import { ToursView } from './ToursView';
-import { SearchField } from './SearchField';
 import { useWeekdayStore, useCalendarWeekStore } from '../../stores';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { usePatients, usePatientImport, useCalendarWeeks } from '../../services/queries/usePatients';
 import { useLastPatientImportTime } from '../../services/queries/useConfig';
 import { useNrwpHolidayForTourDay, useNrwpHolidayLookupForSelectedKw } from '../../hooks';
 import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
-import { useRoutes, useOptimizeRoutes, useOptimizeTourAreaRoutes, useDownloadRoutePdf } from '../../services/queries/useRoutes';
+import { useRoutes, useOptimizeRoutes, useOptimizeTourAreaRoutes } from '../../services/queries/useRoutes';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouteVisibility } from '../../stores/useRouteVisibilityStore';
+import { MAP_HEADER_TOOLBAR_PX } from '../../theme/floatingControlSx';
+
+/** Zwei Buchstaben (Mo … So) + Icons — feste Breite, kein Zucken beim Wochentagswechsel. */
+const TOUR_WEEKDAY_BUTTON_WIDTH_PX = 104;
+
+const WEEKDAY_FULL_DE: Record<Weekday, string> = {
+    monday: 'Montag',
+    tuesday: 'Dienstag',
+    wednesday: 'Mittwoch',
+    thursday: 'Donnerstag',
+    friday: 'Freitag',
+    saturday: 'Samstag',
+    sunday: 'Sonntag',
+};
 
 interface TourPlanSidebarProps {
     width?: number;
@@ -122,7 +132,6 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
     const patientImportMutation = usePatientImport();
     const optimizeRoutesMutation = useOptimizeRoutes();
     const optimizeTourAreaRoutesMutation = useOptimizeTourAreaRoutes();
-    const downloadPdfMutation = useDownloadRoutePdf();
     const { data: lastImportTimeData } = useLastPatientImportTime();
 
     // Update local store when API data changes
@@ -185,24 +194,6 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
         setKwAnchorEl(null);
     };
 
-    const handleDownloadPdf = async () => {
-        if (!selectedCalendarWeek) {
-            setNotification('Bitte wählen Sie eine Kalenderwoche aus', 'error');
-            return;
-        }
-
-        try {
-            await downloadPdfMutation.mutateAsync({
-                calendarWeek: selectedCalendarWeek,
-                selectedWeekday: selectedWeekday,
-            });
-            setNotification(`ZIP für KW ${selectedCalendarWeek} erfolgreich heruntergeladen`, 'success');
-        } catch (error: any) {
-            console.error('Error downloading PDF:', error);
-            setNotification('Fehler beim Herunterladen des PDFs', 'error');
-        }
-    };
-
     const handleImport = async () => {
         try {
             const result = await patientImportMutation.mutateAsync();
@@ -242,18 +233,17 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
         setFilteredResults(results);
     }, []);
 
-    // Memoize weekday name mapping
-    const getWeekdayName = useCallback((day: Weekday): string => {
-        const weekdayNames: Record<Weekday, string> = {
-            monday: 'Montag',
-            tuesday: 'Dienstag',
-            wednesday: 'Mittwoch',
-            thursday: 'Donnerstag',
-            friday: 'Freitag',
-            saturday: 'Samstag',
-            sunday: 'Sonntag'
+    const getWeekdayAbbrev = useCallback((day: Weekday): string => {
+        const abbrev: Record<Weekday, string> = {
+            monday: 'Mo',
+            tuesday: 'Di',
+            wednesday: 'Mi',
+            thursday: 'Do',
+            friday: 'Fr',
+            saturday: 'Sa',
+            sunday: 'So',
         };
-        return weekdayNames[day] || 'Unbekannt';
+        return abbrev[day] || '?';
     }, []);
 
     // Get current weekday
@@ -358,77 +348,167 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
                 flexDirection: 'column',
             }}
         >
-            <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                p: 2,
+                flexWrap: 'nowrap',
+                pt: 2,
+                pb: 2,
+                pr: 2,
+                pl: 8,
                 height: 64,
                 borderBottom: 1,
-                borderColor: 'divider'
+                borderColor: 'divider',
             }}>
-                <Typography variant="h6" component="h2" sx={{ pl: 4.5 }}>
-                    Tourenplanung
+                <Typography variant="h6" component="h2" sx={{ pl: 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    Touren
                 </Typography>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {/* PDF Download Button */}
-                    {selectedCalendarWeek && (
-                        <Tooltip title={downloadPdfMutation.isPending ? 'PDFs werden erstellt...' : `PDFs für KW ${selectedCalendarWeek} herunterladen`}>
-                            <IconButton
-                                onClick={handleDownloadPdf}
-                                disabled={downloadPdfMutation.isPending}
-                                sx={{
-                                    color: 'error.main',
-                                    '&:hover': {
-                                        backgroundColor: 'error.50',
-                                    }
-                                }}
-                            >
-                                {downloadPdfMutation.isPending ? (
-                                    <CircularProgress size={20} color="inherit" />
-                                ) : (
-                                    <PictureAsPdfIcon />
-                                )}
-                            </IconButton>
-                        </Tooltip>
-                    )}
-                    
-                    {/* Calendar Week Selector Button */}
-                    {selectedCalendarWeek && (
-                        <Button
-                            variant="outlined"
-                            onClick={handleKwPopoverOpen}
-                            startIcon={<CalendarIcon />}
-                            endIcon={<ExpandMoreIcon />}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                    {/* Kalenderwoche: Toggle bei genau zwei KW, sonst Popover */}
+                    {selectedCalendarWeek && availableCalendarWeeks.length === 2 ? (
+                        <Box
+                            role="group"
+                            aria-label="Kalenderwoche wählen"
                             sx={{
-                                minWidth: 100,
-                                justifyContent: 'space-between',
-                                textTransform: 'none',
-                                fontWeight: 500,
-                                borderColor: isCurrentWeek ? 'success.main' : 'primary.main',
-                                color: isCurrentWeek ? 'success.main' : 'primary.main',
-                                backgroundColor: isCurrentWeek ? 'success.50' : 'transparent',
-                                '&:hover': {
-                                    borderColor: isCurrentWeek ? 'success.dark' : 'primary.dark',
-                                    backgroundColor: isCurrentWeek ? 'success.100' : 'primary.50',
-                                }
+                                display: 'inline-flex',
+                                alignItems: 'stretch',
+                                height: MAP_HEADER_TOOLBAR_PX,
+                                boxSizing: 'border-box',
+                                flexShrink: 0,
+                                borderRadius: 2,
+                                overflow: 'hidden',
+                                bgcolor: 'background.paper',
+                                boxShadow: (theme) => `inset 0 0 0 1px ${theme.palette.divider}`,
                             }}
                         >
-                            KW {selectedCalendarWeek}
-                        </Button>
+                            {[...availableCalendarWeeks].sort((a, b) => a - b).map((week, idx) => {
+                                const selected = selectedCalendarWeek === week;
+                                const isKwThisSegmentCurrentIso = week === currentWeek;
+                                return (
+                                    <Button
+                                        key={week}
+                                        variant="text"
+                                        size="small"
+                                        disableElevation
+                                        onClick={() => setSelectedCalendarWeek(week)}
+                                        aria-label={
+                                            isKwThisSegmentCurrentIso
+                                                ? `Kalenderwoche ${week} (aktuelle Woche)`
+                                                : `Kalenderwoche ${week}`
+                                        }
+                                        aria-pressed={selected}
+                                        sx={{
+                                            alignSelf: 'stretch',
+                                            flex: '1 1 0',
+                                            minWidth: 0,
+                                            height: 'auto',
+                                            minHeight: 0,
+                                            py: 0,
+                                            px: 1.25,
+                                            borderRadius: 4,
+                                            border: 'none',
+                                            borderRight:
+                                                idx === 0
+                                                    ? (t) => `1px solid ${t.palette.divider}`
+                                                    : 'none',
+                                            textTransform: 'none',
+                                            fontWeight: 600,
+                                            fontSize: '0.8125rem',
+                                            whiteSpace: 'nowrap',
+                                            lineHeight: 1.2,
+                                            ...(selected
+                                                ? isKwThisSegmentCurrentIso
+                                                    ? {
+                                                          color: 'success.contrastText',
+                                                          backgroundColor: 'success.main',
+                                                          boxShadow: (theme) =>
+                                                              `0 1px 2px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.12)'}`,
+                                                          '&:hover': {
+                                                              backgroundColor: 'success.dark',
+                                                          },
+                                                      }
+                                                    : {
+                                                          color: 'primary.contrastText',
+                                                          backgroundColor: 'primary.main',
+                                                          boxShadow: (theme) =>
+                                                              `0 1px 2px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.12)'}`,
+                                                          '&:hover': {
+                                                              backgroundColor: 'primary.dark',
+                                                          },
+                                                      }
+                                                : {
+                                                      color: 'text.secondary',
+                                                      backgroundColor: 'transparent',
+                                                      '&:hover': {
+                                                          backgroundColor: 'rgba(0, 0, 0, 0.06)',
+                                                      },
+                                                  }),
+                                        }}
+                                    >
+                                        KW {week}
+                                    </Button>
+                                );
+                            })}
+                        </Box>
+                    ) : (
+                        selectedCalendarWeek && (
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={handleKwPopoverOpen}
+                                startIcon={<CalendarViewWeekIcon sx={{ fontSize: 18 }} />}
+                                endIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
+                                sx={{
+                                    minWidth: 'auto',
+                                    height: MAP_HEADER_TOOLBAR_PX,
+                                    minHeight: MAP_HEADER_TOOLBAR_PX,
+                                    maxHeight: MAP_HEADER_TOOLBAR_PX,
+                                    boxSizing: 'border-box',
+                                    py: 0,
+                                    px: 1.25,
+                                    justifyContent: 'space-between',
+                                    textTransform: 'none',
+                                    fontWeight: 500,
+                                    fontSize: '0.8125rem',
+                                    borderColor: isCurrentWeek ? 'success.main' : 'primary.main',
+                                    color: isCurrentWeek ? 'success.main' : 'primary.main',
+                                    backgroundColor: isCurrentWeek ? 'success.50' : 'primary.50',
+                                    '&:hover': {
+                                        borderColor: isCurrentWeek ? 'success.dark' : 'primary.dark',
+                                        backgroundColor: isCurrentWeek ? 'success.100' : 'primary.50',
+                                    },
+                                }}
+                            >
+                                KW {selectedCalendarWeek}
+                            </Button>
+                        )
                     )}
                     
                     {/* Weekday Selector Button */}
                     <Button
                         variant="outlined"
+                        size="small"
                         onClick={handlePopoverOpen}
-                        startIcon={<ScheduleIcon />}
-                        endIcon={<ExpandMoreIcon />}
+                        aria-label={`Wochentag ${WEEKDAY_FULL_DE[selectedWeekday]}`}
+                        aria-haspopup="listbox"
+                        startIcon={<DateRangeIcon sx={{ fontSize: 18 }} />}
+                        endIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
                         sx={{
-                            minWidth: 140,
+                            width: TOUR_WEEKDAY_BUTTON_WIDTH_PX,
+                            minWidth: TOUR_WEEKDAY_BUTTON_WIDTH_PX,
+                            maxWidth: TOUR_WEEKDAY_BUTTON_WIDTH_PX,
+                            flexShrink: 0,
+                            height: MAP_HEADER_TOOLBAR_PX,
+                            minHeight: MAP_HEADER_TOOLBAR_PX,
+                            maxHeight: MAP_HEADER_TOOLBAR_PX,
+                            boxSizing: 'border-box',
+                            py: 0,
+                            px: 1.25,
                             justifyContent: 'space-between',
                             textTransform: 'none',
+                            fontSize: '0.8125rem',
                             fontWeight: currentWeekday === selectedWeekday ? 700 : 500,
                             borderColor: 'primary.main',
                             color: 'primary.main',
@@ -439,7 +519,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
                             }
                         }}
                     >
-                        {getWeekdayName(selectedWeekday)}
+                        {getWeekdayAbbrev(selectedWeekday)}
                         {/* Current day indicator */}
                         {currentWeekday === selectedWeekday && (
                             <Box
@@ -450,7 +530,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
                                     backgroundColor: '#007AFF',
                                     position: 'absolute',
                                     top: '50%',
-                                    right: 30,
+                                    right: 26,
                                     transform: 'translateY(-50%)',
                                     border: '1px solid rgba(0, 122, 255, 0.2)',
                                     boxShadow: '0 1px 2px rgba(0, 122, 255, 0.3)',
@@ -484,15 +564,17 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
                 }}
             >
                 <List sx={{ p: 1 }}>
-                    {[
-                        { value: 'monday', label: 'Montag', isWeekend: false },
-                        { value: 'tuesday', label: 'Dienstag', isWeekend: false },
-                        { value: 'wednesday', label: 'Mittwoch', isWeekend: false },
-                        { value: 'thursday', label: 'Donnerstag', isWeekend: false },
-                        { value: 'friday', label: 'Freitag', isWeekend: false },
-                        { value: 'saturday', label: 'Samstag', isWeekend: true },
-                        { value: 'sunday', label: 'Sonntag', isWeekend: true },
-                    ].map((day) => {
+                    {(
+                        [
+                            { value: 'monday' as const, isWeekend: false },
+                            { value: 'tuesday' as const, isWeekend: false },
+                            { value: 'wednesday' as const, isWeekend: false },
+                            { value: 'thursday' as const, isWeekend: false },
+                            { value: 'friday' as const, isWeekend: false },
+                            { value: 'saturday' as const, isWeekend: true },
+                            { value: 'sunday' as const, isWeekend: true },
+                        ] as const
+                    ).map((day) => {
                         const holidayLabel = getHolidayName(day.value as Weekday);
                         const useOrangeRow = day.isWeekend || Boolean(holidayLabel);
                         return (
@@ -520,7 +602,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
                                 }}
                             >
                                 <ListItemText 
-                                    primary={day.label}
+                                    primary={WEEKDAY_FULL_DE[day.value]}
                                     secondary={holidayLabel ? `Feiertag: ${holidayLabel}` : undefined}
                                     primaryTypographyProps={{
                                         fontWeight: selectedWeekday === day.value ? 600 : (currentWeekday === day.value ? 500 : 400),
@@ -562,83 +644,85 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
                 </List>
             </Popover>
 
-            {/* Calendar Week Selection Popover */}
-            <Popover
-                open={Boolean(kwAnchorEl)}
-                anchorEl={kwAnchorEl}
-                onClose={handleKwPopoverClose}
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'left',
-                }}
-                transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'left',
-                }}
-                PaperProps={{
-                    sx: {
-                        minWidth: 150,
-                        mt: 1,
-                        borderRadius: 2,
-                        boxShadow: 3,
-                    }
-                }}
-            >
-                <List sx={{ p: 1 }}>
-                    {availableCalendarWeeks.map((week) => {
-                        const isCurrentWeekItem = week === getCurrentCalendarWeek();
-                        const isSelected = week === selectedCalendarWeek;
-                        
-                        return (
-                            <ListItem key={week} disablePadding>
-                                <ListItemButton
-                                    onClick={() => {
-                                        setSelectedCalendarWeek(week);
-                                        handleKwPopoverClose();
-                                    }}
-                                    selected={isSelected}
-                                    sx={{
-                                        borderRadius: 1,
-                                        mb: 0.5,
-                                        backgroundColor: isCurrentWeekItem ? 'success.50' : 'transparent',
-                                        '&.Mui-selected': {
-                                            backgroundColor: isCurrentWeekItem ? 'success.main' : 'primary.main',
-                                            color: 'white',
-                                            '&:hover': {
-                                                backgroundColor: isCurrentWeekItem ? 'success.dark' : 'primary.dark',
-                                            }
-                                        },
-                                        '&:hover': {
-                                            backgroundColor: isCurrentWeekItem ? 'success.100' : 'primary.50',
-                                        }
-                                    }}
-                                >
-                                    <ListItemText 
-                                        primary={`KW ${week}`}
-                                        primaryTypographyProps={{
-                                            fontWeight: isSelected ? 600 : 400,
-                                            fontSize: '0.875rem',
-                                            color: isCurrentWeekItem && !isSelected ? 'success.dark' : 'inherit'
+            {/* Calendar Week Selection Popover (nur wenn nicht zwei KW / Toggle) */}
+            {availableCalendarWeeks.length !== 2 && (
+                <Popover
+                    open={Boolean(kwAnchorEl)}
+                    anchorEl={kwAnchorEl}
+                    onClose={handleKwPopoverClose}
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}
+                    PaperProps={{
+                        sx: {
+                            minWidth: 150,
+                            mt: 1,
+                            borderRadius: 2,
+                            boxShadow: 3,
+                        },
+                    }}
+                >
+                    <List sx={{ p: 1 }}>
+                        {availableCalendarWeeks.map((week) => {
+                            const isCurrentWeekItem = week === getCurrentCalendarWeek();
+                            const isSelected = week === selectedCalendarWeek;
+
+                            return (
+                                <ListItem key={week} disablePadding>
+                                    <ListItemButton
+                                        onClick={() => {
+                                            setSelectedCalendarWeek(week);
+                                            handleKwPopoverClose();
                                         }}
-                                    />
-                                    {isCurrentWeekItem && (
-                                        <Box
-                                            sx={{
-                                                width: 8,
-                                                height: 8,
-                                                borderRadius: '50%',
-                                                backgroundColor: isSelected ? 'white' : 'success.main',
-                                                ml: 1,
-                                                opacity: 0.9
+                                        selected={isSelected}
+                                        sx={{
+                                            borderRadius: 1,
+                                            mb: 0.5,
+                                            backgroundColor: isCurrentWeekItem ? 'success.50' : 'transparent',
+                                            '&.Mui-selected': {
+                                                backgroundColor: isCurrentWeekItem ? 'success.main' : 'primary.main',
+                                                color: 'white',
+                                                '&:hover': {
+                                                    backgroundColor: isCurrentWeekItem ? 'success.dark' : 'primary.dark',
+                                                },
+                                            },
+                                            '&:hover': {
+                                                backgroundColor: isCurrentWeekItem ? 'success.100' : 'primary.50',
+                                            },
+                                        }}
+                                    >
+                                        <ListItemText
+                                            primary={`KW ${week}`}
+                                            primaryTypographyProps={{
+                                                fontWeight: isSelected ? 600 : 400,
+                                                fontSize: '0.875rem',
+                                                color: isCurrentWeekItem && !isSelected ? 'success.dark' : 'inherit',
                                             }}
                                         />
-                                    )}
-                                </ListItemButton>
-                            </ListItem>
-                        );
-                    })}
-                </List>
-            </Popover>
+                                        {isCurrentWeekItem && (
+                                            <Box
+                                                sx={{
+                                                    width: 8,
+                                                    height: 8,
+                                                    borderRadius: '50%',
+                                                    backgroundColor: isSelected ? 'white' : 'success.main',
+                                                    ml: 1,
+                                                    opacity: 0.9,
+                                                }}
+                                            />
+                                        )}
+                                    </ListItemButton>
+                                </ListItem>
+                            );
+                        })}
+                    </List>
+                </Popover>
+            )}
 
             <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -676,22 +760,14 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = ({
 
             <Divider />
 
-            {/* SearchField nur an Werktagen ohne Feiertags-Wochenendlogik */}
-            {!isAreaTourDay && (
-                <SearchField
+            <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+                <ToursView
                     selectedDay={selectedWeekday}
                     searchTerm={searchTerm}
+                    filteredResults={filteredResults}
                     onSearchChange={setSearchTerm}
                     onClearSearch={handleClearSearch}
                     onFilteredResultsChange={handleFilteredResultsChange}
-                />
-            )}
-
-            <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
-                <ToursView 
-                    selectedDay={selectedWeekday} 
-                    searchTerm={searchTerm}
-                    filteredResults={filteredResults}
                 />
             </Box>
             

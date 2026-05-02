@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Box,
     Button,
@@ -9,12 +9,12 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    IconButton,
     Popover,
     List,
     ListItem,
     ListItemButton,
     ListItemText,
+    TextField,
 } from '@mui/material';
 import {
     Refresh as RefreshIcon,
@@ -33,8 +33,26 @@ import { useEmployees, useDeleteEmployee, useImportEmployees } from '../../servi
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
 import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
+import { MAP_HEADER_TOOLBAR_PX } from '../../theme/floatingControlSx';
+import { dateFromIsoCalendarWeek } from '../../utils/holidayUtils';
 
-// Function to generate a random color based on the user's name
+/** 1–52, gleiche Liste wie `usePlanningWeekStore.getAvailablePlanningWeeks` — stabil für useMemo. */
+const PLANNING_WEEKS_1_52: readonly number[] = Object.freeze(
+    Array.from({ length: 52 }, (_, i) => i + 1),
+);
+
+/** Montag–Sonntag der ISO-KW im Jahr (Anzeige; Jahr = Referenz für Planung). */
+function formatIsoWeekShortRange(calendarWeek: number, isoYear: number): string {
+    try {
+        const mon = dateFromIsoCalendarWeek(isoYear, calendarWeek, 1);
+        const sun = dateFromIsoCalendarWeek(isoYear, calendarWeek, 7);
+        return `${mon.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })} – ${sun.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}`;
+    } catch {
+        return '';
+    }
+}
+
+// Function to generate a random color based on user's name
 const stringToColor = (string: string) => {
     let hash = 0;
     let i;
@@ -83,7 +101,10 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
     const [employeeToDelete, setEmployeeToDelete] = useState<{id: number, name: string} | null>(null);
     const [tablePopupOpen, setTablePopupOpen] = useState(false);
     const [kwAnchorEl, setKwAnchorEl] = useState<null | HTMLElement>(null);
+    const [kwPickerSearch, setKwPickerSearch] = useState('');
+    const [kwPickerShowAll, setKwPickerShowAll] = useState(false);
     const navigate = useNavigate();
+    const planningYear = new Date().getFullYear();
 
     // React Query hooks
     const { data: employees = [], isLoading, error } = useEmployees();
@@ -93,14 +114,36 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
     const { lastEmployeeImportTime, setLastEmployeeImportTime } = useLastUpdateStore();
     
     // Planning week store
-    const { 
-        selectedPlanningWeek, 
-        setSelectedPlanningWeek,
-        getCurrentPlanningWeek,
-        getAvailablePlanningWeeks 
-    } = usePlanningWeekStore();
-    
-    const availablePlanningWeeks = getAvailablePlanningWeeks();
+    const { selectedPlanningWeek, setSelectedPlanningWeek, getCurrentPlanningWeek } =
+        usePlanningWeekStore();
+
+    const displayedPlanningWeeks = useMemo(() => {
+        const all = PLANNING_WEEKS_1_52;
+        const q = kwPickerSearch.trim().toLowerCase();
+        if (q) {
+            return all.filter((w) => {
+                if (/^\d+$/.test(q)) {
+                    return String(w).startsWith(q);
+                }
+                const range = formatIsoWeekShortRange(w, planningYear).toLowerCase();
+                return `kw ${w} ${range}`.includes(q);
+            });
+        }
+        if (kwPickerShowAll) {
+            return [...all];
+        }
+        const cur = selectedPlanningWeek ?? getCurrentPlanningWeek();
+        const from = Math.max(1, cur - 5);
+        const to = Math.min(52, cur + 5);
+        return all.filter((w) => w >= from && w <= to);
+    }, [kwPickerSearch, kwPickerShowAll, planningYear, selectedPlanningWeek, getCurrentPlanningWeek]);
+
+    useEffect(() => {
+        if (!kwAnchorEl) {
+            setKwPickerSearch('');
+            setKwPickerShowAll(false);
+        }
+    }, [kwAnchorEl]);
 
     // Format last update time for display
     const formatLastUpdateTime = (time: Date | null): string => {
@@ -217,9 +260,9 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
     // Set current week if no week is selected
     useEffect(() => {
         if (selectedPlanningWeek === null) {
-            setSelectedPlanningWeek(getCurrentPlanningWeek());
+            setSelectedPlanningWeek(usePlanningWeekStore.getState().getCurrentPlanningWeek());
         }
-    }, [selectedPlanningWeek, setSelectedPlanningWeek, getCurrentPlanningWeek]);
+    }, [selectedPlanningWeek, setSelectedPlanningWeek]);
 
 
     return (
@@ -242,60 +285,112 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
                 borderColor: 'divider'
             }}>
                 <Typography variant="h6" component="h2" sx={{ pl: 2 }}>
-                    Mitarbeiterplanung
+                    Mitarbeiter
                 </Typography>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0, mr: 5 }}>
-                    {/* Previous Week Button */}
-                    <IconButton
-                        onClick={handlePreviousWeek}
-                        disabled={!selectedPlanningWeek || selectedPlanningWeek <= 1}
-                        size="small"
-                        sx={{ 
-                            color: 'primary.main',
-                            '&:hover': { backgroundColor: 'primary.50' }
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        mr: 6,
+                    }}
+                >
+                    <Box
+                        role="group"
+                        aria-label="Kalenderwoche wechseln"
+                        sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.75,
+                            flexShrink: 0,
                         }}
                     >
-                        <ChevronLeftIcon />
-                    </IconButton>
-                    
-                    {/* Calendar Week Selector Button */}
-                    {selectedPlanningWeek && (
                         <Button
                             variant="outlined"
-                            onClick={handleKwPopoverOpen}
-                            startIcon={<CalendarIcon />}
-                            endIcon={<ExpandMoreIcon />}
+                            color="primary"
+                            size="small"
+                            onClick={handlePreviousWeek}
+                            disabled={!selectedPlanningWeek || selectedPlanningWeek <= 1}
+                            aria-label="Vorherige Kalenderwoche"
                             sx={{
-                                minWidth: 100,
-                                justifyContent: 'space-between',
-                                textTransform: 'none',
-                                fontWeight: 500,
-                                borderColor: isCurrentWeek ? 'success.main' : 'primary.main',
-                                color: isCurrentWeek ? 'success.main' : 'primary.main',
-                                backgroundColor: isCurrentWeek ? 'success.50' : 'transparent',
-                                '&:hover': {
-                                    borderColor: isCurrentWeek ? 'success.dark' : 'primary.dark',
-                                    backgroundColor: isCurrentWeek ? 'success.100' : 'primary.50',
-                                }
+                                minWidth: MAP_HEADER_TOOLBAR_PX,
+                                width: MAP_HEADER_TOOLBAR_PX,
+                                height: MAP_HEADER_TOOLBAR_PX,
+                                p: 0,
+                                borderRadius: 2,
+                                boxSizing: 'border-box',
                             }}
                         >
-                            KW {selectedPlanningWeek}
+                            <ChevronLeftIcon fontSize="small" />
                         </Button>
-                    )}
-                    
-                    {/* Next Week Button */}
-                    <IconButton
-                        onClick={handleNextWeek}
-                        disabled={!selectedPlanningWeek || selectedPlanningWeek >= 52}
-                        size="small"
-                        sx={{ 
-                            color: 'primary.main',
-                            '&:hover': { backgroundColor: 'primary.50' }
-                        }}
-                    >
-                        <ChevronRightIcon />
-                    </IconButton>
+
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={handleKwPopoverOpen}
+                            disabled={!selectedPlanningWeek}
+                            startIcon={<CalendarIcon sx={{ fontSize: 18 }} />}
+                            endIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
+                            sx={{
+                                minWidth: 108,
+                                height: MAP_HEADER_TOOLBAR_PX,
+                                px: 1.25,
+                                py: 0,
+                                borderRadius: 2,
+                                boxSizing: 'border-box',
+                                justifyContent: 'space-between',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                fontSize: '0.8125rem',
+                                ...(selectedPlanningWeek
+                                    ? isCurrentWeek
+                                        ? {
+                                              borderColor: 'success.main',
+                                              color: 'success.main',
+                                              backgroundColor: 'success.50',
+                                              '&:hover': {
+                                                  borderColor: 'success.dark',
+                                                  backgroundColor: 'success.100',
+                                              },
+                                          }
+                                        : {
+                                              borderColor: 'primary.main',
+                                              color: 'primary.main',
+                                              backgroundColor: 'primary.50',
+                                              '&:hover': {
+                                                  borderColor: 'primary.dark',
+                                                  backgroundColor: 'primary.100',
+                                              },
+                                          }
+                                    : {
+                                          borderColor: 'divider',
+                                          color: 'text.disabled',
+                                          backgroundColor: 'transparent',
+                                      }),
+                            }}
+                        >
+                            {selectedPlanningWeek ? `KW ${selectedPlanningWeek}` : 'KW'}
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            size="small"
+                            onClick={handleNextWeek}
+                            disabled={!selectedPlanningWeek || selectedPlanningWeek >= 52}
+                            aria-label="Nächste Kalenderwoche"
+                            sx={{
+                                minWidth: MAP_HEADER_TOOLBAR_PX,
+                                width: MAP_HEADER_TOOLBAR_PX,
+                                height: MAP_HEADER_TOOLBAR_PX,
+                                p: 0,
+                                borderRadius: 2,
+                                boxSizing: 'border-box',
+                            }}
+                        >
+                            <ChevronRightIcon fontSize="small" />
+                        </Button>
+                    </Box>
                 </Box>
             </Box>
 
@@ -340,17 +435,35 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
                 }}
                 PaperProps={{
                     sx: {
-                        minWidth: 150,
+                        minWidth: 280,
+                        maxWidth: 320,
                         mt: 1,
                         borderRadius: 2,
                         boxShadow: 3,
                     }
                 }}
             >
-                <List sx={{ p: 1 }}>
-                    {availablePlanningWeeks.map((week) => {
+                <Box sx={{ p: 1.25, pb: 0.5 }}>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        size="small"
+                        placeholder="KW oder Datum suchen…"
+                        value={kwPickerSearch}
+                        onChange={(e) => setKwPickerSearch(e.target.value)}
+                        inputProps={{ 'aria-label': 'Kalenderwoche filtern' }}
+                    />
+                </Box>
+                <List dense sx={{ py: 0, px: 1, maxHeight: 280, overflow: 'auto' }}>
+                    {displayedPlanningWeeks.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 2 }}>
+                            Keine Kalenderwoche passt zur Suche.
+                        </Typography>
+                    ) : (
+                        displayedPlanningWeeks.map((week) => {
                         const isCurrentWeekItem = week === getCurrentPlanningWeek();
                         const isSelected = week === selectedPlanningWeek;
+                        const rangeLabel = formatIsoWeekShortRange(week, planningYear);
                         
                         return (
                             <ListItem key={week} disablePadding>
@@ -363,6 +476,7 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
                                     sx={{
                                         borderRadius: 1,
                                         mb: 0.5,
+                                        alignItems: 'flex-start',
                                         backgroundColor: isCurrentWeekItem ? 'success.50' : 'transparent',
                                         '&.Mui-selected': {
                                             backgroundColor: isCurrentWeekItem ? 'success.main' : 'primary.main',
@@ -378,10 +492,21 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
                                 >
                                     <ListItemText 
                                         primary={`KW ${week}`}
+                                        secondary={rangeLabel || undefined}
                                         primaryTypographyProps={{
                                             fontWeight: isSelected ? 600 : 400,
                                             fontSize: '0.875rem',
                                             color: isCurrentWeekItem && !isSelected ? 'success.dark' : 'inherit'
+                                        }}
+                                        secondaryTypographyProps={{
+                                            fontSize: '0.72rem',
+                                            lineHeight: 1.25,
+                                            sx: {
+                                                mt: 0.25,
+                                                color: isSelected
+                                                    ? 'rgba(255,255,255,0.85)'
+                                                    : 'text.secondary',
+                                            },
                                         }}
                                     />
                                     {isCurrentWeekItem && (
@@ -392,6 +517,8 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
                                                 borderRadius: '50%',
                                                 backgroundColor: isSelected ? 'white' : 'success.main',
                                                 ml: 1,
+                                                mt: 0.5,
+                                                flexShrink: 0,
                                                 opacity: 0.9
                                             }}
                                         />
@@ -399,8 +526,21 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
                                 </ListItemButton>
                             </ListItem>
                         );
-                    })}
+                    })
+                    )}
                 </List>
+                {!kwPickerSearch && !kwPickerShowAll && (
+                    <Box sx={{ px: 1, pb: 1 }}>
+                        <Button
+                            fullWidth
+                            size="small"
+                            variant="text"
+                            onClick={() => setKwPickerShowAll(true)}
+                        >
+                            Alle Kalenderwochen (1–52)
+                        </Button>
+                    </Box>
+                )}
             </Popover>
 
             {openForm && (

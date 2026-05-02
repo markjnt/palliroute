@@ -4,6 +4,12 @@ import { persist } from 'zustand/middleware';
 // Constants
 const DEFAULT_SIDEBAR_WIDTH = 425;
 
+/**
+ * Smallest width that keeps the Tour sidebar header (Touren + PDF + KW + weekday) on one line
+ * with default MUI spacing: pl 8 (64) + pr 2 (16) + title + control cluster (~min 100 + 140 + icon/gaps).
+ */
+export const MIN_RIGHT_SIDEBAR_WIDTH = 490;
+
 interface SidebarState {
   isFullscreen: boolean;
   width: number;
@@ -36,7 +42,7 @@ export const useLayoutStore = create<LayoutState>()(
       },
       rightSidebar: {
         isFullscreen: false,
-        width: DEFAULT_SIDEBAR_WIDTH,
+        width: Math.max(DEFAULT_SIDEBAR_WIDTH, MIN_RIGHT_SIDEBAR_WIDTH),
         isCollapsed: false,
       },
       
@@ -74,9 +80,12 @@ export const useLayoutStore = create<LayoutState>()(
           leftSidebar: { ...state.leftSidebar, width }
         })),
       
-      setRightSidebarWidth: (width) => 
+      setRightSidebarWidth: (width) =>
         set((state) => ({
-          rightSidebar: { ...state.rightSidebar, width }
+          rightSidebar: {
+            ...state.rightSidebar,
+            width: Math.max(MIN_RIGHT_SIDEBAR_WIDTH, width),
+          },
         })),
       
       setLeftSidebarCollapsed: (isCollapsed) => 
@@ -108,13 +117,30 @@ export const useLayoutStore = create<LayoutState>()(
           },
           rightSidebar: {
             isFullscreen: false,
-            width: DEFAULT_SIDEBAR_WIDTH,
+            width: Math.max(DEFAULT_SIDEBAR_WIDTH, MIN_RIGHT_SIDEBAR_WIDTH),
             isCollapsed: false,
           }
         })
     }),
     {
       name: 'layout-storage', // Name for localStorage entry
+      merge: (persistedState, currentState) => {
+        const p = persistedState as Partial<LayoutState> | undefined;
+        if (!p) return currentState;
+        return {
+          ...currentState,
+          ...p,
+          leftSidebar: { ...currentState.leftSidebar, ...p.leftSidebar },
+          rightSidebar: {
+            ...currentState.rightSidebar,
+            ...p.rightSidebar,
+            width: Math.max(
+              MIN_RIGHT_SIDEBAR_WIDTH,
+              p.rightSidebar?.width ?? currentState.rightSidebar.width
+            ),
+          },
+        };
+      },
     }
   )
 ); 

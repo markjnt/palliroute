@@ -180,7 +180,7 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
         <Paper 
             elevation={2} 
             sx={{ 
-                mb: 3, 
+                mb: 0,
                 p: 2,
                 transition: 'all 0.3s ease',
                 width: '100%',
@@ -433,7 +433,7 @@ export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay 
                 isAssigning={appointmentManagement.isAssigningTourArea}
             />
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {tourAreasToShow.map((area) => {
                     const areaRoutes = tourRoutesByArea.get(area);
                     

@@ -4,22 +4,19 @@ import {
     Typography,
     Box,
     Button,
-    Modal
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    IconButton,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { mapFloatingControlSx } from '../../theme/floatingControlSx';
 import { useNavigate } from 'react-router-dom';
 import { useAreaStore } from '../../stores/useAreaStore';
 import AreaList from './AreaList';
-import { Public as PublicIcon, ChangeCircle as ChangeIcon } from '@mui/icons-material';
+import { Public as PublicIcon, ChangeCircle as ChangeIcon, Close as CloseIcon } from '@mui/icons-material';
 
 const AREAS = ['Nord- und Südkreis', 'Nordkreis', 'Südkreis'];
-
-// Hilfsfunktionen für Area-Styling (gleich wie in EmployeeSidebar)
-const getAreaChipColor = (area: string) => {
-    if (area === 'Nordkreis') return 'primary';
-    if (area === 'Südkreis') return 'secondary';
-    if (area === 'Nord- und Südkreis' || area === 'Gesamt') return 'default';
-    return 'default';
-};
 
 const getAreaInitial = (area: string) => {
     if (area === 'Nordkreis') return 'N';
@@ -31,12 +28,31 @@ const getAreaInitial = (area: string) => {
 interface AreaSelectionProps {
     compact?: boolean;
     onAreaChange?: () => void;
+    /** Dialog von außen steuern (z. B. Karten-Menü) */
+    dialogOpen?: boolean;
+    onDialogOpenChange?: (open: boolean) => void;
+    /** Kompakt-Button ausblenden — Dialog nur über `dialogOpen` */
+    hideCompactButton?: boolean;
 }
 
-const AreaSelection: React.FC<AreaSelectionProps> = ({ compact = false, onAreaChange }) => {
+const AreaSelection: React.FC<AreaSelectionProps> = ({
+    compact = false,
+    onAreaChange,
+    dialogOpen: controlledDialogOpen,
+    onDialogOpenChange,
+    hideCompactButton = false,
+}) => {
     const { currentArea, setCurrentArea } = useAreaStore();
     const navigate = useNavigate();
-    const [modalOpen, setModalOpen] = useState(false);
+    const [internalModalOpen, setInternalModalOpen] = useState(false);
+
+    const isDialogControlled =
+        controlledDialogOpen !== undefined && onDialogOpenChange !== undefined;
+    const modalOpen = isDialogControlled ? controlledDialogOpen : internalModalOpen;
+    const setModalOpen = (open: boolean) => {
+        if (isDialogControlled) onDialogOpenChange!(open);
+        else setInternalModalOpen(open);
+    };
 
     const handleAreaSelect = (area: string) => {
         setCurrentArea(area);
@@ -58,99 +74,83 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({ compact = false, onAreaCh
     if (compact) {
         return (
             <>
-                <Button
-                    onClick={handleButtonClick}
-                    variant="outlined"
-                    sx={{
-                        borderRadius: '12px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        height: 40,
-                        minHeight: 40,
-                        px: 2,
-                        py: 1,
-                        border: '1px solid rgba(0, 0, 0, 0.08)',
-                        backgroundColor: getAreaChipColor(currentArea || '') === 'primary' ? 'rgba(25, 118, 210, 0.1)' : 
-                                        getAreaChipColor(currentArea || '') === 'secondary' ? 'rgba(220, 0, 78, 0.1)' : 
-                                        'rgba(255, 255, 255, 0.9)',
-                        backdropFilter: 'blur(10px)',
-                        color: getAreaChipColor(currentArea || '') === 'primary' ? '#1976d2' : 
-                               getAreaChipColor(currentArea || '') === 'secondary' ? '#dc004e' : 
-                               '#1d1d1f',
-                        borderColor: getAreaChipColor(currentArea || '') === 'primary' ? 'rgba(25, 118, 210, 0.3)' : 
-                                    getAreaChipColor(currentArea || '') === 'secondary' ? 'rgba(220, 0, 78, 0.3)' : 
-                                    'rgba(0, 0, 0, 0.12)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                        '&:hover': {
-                            backgroundColor: getAreaChipColor(currentArea || '') === 'primary' ? 'rgba(25, 118, 210, 0.15)' : 
-                                           getAreaChipColor(currentArea || '') === 'secondary' ? 'rgba(220, 0, 78, 0.15)' : 
-                                           'rgba(255, 255, 255, 0.95)',
-                            borderColor: getAreaChipColor(currentArea || '') === 'primary' ? 'rgba(25, 118, 210, 0.5)' : 
-                                        getAreaChipColor(currentArea || '') === 'secondary' ? 'rgba(220, 0, 78, 0.5)' : 
-                                        'rgba(0, 0, 0, 0.2)',
-                            transform: 'translateY(-1px)',
-                            boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15)',
-                        },
-                        '&:active': {
-                            transform: 'translateY(0)',
-                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-                        },
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                    startIcon={<ChangeIcon />}
-                >
-                    {getAreaInitial(currentArea || '')}
-                </Button>
+                {!hideCompactButton && (
+                    <Button
+                        onClick={handleButtonClick}
+                        variant="outlined"
+                        size="small"
+                        startIcon={<ChangeIcon />}
+                        sx={mapFloatingControlSx}
+                    >
+                        {getAreaInitial(currentArea || '')}
+                    </Button>
+                )}
 
-                <Modal
+                <Dialog
                     open={modalOpen}
                     onClose={() => setModalOpen(false)}
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        p: 2,
+                    maxWidth="sm"
+                    fullWidth
+                    PaperProps={{
+                        sx: {
+                            maxWidth: 400,
+                        },
                     }}
                 >
-                    <Box sx={{
-                        width: '100%',
-                        maxWidth: 400,
-                        bgcolor: 'rgba(255, 255, 255, 0.95)',
-                        backdropFilter: 'blur(20px)',
-                        borderRadius: '20px',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-                        p: 3,
-                        outline: 'none',
-                    }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                            <Box sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: '10px',
-                                backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}>
-                                <ChangeIcon sx={{ color: '#1976d2', fontSize: 20 }} />
+                    <DialogTitle
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 2,
+                            pb: 2,
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+                            <Box
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 2,
+                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                }}
+                            >
+                                <ChangeIcon sx={{ color: 'primary.main', fontSize: 22 }} />
                             </Box>
-                            <Typography variant="h5" component="h2" sx={{ 
-                                fontWeight: 600,
-                                color: '#1d1d1f',
-                                letterSpacing: '-0.3px'
-                            }}>
-                                Gebiet wählen
-                            </Typography>
+                            <Box sx={{ minWidth: 0 }}>
+                                <Typography component="span" variant="h6" sx={{ lineHeight: 1.3 }}>
+                                    Gebiet wählen
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                                    Kreis für Karte und Planung
+                                </Typography>
+                            </Box>
                         </Box>
-                        <AreaList
-                            areas={AREAS}
-                            onAreaSelect={handleAreaSelect}
-                            selectedArea={currentArea}
-                        />
-                    </Box>
-                </Modal>
+                        <IconButton
+                            aria-label="Schließen"
+                            onClick={() => setModalOpen(false)}
+                            size="small"
+                            sx={{ color: 'text.secondary' }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    </DialogTitle>
+                    <DialogContent sx={{ p: 0 }}>
+                        <Box sx={{ px: 2.5, pt: 3, pb: 3 }}>
+                            <AreaList
+                                areas={AREAS}
+                                onAreaSelect={handleAreaSelect}
+                                selectedArea={currentArea}
+                            />
+                        </Box>
+                    </DialogContent>
+                </Dialog>
             </>
         );
     }
@@ -158,31 +158,39 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({ compact = false, onAreaCh
     // Vollständige Version für die Seite
     return (
         <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
-            <Box sx={{ 
-                p: 4, 
-                borderRadius: '20px', 
-                background: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-            }}>
+            <Box
+                sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    bgcolor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    boxShadow: 1,
+                }}
+            >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-                    <Box sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '12px',
-                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}>
-                        <PublicIcon sx={{ color: '#1976d2', fontSize: 28 }} />
+                    <Box
+                        sx={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 2,
+                            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <PublicIcon sx={{ color: 'primary.main', fontSize: 28 }} />
                     </Box>
-                    <Typography variant="h4" component="h1" sx={{ 
-                        fontWeight: 600,
-                        color: '#1d1d1f',
-                        letterSpacing: '-0.5px'
-                    }}>
+                    <Typography
+                        variant="h4"
+                        component="h1"
+                        sx={{
+                            fontWeight: 600,
+                            color: 'text.primary',
+                            letterSpacing: '-0.02em',
+                        }}
+                    >
                         Kreisauswahl
                     </Typography>
                 </Box>

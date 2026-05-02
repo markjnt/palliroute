@@ -3,6 +3,8 @@ import { Box, Typography, Alert, CircularProgress } from '@mui/material';
 import { Employee, Weekday } from '../../types/models';
 import { TourContainer } from './TourContainer';
 import { NursingAreaRouteSummary } from './tour/NursingAreaRouteSummary';
+import { SearchField } from './SearchField';
+import type { FilteredResults } from './SearchField';
 import { WeekendToursView } from './weekend/WeekendToursView';
 import { Person as PersonIcon, LocalHospital as DoctorIcon, RemoveCircle as EmptyIcon } from '@mui/icons-material';
 import { useRoutes } from '../../services/queries/useRoutes';
@@ -15,14 +17,20 @@ import { useEmployeeManagement, useAreaManagement, useNrwpHolidayForTourDay } fr
 interface ToursViewProps {
     selectedDay: Weekday;
     searchTerm: string;
-    filteredResults: {
-        filteredActiveOtherEmployeesWithPatients: Employee[];
-        filteredActiveOtherEmployeesWithoutPatients: Employee[];
-        filteredDoctors: Employee[];
-    };
+    filteredResults: FilteredResults;
+    onSearchChange: (value: string) => void;
+    onClearSearch: () => void;
+    onFilteredResultsChange: (results: FilteredResults) => void;
 }
 
-export const ToursView: React.FC<ToursViewProps> = ({ selectedDay, searchTerm, filteredResults }) => {
+export const ToursView: React.FC<ToursViewProps> = ({
+    selectedDay,
+    searchTerm,
+    filteredResults,
+    onSearchChange,
+    onClearSearch,
+    onFilteredResultsChange,
+}) => {
     const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedDay);
 
     const { data: employees = [], isLoading: loadingEmployees, error: employeesError } = useEmployees();
@@ -102,6 +110,15 @@ export const ToursView: React.FC<ToursViewProps> = ({ selectedDay, searchTerm, f
                 routes={routes}
                 selectedDay={selectedDay}
             />
+            {!isAreaTourDay && (
+                <SearchField
+                    selectedDay={selectedDay}
+                    searchTerm={searchTerm}
+                    onSearchChange={onSearchChange}
+                    onClearSearch={onClearSearch}
+                    onFilteredResultsChange={onFilteredResultsChange}
+                />
+            )}
             {/* 1. Pflegetouren - Active other employees with patients */}
             {activeOtherEmployeesWithPatients.length > 0 && (
                 <Box sx={{ mb: 4 }}>
@@ -120,13 +137,13 @@ export const ToursView: React.FC<ToursViewProps> = ({ selectedDay, searchTerm, f
                     <Box sx={{
                         display: 'flex',
                         flexWrap: 'wrap',
-                        gap: 1,
+                        gap: 0.5,
                         '& > *': {
                             flexGrow: 1,
                             flexShrink: 1,
                             flexBasis: {
                                 xs: '100%',
-                                sm: 'calc(100% - 16px)',
+                                sm: 'calc(100% - 8px)',
                                 md: '47%',
                                 lg: '31%',
                                 xl: '23%'
@@ -183,7 +200,7 @@ export const ToursView: React.FC<ToursViewProps> = ({ selectedDay, searchTerm, f
                             flexShrink: 1,
                             flexBasis: {
                                 xs: '100%',
-                                sm: 'calc(100% - 16px)',
+                                sm: 'calc(100% - 8px)',
                                 md: '47%',
                                 lg: '31%',
                                 xl: '23%'
@@ -234,13 +251,13 @@ export const ToursView: React.FC<ToursViewProps> = ({ selectedDay, searchTerm, f
                     <Box sx={{
                         display: 'flex',
                         flexWrap: 'wrap',
-                        gap: 1,
+                        gap: 0.5,
                         '& > *': {
                             flexGrow: 1,
                             flexShrink: 1,
                             flexBasis: {
                                 xs: '100%',
-                                sm: 'calc(100% - 16px)',
+                                sm: 'calc(100% - 8px)',
                                 md: '47%',
                                 lg: '31%',
                                 xl: '23%'
@@ -291,13 +308,13 @@ export const ToursView: React.FC<ToursViewProps> = ({ selectedDay, searchTerm, f
                     <Box sx={{
                         display: 'flex',
                         flexWrap: 'wrap',
-                        gap: 1,
+                        gap: 0.5,
                         '& > *': {
                             flexGrow: 1,
                             flexShrink: 1,
                             flexBasis: {
                                 xs: '100%',
-                                sm: 'calc(100% - 16px)',
+                                sm: 'calc(100% - 8px)',
                                 md: '47%',
                                 lg: '31%',
                                 xl: '23%'

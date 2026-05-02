@@ -238,7 +238,7 @@ export const NursingAreaRouteSummary: React.FC<NursingAreaRouteSummaryProps> = (
     const showBothCollapsed = nord.tourCount > 0 && sued.tourCount > 0;
 
     return (
-        <Box sx={{ mb: 2, mt: -1 }}>
+        <Box sx={{ mb: 1, mt: -1 }}>
             <Box
                 role="button"
                 tabIndex={0}

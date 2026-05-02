@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { Box, IconButton, Drawer, useTheme, useMediaQuery, Snackbar, Alert, LinearProgress, CircularProgress } from '@mui/material';
+import { Box, Button, Drawer, useTheme, useMediaQuery, Snackbar, Alert, LinearProgress, CircularProgress } from '@mui/material';
 import { Fullscreen as FullscreenIcon, FullscreenExit as FullscreenExitIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon } from '@mui/icons-material';
-import { useLayoutStore } from '../../stores';
+import { useLayoutStore, MIN_RIGHT_SIDEBAR_WIDTH } from '../../stores';
 import { useAreaStore } from '../../stores/useAreaStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { EmployeeSidebar } from '../employees/EmployeeSidebar';
 import { TourPlanSidebar } from '../patients/TourSidebar';
+import { floatingOutlineIconButtonSx, SIDEBAR_HEADER_HEIGHT_PX } from '../../theme/floatingControlSx';
 
 const MIN_MAIN_CONTENT_WIDTH = 100;
 const COLLAPSED_WIDTH = 0;
@@ -131,7 +132,7 @@ export const MainLayout: React.FC = () => {
                     const maxRightSidebarWidth = availableWidth - MIN_MAIN_CONTENT_WIDTH;
                     
                     const newWidth = Math.min(
-                        Math.max(DEFAULT_SIDEBAR_WIDTH, rightResizeRef.current.startWidth - delta),
+                        Math.max(MIN_RIGHT_SIDEBAR_WIDTH, rightResizeRef.current.startWidth - delta),
                         maxRightSidebarWidth
                     );
                     
@@ -218,26 +219,23 @@ export const MainLayout: React.FC = () => {
             <Box sx={{ position: 'relative' }}>
                 {/* Collapse Toggle Button for collapsed state */}
                 {leftSidebar.isCollapsed && !rightSidebar.isFullscreen && (
-                    <IconButton 
-                        onClick={handleLeftCollapseToggle}
+                    <Button
+                        variant="outlined"
+                        color="primary"
                         size="small"
-                        sx={{ 
-                            position: 'absolute', 
-                            left: -5,
-                            top: '50%', 
+                        onClick={handleLeftCollapseToggle}
+                        aria-label="Linke Sidebar ausklappen"
+                        sx={{
+                            ...floatingOutlineIconButtonSx,
+                            position: 'absolute',
+                            left: -8,
+                            top: '50%',
                             transform: 'translateY(-50%)',
                             zIndex: 1300,
-                            bgcolor: 'background.paper',
-                            boxShadow: 2,
-                            width: 32,
-                            height: 32,
-                            '&:hover': {
-                                bgcolor: 'background.paper',
-                            }
                         }}
                     >
-                        <ChevronRightIcon />
-                    </IconButton>
+                        <ChevronRightIcon fontSize="small" />
+                    </Button>
                 )}
                 <Drawer
                     variant={isMobile ? 'temporary' : 'permanent'}
@@ -273,41 +271,52 @@ export const MainLayout: React.FC = () => {
                             width: '100%',
                             overflow: 'auto'
                         }}>
-                            {/* Fullscreen Button - top right */}
-                            <IconButton 
-                                onClick={handleLeftFullscreenToggle}
-                                size="small"
+                            {/* Fullscreen Button — vertically centered in sidebar header row */}
+                            <Box
                                 sx={{
                                     position: 'absolute',
+                                    top: 0,
                                     right: 16,
-                                    top: 14,
-                                    zIndex: 10
+                                    height: SIDEBAR_HEADER_HEIGHT_PX,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    zIndex: 10,
                                 }}
                             >
-                                {leftSidebar.isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-                            </IconButton>
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    size="small"
+                                    onClick={handleLeftFullscreenToggle}
+                                    aria-label={leftSidebar.isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+                                    sx={floatingOutlineIconButtonSx}
+                                >
+                                    {leftSidebar.isFullscreen ? (
+                                        <FullscreenExitIcon fontSize="small" />
+                                    ) : (
+                                        <FullscreenIcon fontSize="small" />
+                                    )}
+                                </Button>
+                            </Box>
                             
-                            {/* Collapse Toggle Button - middle right edge */}
-                            <IconButton 
-                                onClick={handleLeftCollapseToggle}
+                            {/* Collapse Toggle — middle right edge */}
+                            <Button
+                                variant="outlined"
+                                color="primary"
                                 size="small"
+                                onClick={handleLeftCollapseToggle}
+                                aria-label="Linke Sidebar einklappen"
                                 sx={{
+                                    ...floatingOutlineIconButtonSx,
                                     position: 'absolute',
-                                    right: -5,
+                                    right: -8,
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     zIndex: 1299,
-                                    bgcolor: 'background.paper',
-                                    boxShadow: 2,
-                                    width: 32,
-                                    height: 32,
-                                    '&:hover': {
-                                        bgcolor: 'background.paper',
-                                    }
                                 }}
                             >
-                                <ChevronLeftIcon />
-                            </IconButton>
+                                <ChevronLeftIcon fontSize="small" />
+                            </Button>
                             
                             {/* Optimized Resize Handle */}
                             <Box
@@ -362,26 +371,23 @@ export const MainLayout: React.FC = () => {
             <Box sx={{ position: 'relative' }}>
                 {/* Collapse Toggle Button for collapsed state */}
                 {rightSidebar.isCollapsed && !leftSidebar.isFullscreen && (
-                    <IconButton 
-                        onClick={handleRightCollapseToggle}
+                    <Button
+                        variant="outlined"
+                        color="primary"
                         size="small"
-                        sx={{ 
-                            position: 'absolute', 
-                            right: -5,
-                            top: '50%', 
+                        onClick={handleRightCollapseToggle}
+                        aria-label="Rechte Sidebar ausklappen"
+                        sx={{
+                            ...floatingOutlineIconButtonSx,
+                            position: 'absolute',
+                            right: -8,
+                            top: '50%',
                             transform: 'translateY(-50%)',
                             zIndex: 1300,
-                            bgcolor: 'background.paper',
-                            boxShadow: 2,
-                            width: 32,
-                            height: 32,
-                            '&:hover': {
-                                bgcolor: 'background.paper',
-                            }
                         }}
                     >
-                        <ChevronLeftIcon />
-                    </IconButton>
+                        <ChevronLeftIcon fontSize="small" />
+                    </Button>
                 )}
                 <Drawer
                     variant={isMobile ? 'temporary' : 'permanent'}
@@ -418,41 +424,52 @@ export const MainLayout: React.FC = () => {
                             width: '100%',
                             overflow: 'auto'
                         }}>
-                            {/* Fullscreen Button - top left */}
-                            <IconButton 
-                                onClick={handleRightFullscreenToggle}
-                                size="small"
+                            {/* Fullscreen Button — vertically centered in sidebar header row */}
+                            <Box
                                 sx={{
                                     position: 'absolute',
+                                    top: 0,
                                     left: 16,
-                                    top: 14,
-                                    zIndex: 10
+                                    height: SIDEBAR_HEADER_HEIGHT_PX,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    zIndex: 10,
                                 }}
                             >
-                                {rightSidebar.isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-                            </IconButton>
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    size="small"
+                                    onClick={handleRightFullscreenToggle}
+                                    aria-label={rightSidebar.isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+                                    sx={floatingOutlineIconButtonSx}
+                                >
+                                    {rightSidebar.isFullscreen ? (
+                                        <FullscreenExitIcon fontSize="small" />
+                                    ) : (
+                                        <FullscreenIcon fontSize="small" />
+                                    )}
+                                </Button>
+                            </Box>
                             
-                            {/* Collapse Toggle Button - middle left edge */}
-                            <IconButton 
-                                onClick={handleRightCollapseToggle}
+                            {/* Collapse Toggle — middle left edge */}
+                            <Button
+                                variant="outlined"
+                                color="primary"
                                 size="small"
+                                onClick={handleRightCollapseToggle}
+                                aria-label="Rechte Sidebar einklappen"
                                 sx={{
+                                    ...floatingOutlineIconButtonSx,
                                     position: 'absolute',
-                                    left: -5,
+                                    left: -8,
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     zIndex: 1299,
-                                    bgcolor: 'background.paper',
-                                    boxShadow: 2,
-                                    width: 32,
-                                    height: 32,
-                                    '&:hover': {
-                                        bgcolor: 'background.paper',
-                                    }
                                 }}
                             >
-                                <ChevronRightIcon />
-                            </IconButton>
+                                <ChevronRightIcon fontSize="small" />
+                            </Button>
                             
                             {/* Optimized Resize Handle */}
                             <Box

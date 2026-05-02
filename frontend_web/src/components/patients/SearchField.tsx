@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
-import { Box, TextField, InputAdornment, Paper, IconButton, Typography } from '@mui/material';
+import { Box, TextField, InputAdornment, IconButton, Typography } from '@mui/material';
 import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
 import { Patient, Appointment, Employee, Weekday } from '../../types/models';
 import { useEmployees } from '../../services/queries/useEmployees';
@@ -7,7 +7,7 @@ import { usePatients } from '../../services/queries/usePatients';
 import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
 import { useAreaStore } from '../../stores/useAreaStore';
 
-interface FilteredResults {
+export interface FilteredResults {
     filteredActiveOtherEmployeesWithPatients: Employee[];
     filteredActiveOtherEmployeesWithoutPatients: Employee[];
     filteredDoctors: Employee[];
@@ -170,54 +170,49 @@ export const SearchField: React.FC<SearchFieldProps> = ({
     };
 
     return (
-        <Box sx={{ px: 2, py: 2 }}>
-            <Paper 
-                elevation={1} 
-                sx={{ 
-                    p: 2,
-                    backgroundColor: 'background.default'
+        <Box
+            sx={{
+                px: 0,
+                pt: 0.5,
+                pb: 2,
+                bgcolor: 'background.paper',
+            }}
+        >
+            <TextField
+                id="tour-sidebar-search"
+                fullWidth
+                size="small"
+                variant="outlined"
+                placeholder="Mitarbeiter oder Patienten suchen…"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon sx={{ color: 'action.active', fontSize: 20 }} />
+                        </InputAdornment>
+                    ),
+                    endAdornment: searchTerm ? (
+                        <InputAdornment position="end">
+                            <IconButton
+                                size="small"
+                                onClick={handleClearClick}
+                                edge="end"
+                                aria-label="Suche löschen"
+                                sx={{ color: 'text.secondary' }}
+                            >
+                                <ClearIcon fontSize="small" />
+                            </IconButton>
+                        </InputAdornment>
+                    ) : null,
                 }}
-            >
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Mitarbeiter oder Patienten suchen..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon color="action" />
-                            </InputAdornment>
-                        ),
-                        endAdornment: searchTerm && (
-                            <InputAdornment position="end">
-                                <IconButton
-                                    size="small"
-                                    onClick={handleClearClick}
-                                    edge="end"
-                                    aria-label="Suche löschen"
-                                >
-                                    <ClearIcon />
-                                </IconButton>
-                            </InputAdornment>
-                        )
-                    }}
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            backgroundColor: 'background.paper',
-                            '&:hover': {
-                                backgroundColor: 'background.paper'
-                            }
-                        }
-                    }}
-                />
-                {searchTerm && (
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                        "{searchTerm}" - {totalResults} Ergebnisse
-                    </Typography>
-                )}
-            </Paper>
+            />
+            {searchTerm ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25 }}>
+                    „{searchTerm}“ · {totalResults}{' '}
+                    {totalResults === 1 ? 'Ergebnis' : 'Ergebnisse'}
+                </Typography>
+            ) : null}
         </Box>
     );
 };
