@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { employeePlanningApi, EmployeePlanningData } from '../api/employeePlanning';
+import { employeePlanningApi, type EmployeePlanningData } from '../api/employeePlanning';
 import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { routeKeys } from './useRoutes';
@@ -15,6 +15,25 @@ export const employeePlanningKeys = {
   conflicts: (employeeId: number, weekday: string, calendarWeek?: number) => [...employeePlanningKeys.all, 'conflicts', employeeId, weekday, { calendarWeek }] as const,
 };
 
+/** Einheitliche Liste aus GET /employee-planning (reiner Array oder { data, warning } bei Sync-Warnung). */
+function normalizeEmployeePlanningResponse(
+  body: unknown,
+  setNotification: (msg: string, type: 'success' | 'error') => void
+): EmployeePlanningData[] {
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'warning' in body) {
+    const w = (body as { warning?: string }).warning;
+    if (w) {
+      setNotification(`Aplano Sync Warnung: ${w}`, 'error');
+    }
+    const nested = (body as { data?: EmployeePlanningData[] }).data;
+    return Array.isArray(nested) ? nested : [];
+  }
+  if (Array.isArray(body)) {
+    return body as EmployeePlanningData[];
+  }
+  return [];
+}
+
 // Hook to get all planning entries
 export const useEmployeePlanning = () => {
   const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
@@ -27,13 +46,7 @@ export const useEmployeePlanning = () => {
       try {
         setLoading('Synchronisiere mit Aplano...');
         const response = await employeePlanningApi.getAll(currentWeek);
-        
-        // Check for Aplano sync warnings
-        if (response.data?.warning) {
-          setNotification(`Aplano Sync Warnung: ${response.data.warning}`, 'error');
-        }
-        
-        return response;
+        return normalizeEmployeePlanningResponse(response.data, setNotification);
       } finally {
         resetLoading();
       }

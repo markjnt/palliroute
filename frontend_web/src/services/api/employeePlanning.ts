@@ -19,6 +19,7 @@ export interface EmployeePlanningData {
     has_conflicts?: boolean;
     appointments_count?: number;
     patient_count?: number;
+    replacement_affected_count?: number;
 }
 
 

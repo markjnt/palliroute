@@ -67,16 +67,9 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
     // Check if planning week is selected
     const isPlanningWeekSelected = selectedPlanningWeek !== null;
 
-    // Get all planning entries as memoized array (to avoid recalculation in every cell)
+    // useEmployeePlanning liefert eine normierte Liste (auch bei Aplano-Warnungs-Response)
     const allPlanningData = React.useMemo((): any[] => {
-        if (Array.isArray(planningEntries)) {
-            return planningEntries;
-        } else if (planningEntries && Array.isArray((planningEntries as any).data)) {
-            return (planningEntries as any).data;
-        } else if (planningEntries && (planningEntries as any).data) {
-            return [(planningEntries as any).data];
-        }
-        return [];
+        return Array.isArray(planningEntries) ? planningEntries : [];
     }, [planningEntries]);
 
     const filteredEmployees = React.useMemo(() => {

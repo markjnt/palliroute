@@ -38,7 +38,7 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
 }) => {
     const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
     const currentWeek = selectedPlanningWeek || getCurrentPlanningWeek();
-    const { data: planningData, isLoading: planningLoading } = useEmployeePlanning();
+    const { data: planningData } = useEmployeePlanning();
 
     // Map German weekday names to English database format
     const weekdayMapping: { [key: string]: string } = {
@@ -53,15 +53,20 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
     
     const dbWeekday = weekdayMapping[weekday] || weekday.toLowerCase();
 
-    // Helper function to get employee status for current weekday
+    // Helper: backend liefert `available` + optional `custom_text`, kein Feld `status`
     const getEmployeeStatus = (employeeId: number) => {
-        if (!planningData?.data || !dbWeekday) return 'available';
-        
-        const planningEntry = planningData.data.find(
+        if (!dbWeekday) return 'available';
+
+        const planningEntry = (planningData ?? []).find(
             (entry: EmployeePlanningData) => entry.employee_id === employeeId && entry.weekday === dbWeekday
         );
-        
-        return planningEntry?.status || 'available';
+
+        if (!planningEntry) return 'available';
+
+        if (planningEntry.available === false) {
+            return planningEntry.custom_text ? 'custom' : 'unavailable';
+        }
+        return 'available';
     };
 
     // Helper function to get status display text
@@ -75,6 +80,8 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                 return 'Krank';
             case 'custom':
                 return customText || 'Benutzerdefiniert';
+            case 'unavailable':
+                return 'Abwesend';
             default:
                 return 'Verfügbar';
         }
@@ -86,11 +93,10 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
             case 'available':
                 return 'success';
             case 'vacation':
-                return 'warning';
             case 'sick':
-                return 'error';
             case 'custom':
-                return 'info';
+            case 'unavailable':
+                return 'error';
             default:
                 return 'success';
         }
@@ -212,7 +218,7 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                 const patientCount = patientCountByEmployee.get(emp.id || 0) || 0;
                 const isEmpty = patientCount === 0;
                 const status = getEmployeeStatus(emp.id || 0);
-                const planningEntry = planningData?.data?.find(
+                const planningEntry = (planningData ?? []).find(
                     (entry: EmployeePlanningData) => entry.employee_id === emp.id && entry.weekday === dbWeekday
                 );
                 
@@ -321,7 +327,7 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
             {unavailableEmployeesList.map((emp) => {
                 const patientCount = patientCountByEmployee.get(emp.id || 0) || 0;
                 const status = getEmployeeStatus(emp.id || 0);
-                const planningEntry = planningData?.data?.find(
+                const planningEntry = (planningData ?? []).find(
                     (entry: EmployeePlanningData) => entry.employee_id === emp.id && entry.weekday === dbWeekday
                 );
                 
