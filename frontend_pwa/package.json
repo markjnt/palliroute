@@ -11,6 +11,8 @@
   "devDependencies": {
     "@emotion/babel-plugin": "^11.13.5",
     "@types/node": "^22.14.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.3.4",
     "babel-plugin-react-compiler": "^1.0.0",
     "typescript": "^5.8.3",
@@ -21,27 +23,18 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@hello-pangea/dnd": "^18.0.1",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
-    "@mui/x-data-grid": "^7.28.3",
     "@react-google-maps/api": "^2.20.6",
     "@tanstack/react-query": "^5.72.2",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.2",
-    "@types/react-resizable": "^3.0.8",
     "axios": "^1.8.4",
-    "formik": "^2.4.6",
-    "motion": "^12.23.12",
     "react": "^19.2.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dnd-touch-backend": "^16.0.1",
     "react-dom": "^19.2.0",
     "react-modal-sheet": "^4.4.0",
-    "react-resizable": "^3.0.5",
     "react-router-dom": "^7.5.0",
-    "yup": "^1.6.1",
     "zustand": "^5.0.3"
   }
 }
