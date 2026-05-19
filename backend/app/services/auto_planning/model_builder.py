@@ -4,7 +4,7 @@ Build OR-Tools CP-SAT model: variables x(e,s), hard constraints H1–H7, soft co
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Dict, List, Optional, Set, Tuple
 
 from ortools.sat.python import cp_model
@@ -124,6 +124,38 @@ def _rb_nursing_weekend_day_night_pairs(shifts: List[ShiftInfo]) -> List[Tuple[i
         for s_sat_n in sat_night:
             for s_sun_d in sun_day:
                 pairs.append((s_sat_n.index, s_sun_d.index))
+    return pairs
+
+
+def _saturday_of_weekend_shift(d: date) -> date:
+    """ISO weekend bucket: Saturday of the Sat/Sun pair containing d."""
+    if d.weekday() == 5:
+        return d
+    if d.weekday() == 6:
+        return d - timedelta(days=1)
+    return d + timedelta(days=(5 - d.weekday()) % 7)
+
+
+def _consecutive_weekend_duty_pairs(
+    shifts: List[ShiftInfo],
+) -> List[Tuple[List[int], List[int]]]:
+    """
+    Pairs of shift-index lists for chronologically adjacent weekends (7 days apart).
+    Each list contains AW + RB_WEEKEND slots on that Sat/Sun.
+  Used for W2: penalize any weekend duty two weeks in a row (AW/RB → frei → …).
+    """
+    by_sat: Dict[date, List[int]] = defaultdict(list)
+    for s in shifts:
+        if not s.is_weekend or s.category not in ('AW', 'RB_WEEKEND'):
+            continue
+        by_sat[_saturday_of_weekend_shift(s.date)].append(s.index)
+    saturdays = sorted(by_sat.keys())
+    pairs: List[Tuple[List[int], List[int]]] = []
+    for i in range(1, len(saturdays)):
+        sat_prev, sat_curr = saturdays[i - 1], saturdays[i]
+        if (sat_curr - sat_prev).days != 7:
+            continue
+        pairs.append((by_sat[sat_prev], by_sat[sat_curr]))
     return pairs
 
 
@@ -320,63 +352,66 @@ def build_model(
             model.Add(sum(vars_ew) <= 1).OnlyEnforceIf(aux.Not())
             objective_terms.append(aux * penalty_w1)
 
-    # W2: Weekend rotation (AW -> free -> RB -> free): penalize same type two weekends in a row
-    # We need weekend "type" per employee: 0=free, 1=AW, 2=RB. Then penalize when type[w] == type[w-1] and not free.
+    # W2: Weekend rotation (AW -> frei -> RB -> frei): penalize ANY AW/RB duty on two weekends in a row
+    # (chronological Saturdays, not calendar_week numbers — avoids ISO-year edge cases).
+    # Additional penalty when the same type repeats (AW->AW or RB->RB).
     weekend_weeks = sorted(set(s.calendar_week for s in shifts if s.is_weekend))
-    if len(weekend_weeks) >= 2:
-        for e in employees:
-            for i in range(1, len(weekend_weeks)):
-                cw_prev, cw_curr = weekend_weeks[i - 1], weekend_weeks[i]
-                shifts_prev = [s for s in shifts if s.calendar_week == cw_prev and s.is_weekend]
-                shifts_curr = [s for s in shifts if s.calendar_week == cw_curr and s.is_weekend]
-                aw_prev = [s.index for s in shifts_prev if s.category == 'AW']
-                aw_curr = [s.index for s in shifts_curr if s.category == 'AW']
-                rb_prev = [s.index for s in shifts_prev if s.category == 'RB_WEEKEND']
-                rb_curr = [s.index for s in shifts_curr if s.category == 'RB_WEEKEND']
-                # has_aw_prev = sum x[e,s] for s in aw_prev >= 1
-                has_aw_prev = model.NewBoolVar(f'w2_aw_prev_{e.index}_{cw_prev}')
-                if aw_prev:
-                    vars_aw_prev = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in aw_prev]
-                    if vars_aw_prev:
-                        model.Add(sum(vars_aw_prev) >= 1).OnlyEnforceIf(has_aw_prev)
-                        model.Add(sum(vars_aw_prev) == 0).OnlyEnforceIf(has_aw_prev.Not())
-                else:
-                    model.Add(has_aw_prev == 0)
-                has_aw_curr = model.NewBoolVar(f'w2_aw_curr_{e.index}_{cw_curr}')
-                if aw_curr:
-                    vars_aw_curr = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in aw_curr]
-                    if vars_aw_curr:
-                        model.Add(sum(vars_aw_curr) >= 1).OnlyEnforceIf(has_aw_curr)
-                        model.Add(sum(vars_aw_curr) == 0).OnlyEnforceIf(has_aw_curr.Not())
-                else:
-                    model.Add(has_aw_curr == 0)
-                has_rb_prev = model.NewBoolVar(f'w2_rb_prev_{e.index}_{cw_prev}')
-                if rb_prev:
-                    vars_rb_prev = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in rb_prev]
-                    if vars_rb_prev:
-                        model.Add(sum(vars_rb_prev) >= 1).OnlyEnforceIf(has_rb_prev)
-                        model.Add(sum(vars_rb_prev) == 0).OnlyEnforceIf(has_rb_prev.Not())
-                else:
-                    model.Add(has_rb_prev == 0)
-                has_rb_curr = model.NewBoolVar(f'w2_rb_curr_{e.index}_{cw_curr}')
-                if rb_curr:
-                    vars_rb_curr = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in rb_curr]
-                    if vars_rb_curr:
-                        model.Add(sum(vars_rb_curr) >= 1).OnlyEnforceIf(has_rb_curr)
-                        model.Add(sum(vars_rb_curr) == 0).OnlyEnforceIf(has_rb_curr.Not())
-                else:
-                    model.Add(has_rb_curr == 0)
-                # AND using linear constraints (avoid AddMultiplicationEquality for booleans)
-                repeat_aw = model.NewBoolVar(f'w2_repeat_aw_{e.index}_{cw_curr}')
-                model.Add(repeat_aw <= has_aw_prev)
-                model.Add(repeat_aw <= has_aw_curr)
-                model.Add(repeat_aw >= has_aw_prev + has_aw_curr - 1)
-                objective_terms.append(repeat_aw * penalty_w2)
-                repeat_rb = model.NewBoolVar(f'w2_repeat_rb_{e.index}_{cw_curr}')
-                model.Add(repeat_rb <= has_rb_prev)
-                model.Add(repeat_rb <= has_rb_curr)
-                model.Add(repeat_rb >= has_rb_prev + has_rb_curr - 1)
-                objective_terms.append(repeat_rb * penalty_w2)
+    consecutive_weekend_pairs = _consecutive_weekend_duty_pairs(shifts)
+    for e in employees:
+        for shifts_prev, shifts_curr in consecutive_weekend_pairs:
+            sat_curr = _saturday_of_weekend_shift(shifts[shifts_curr[0]].date)
+            # Vormonat-only-Paare überspringen (werden nicht gespeichert); Grenze Apr→Mai bleibt aktiv.
+            if sat_curr < ctx.start_date:
+                continue
+            vars_prev = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in shifts_prev]
+            vars_curr = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in shifts_curr]
+            if not vars_prev or not vars_curr:
+                continue
+            has_duty_prev = model.NewBoolVar(f'w2_duty_prev_{e.index}_{sat_curr}')
+            model.Add(sum(vars_prev) >= 1).OnlyEnforceIf(has_duty_prev)
+            model.Add(sum(vars_prev) == 0).OnlyEnforceIf(has_duty_prev.Not())
+            has_duty_curr = model.NewBoolVar(f'w2_duty_curr_{e.index}_{sat_curr}')
+            model.Add(sum(vars_curr) >= 1).OnlyEnforceIf(has_duty_curr)
+            model.Add(sum(vars_curr) == 0).OnlyEnforceIf(has_duty_curr.Not())
+            repeat_weekend = model.NewBoolVar(f'w2_repeat_weekend_{e.index}_{sat_curr}')
+            model.Add(repeat_weekend <= has_duty_prev)
+            model.Add(repeat_weekend <= has_duty_curr)
+            model.Add(repeat_weekend >= has_duty_prev + has_duty_curr - 1)
+            objective_terms.append(repeat_weekend * penalty_w2)
+            aw_prev = [s for s in shifts_prev if shifts[s].category == 'AW']
+            aw_curr = [s for s in shifts_curr if shifts[s].category == 'AW']
+            rb_prev = [s for s in shifts_prev if shifts[s].category == 'RB_WEEKEND']
+            rb_curr = [s for s in shifts_curr if shifts[s].category == 'RB_WEEKEND']
+            if aw_prev and aw_curr:
+                vars_aw_prev = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in aw_prev]
+                vars_aw_curr = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in aw_curr]
+                if vars_aw_prev and vars_aw_curr:
+                    has_aw_prev = model.NewBoolVar(f'w2_aw_prev_{e.index}_{sat_curr}')
+                    model.Add(sum(vars_aw_prev) >= 1).OnlyEnforceIf(has_aw_prev)
+                    model.Add(sum(vars_aw_prev) == 0).OnlyEnforceIf(has_aw_prev.Not())
+                    has_aw_curr = model.NewBoolVar(f'w2_aw_curr_{e.index}_{sat_curr}')
+                    model.Add(sum(vars_aw_curr) >= 1).OnlyEnforceIf(has_aw_curr)
+                    model.Add(sum(vars_aw_curr) == 0).OnlyEnforceIf(has_aw_curr.Not())
+                    repeat_aw = model.NewBoolVar(f'w2_repeat_aw_{e.index}_{sat_curr}')
+                    model.Add(repeat_aw <= has_aw_prev)
+                    model.Add(repeat_aw <= has_aw_curr)
+                    model.Add(repeat_aw >= has_aw_prev + has_aw_curr - 1)
+                    objective_terms.append(repeat_aw * penalty_w2)
+            if rb_prev and rb_curr:
+                vars_rb_prev = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in rb_prev]
+                vars_rb_curr = [x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in rb_curr]
+                if vars_rb_prev and vars_rb_curr:
+                    has_rb_prev = model.NewBoolVar(f'w2_rb_prev_{e.index}_{sat_curr}')
+                    model.Add(sum(vars_rb_prev) >= 1).OnlyEnforceIf(has_rb_prev)
+                    model.Add(sum(vars_rb_prev) == 0).OnlyEnforceIf(has_rb_prev.Not())
+                    has_rb_curr = model.NewBoolVar(f'w2_rb_curr_{e.index}_{sat_curr}')
+                    model.Add(sum(vars_rb_curr) >= 1).OnlyEnforceIf(has_rb_curr)
+                    model.Add(sum(vars_rb_curr) == 0).OnlyEnforceIf(has_rb_curr.Not())
+                    repeat_rb = model.NewBoolVar(f'w2_repeat_rb_{e.index}_{sat_curr}')
+                    model.Add(repeat_rb <= has_rb_prev)
+                    model.Add(repeat_rb <= has_rb_curr)
+                    model.Add(repeat_rb >= has_rb_prev + has_rb_curr - 1)
+                    objective_terms.append(repeat_rb * penalty_w2)
 
     # W3: RB nursing weekend Tag/Nacht alternation: penalize same time_of_day two weekends in a row
     rb_nursing_weekends: List[Tuple[int, List[int], List[int]]] = []
