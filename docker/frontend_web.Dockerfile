@@ -1,35 +1,30 @@
 # syntax=docker/dockerfile:1.6
 FROM node:22.13.1-alpine AS build
 
-WORKDIR /frontend_web
+WORKDIR /app/frontend
 
-# Copy package.json and package-lock.json first for better layer caching
-COPY frontend_web/package.json frontend_web/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
+COPY frontend/web/package.json web/
+COPY frontend/pwa/package.json pwa/
+COPY frontend/packages/shared/package.json packages/shared/
 
-# Install dependencies with BuildKit cache mount
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
-# Copy the frontend code
-COPY frontend_web/ ./
+COPY frontend/ ./
 
-# Build the app
+WORKDIR /app/frontend/web
+
 RUN npm run build
 
-# Kopiere public ins Build-Output
-COPY public/ ./dist/
-
-# Production stage
 FROM nginx:alpine
 
 RUN apk update && apk upgrade
 
-# Copy the build output from the previous stage
-COPY --from=build /frontend_web/dist /usr/share/nginx/html
+COPY --from=build /app/frontend/web/dist /usr/share/nginx/html
 
-# Copy custom nginx config
 COPY docker/nginx_web.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 3000
 
-CMD ["nginx", "-g", "daemon off;"] 
+CMD ["nginx", "-g", "daemon off;"]

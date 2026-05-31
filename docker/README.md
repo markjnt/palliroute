@@ -20,11 +20,15 @@ docker buildx build --platform linux/amd64,linux/arm64 -t markjnt/palliroute-bac
 ```
 
 ## Frontend-Web
+Build-Kontext ist das **Repository-Root** (wegen `docker/nginx_*.conf` und `frontend/`):
+
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -t markjnt/palliroute-frontend-web -f docker/frontend_web.Dockerfile --push .
-``` 
+```
 
 ## Frontend-PWA
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -t markjnt/palliroute-frontend-pwa -f docker/frontend_pwa.Dockerfile --push .
-``` 
+```
+
+Lokale Frontend-Entwicklung (ohne Docker): `cd frontend && npm install`, dann `npm run dev:web` / `npm run dev:pwa`. 

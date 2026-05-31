@@ -54,3 +54,12 @@ docs/
 
 # Beispieldateien
 example_import_files/
+
+# Frontend-Workspace (lokale Builds/Deps nicht in Docker-Kontext)
+frontend/node_modules
+frontend/web/node_modules
+frontend/pwa/node_modules
+frontend/packages/*/node_modules
+frontend/web/dist
+frontend/pwa/dist
+frontend/pwa/dev-dist

@@ -1,0 +1,17 @@
+{
+  "name": "@palliroute/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@palliroute/shared": "*",
+    "@mui/x-data-grid": "^7.28.3",
+    "formik": "^2.4.6",
+    "yup": "^1.6.1"
+  }
+}
