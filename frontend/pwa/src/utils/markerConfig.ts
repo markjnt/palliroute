@@ -1,8 +1,8 @@
+import type { MarkerType } from '@palliroute/models/map';
 import { getColorForVisitType, getColorForEmployeeType } from './mapUtils';
 
-// Create marker icon based on type and properties
 export const createMarkerIcon = (
-  type: 'employee' | 'patient' | 'tour_area',
+  type: MarkerType,
   employeeType?: string,
   visitType?: string,
   isInactive: boolean = false,

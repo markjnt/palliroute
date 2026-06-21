@@ -7,6 +7,11 @@ COPY frontend/package.json frontend/package-lock.json ./
 COPY frontend/web/package.json web/
 COPY frontend/pwa/package.json pwa/
 COPY frontend/packages/shared/package.json packages/shared/
+COPY frontend/packages/models/package.json packages/models/
+COPY frontend/packages/api/package.json packages/api/
+COPY frontend/packages/queries/package.json packages/queries/
+COPY frontend/packages/stores/package.json packages/stores/
+COPY frontend/packages/ui/package.json packages/ui/
 
 RUN --mount=type=cache,target=/root/.npm \
     npm ci

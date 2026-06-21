@@ -34,7 +34,7 @@ import { useNotificationStore } from '../../stores/useNotificationStore';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
 import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
 import { MAP_HEADER_TOOLBAR_PX } from '../../theme/floatingControlSx';
-import { dateFromIsoCalendarWeek } from '../../utils/holidayUtils';
+import { dateFromIsoCalendarWeek } from '@palliroute/shared';
 
 /** 1–52, gleiche Liste wie `usePlanningWeekStore.getAvailablePlanningWeeks` — stabil für useMemo. */
 const PLANNING_WEEKS_1_52: readonly number[] = Object.freeze(

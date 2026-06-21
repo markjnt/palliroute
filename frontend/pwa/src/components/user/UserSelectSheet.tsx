@@ -31,6 +31,7 @@ import { Employee } from '../../types/models';
 import { employeeTypeColors } from '@palliroute/shared';
 import TourAreaSelector from './TourAreaSelector';
 import { AdditionalRoutesSelector } from '../route/AdditionalRoutesSelector';
+import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
 
 interface UserSearchDrawerProps {
   open: boolean;
@@ -40,6 +41,7 @@ interface UserSearchDrawerProps {
 type FilterType = 'all' | 'pflege-nord' | 'pflege-sued' | 'arzt' | 'honorararzt' | 'aw';
 
 const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) => {
+  const shouldRenderSheet = useDeferredSheetMount(open);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [isTourAreaExpanded, setIsTourAreaExpanded] = useState(false);
@@ -156,9 +158,13 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
     return employeeTypeColors[employeeFunction] || employeeTypeColors.default;
   };
 
+  if (!shouldRenderSheet) {
+    return null;
+  }
+
   return (
     <Sheet
-      isOpen={open}
+      isOpen
       onClose={onClose}
       initialSnap={0}
       snapPoints={[0.87, 0]}

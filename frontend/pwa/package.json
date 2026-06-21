@@ -9,7 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@palliroute/api": "*",
+    "@palliroute/models": "*",
+    "@palliroute/queries": "*",
     "@palliroute/shared": "*",
+    "@palliroute/stores": "*",
+    "@palliroute/ui": "*",
     "react-dnd-touch-backend": "^16.0.1",
     "react-modal-sheet": "^4.4.0"
   },

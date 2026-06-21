@@ -1,6 +1,6 @@
 import { api } from '@palliroute/shared';
 import { Route, Weekday } from '../../types/models';
-import { getCurrentCalendarWeek, getBestCalendarWeek } from '../../utils/calendarUtils';
+import { getCurrentCalendarWeek, getBestCalendarWeek } from '@palliroute/shared';
 import { patientsApi } from './patients';
 import { calendarWeekService } from './calendarWeek';
 

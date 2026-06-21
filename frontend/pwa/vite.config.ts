@@ -52,9 +52,19 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    include: ['@palliroute/shared'],
+    include: [
+      'react',
+      'react-dom',
+      '@palliroute/shared',
+      '@palliroute/models',
+      '@palliroute/api',
+      '@palliroute/queries',
+      '@palliroute/stores',
+      '@palliroute/ui',
+    ],
   },
   server: {
     fs: {

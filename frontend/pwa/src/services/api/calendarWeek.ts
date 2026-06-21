@@ -1,5 +1,5 @@
 import { patientsApi } from './patients';
-import { getBestCalendarWeek } from '../../utils/calendarUtils';
+import { getBestCalendarWeek, getCurrentCalendarWeek } from '@palliroute/shared';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 
 /**
@@ -35,7 +35,6 @@ class CalendarWeekService {
             // If no weeks available from backend, use current week as fallback
             if (weeks.length === 0) {
                 console.warn('No calendar weeks available from backend, using current week as fallback');
-                const { getCurrentCalendarWeek } = await import('../../utils/calendarUtils');
                 const fallbackWeek = getCurrentCalendarWeek();
                 setSelectedCalendarWeek(fallbackWeek);
                 return fallbackWeek;
@@ -49,7 +48,6 @@ class CalendarWeekService {
             
             // If no cache available, use current week as final fallback
             console.warn('No cached week available, using current week as fallback');
-            const { getCurrentCalendarWeek } = await import('../../utils/calendarUtils');
             const fallbackWeek = getCurrentCalendarWeek();
             setSelectedCalendarWeek(fallbackWeek);
             return fallbackWeek;

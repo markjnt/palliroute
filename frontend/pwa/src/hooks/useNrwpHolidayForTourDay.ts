@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useCalendarWeekStore } from '../stores/useCalendarWeekStore';
 import { useNrwpHolidaysForYears } from '../services/queries/useConfig';
-import { holidayNameForCalendarWeekday } from '../utils/holidayUtils';
+import { holidayNameForCalendarWeekday } from '@palliroute/shared';
 import type { Weekday } from '../types/models';
 
 export function useNrwpHolidayForTourDay(selectedWeekday: Weekday) {

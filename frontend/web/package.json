@@ -9,7 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@palliroute/api": "*",
+    "@palliroute/models": "*",
+    "@palliroute/queries": "*",
     "@palliroute/shared": "*",
+    "@palliroute/stores": "*",
+    "@palliroute/ui": "*",
     "@mui/x-data-grid": "^7.28.3",
     "formik": "^2.4.6",
     "yup": "^1.6.1"

@@ -18,7 +18,7 @@ import { useRouteCompletionStore } from '../../stores/useRouteCompletionStore';
 import { useCalendarWeek, useCalendarWeeks, calendarWeekKeys } from '../../services/queries/useCalendarWeek';
 import { Weekday } from '../../types/models';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentCalendarWeek } from '../../utils/calendarUtils';
+import { getCurrentCalendarWeek } from '@palliroute/shared';
 import { useNrwpHolidayLookupForSelectedKw } from '../../hooks/useNrwpHolidayForTourDay';
 
 interface WeekdaySelectorProps {

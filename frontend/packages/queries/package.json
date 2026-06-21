@@ -1,0 +1,19 @@
+{
+  "name": "@palliroute/queries",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@palliroute/api": "*",
+    "@palliroute/models": "*",
+    "@palliroute/stores": "*"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^19.0.0"
+  }
+}

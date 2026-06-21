@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getCurrentCalendarWeek as getIsoCalendarWeek } from '@palliroute/shared';
 
 interface CalendarWeekStore {
     selectedCalendarWeek: number | null;
@@ -43,25 +44,7 @@ export const useCalendarWeekStore = create<CalendarWeekStore>()((set, get) => ({
         }
     },
     
-    getCurrentCalendarWeek: () => {
-        const now = new Date();
-        
-        // ISO 8601 week calculation - correct implementation
-        const date = new Date(now.getTime());
-        
-        // Set to nearest Thursday: current date + 4 - current day number
-        // Make Sunday's day number 7
-        const dayOfWeek = (date.getDay() + 6) % 7 + 1; // Monday = 1, Sunday = 7
-        date.setDate(date.getDate() + 4 - dayOfWeek);
-        
-        // Get first day of year
-        const yearStart = new Date(date.getFullYear(), 0, 1);
-        
-        // Calculate full weeks to nearest Thursday
-        const weekNumber = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        
-        return weekNumber;
-    },
+    getCurrentCalendarWeek: () => getIsoCalendarWeek(),
     
     clearSelection: () => {
         set({ 

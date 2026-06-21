@@ -90,4 +90,4 @@ ReactDOM.createRoot(
       <App />
     </QueryClientProvider>
   </React.StrictMode>
-); 
+);
