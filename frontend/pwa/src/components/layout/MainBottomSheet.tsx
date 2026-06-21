@@ -47,8 +47,9 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
       <>
         <Sheet
           ref={sheetRef}
-          isOpen
+          isOpen={isOpen}
           onClose={onClose}
+          onCloseEnd={onCloseEnd}
           initialSnap={0}
           snapPoints={snapPoints}
           onSnap={handleSnapChange}
