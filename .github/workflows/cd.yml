@@ -102,6 +102,7 @@ jobs:
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
+          version: v0.71.2
           scan-type: image
           image-ref: ${{ matrix.image }}:${{ env.IMAGE_TAG }}
           format: sarif
@@ -123,6 +124,7 @@ jobs:
           image-ref: ${{ matrix.image }}:${{ env.IMAGE_TAG }}
           format: spdx-json
           output: sbom-${{ matrix.name }}.spdx.json
+          skip-setup-trivy: true
 
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
