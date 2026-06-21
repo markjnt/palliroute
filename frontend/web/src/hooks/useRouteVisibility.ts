@@ -8,18 +8,20 @@ interface UseRouteVisibilityProps {
 interface UseRouteVisibilityReturn {
   // Visibility state
   isVisible: boolean;
-  
+
   // Visibility actions
   toggleVisibility: () => void;
   showRoute: () => void;
   hideRoute: () => void;
-  
+
   // Global visibility state
   hiddenPolylines: Set<number>;
   hiddenMarkers: Set<number>;
 }
 
-export const useRouteVisibility = ({ routeId }: UseRouteVisibilityProps): UseRouteVisibilityReturn => {
+export const useRouteVisibility = ({
+  routeId,
+}: UseRouteVisibilityProps): UseRouteVisibilityReturn => {
   const {
     hiddenPolylines,
     hiddenMarkers,
@@ -28,7 +30,7 @@ export const useRouteVisibility = ({ routeId }: UseRouteVisibilityProps): UseRou
     hidePolyline,
     showPolyline,
     hideMarker,
-    showMarker
+    showMarker,
   } = useRouteVisibilityStore();
 
   // Check if current route is visible
@@ -69,6 +71,6 @@ export const useRouteVisibility = ({ routeId }: UseRouteVisibilityProps): UseRou
     showRoute,
     hideRoute,
     hiddenPolylines,
-    hiddenMarkers
+    hiddenMarkers,
   };
 };

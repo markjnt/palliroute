@@ -4,7 +4,7 @@ import {
   Home as HomeIcon,
   Phone as PhoneIcon,
   Person as PersonIcon,
-  AddCircle as AddCircleIcon
+  AddCircle as AddCircleIcon,
 } from '@mui/icons-material';
 import { Appointment, Patient } from '../../../types/models';
 
@@ -27,7 +27,7 @@ export const TourSummary: React.FC<TourSummaryProps> = ({
   sortedRoutePatients,
   normalTkPatients,
   emptyTypePatients,
-  getPatientAppointments
+  getPatientAppointments,
 }) => {
   const { hbCount, naCount, tkCount, emptyCount } = useMemo(() => {
     let hb = 0;

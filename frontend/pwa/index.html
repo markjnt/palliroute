@@ -1,103 +1,110 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-  <meta charset="utf-8" />
-  <link rel="icon" href="/favicon.ico" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="HandheldFriendly" content="true" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#007AFF" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="msapplication-TileColor" content="#007AFF" />
-  <meta name="msapplication-config" content="none" />
-  <meta name="application-name" content="PalliRoute" />
-  <meta name="format-detection" content="telephone=no" />
-  <style>
-    html {
-      min-height: calc(100% + env(safe-area-inset-top));
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      background-attachment: fixed;
-      background-image: url('/bg.svg');
-      background-position: center;
-      background-repeat: no-repeat;
-      background-size: cover;
-    }
-    
-    /* Text-Markieren komplett deaktivieren */
-    * {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    /* Für Input-Felder und Textareas das Markieren erlauben */
-    input, textarea, [contenteditable="true"] {
-      -webkit-user-select: text;
-      -moz-user-select: text;
-      -ms-user-select: text;
-      user-select: text;
-    }
-    
-    /* Karten-Container: Touch-Events durchlassen, damit nur die Karte zoomt */
-    .pwa-map-touch-area {
-      touch-action: none;
-    }
-    
-    /* Zusätzliche PWA-Optimierungen – kein Seiten-Zoom, nur Karte zoombar */
-    html, body, #root {
-      touch-action: pan-x pan-y;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overscroll-behavior: none;
-      /* pan-x pan-y = kein Pinch-Zoom der Seite, Karte bekommt weiterhin Touch-Events */
-      touch-action: pan-x pan-y;
-      zoom: 1;
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
-    
-    /* Kein Seiten-Zoom (Pinch betrifft nur die Karte) */
-    * {
-      touch-action: pan-x pan-y;
-    }
-    
-    /* Verhindert Zoom bei Input-Focus */
-    input, textarea, select {
-      font-size: 16px !important;
-      -webkit-text-size-adjust: 100%;
-    }
-    
-    /* Verhindert das Ziehen von Bildern */
-    img {
-      -webkit-user-drag: none;
-      -khtml-user-drag: none;
-      -moz-user-drag: none;
-      -o-user-drag: none;
-    }
-  </style>
-  <meta
-          name="description"
-          content="PalliRoute"
-  />
-  <link rel="apple-touch-icon" href="/logo192.png" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="mask-icon" href="/logo192.png" color="#000000">
-  <title>PalliRoute</title>
-  <meta name="description" content="PalliRoute">
-</head>
-<body>
-<noscript>You need to enable JavaScript to run this app.</noscript>
-<button id="install" hidden>Install</button>
-<div id="root"></div>
-<script type="module" src="/src/main.tsx"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="HandheldFriendly" content="true" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#007AFF" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#007AFF" />
+    <meta name="msapplication-config" content="none" />
+    <meta name="application-name" content="PalliRoute" />
+    <meta name="format-detection" content="telephone=no" />
+    <style>
+      html {
+        min-height: calc(100% + env(safe-area-inset-top));
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+          env(safe-area-inset-left);
+        background-attachment: fixed;
+        background-image: url('/bg.svg');
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      /* Text-Markieren komplett deaktivieren */
+      * {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Für Input-Felder und Textareas das Markieren erlauben */
+      input,
+      textarea,
+      [contenteditable='true'] {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+      }
+
+      /* Karten-Container: Touch-Events durchlassen, damit nur die Karte zoomt */
+      .pwa-map-touch-area {
+        touch-action: none;
+      }
+
+      /* Zusätzliche PWA-Optimierungen – kein Seiten-Zoom, nur Karte zoombar */
+      html,
+      body,
+      #root {
+        touch-action: pan-x pan-y;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overscroll-behavior: none;
+        /* pan-x pan-y = kein Pinch-Zoom der Seite, Karte bekommt weiterhin Touch-Events */
+        touch-action: pan-x pan-y;
+        zoom: 1;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
+      /* Kein Seiten-Zoom (Pinch betrifft nur die Karte) */
+      * {
+        touch-action: pan-x pan-y;
+      }
+
+      /* Verhindert Zoom bei Input-Focus */
+      input,
+      textarea,
+      select {
+        font-size: 16px !important;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      /* Verhindert das Ziehen von Bildern */
+      img {
+        -webkit-user-drag: none;
+        -khtml-user-drag: none;
+        -moz-user-drag: none;
+        -o-user-drag: none;
+      }
+    </style>
+    <meta name="description" content="PalliRoute" />
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="mask-icon" href="/logo192.png" color="#000000" />
+    <title>PalliRoute</title>
+    <meta name="description" content="PalliRoute" />
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <button id="install" hidden>Install</button>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

@@ -15,7 +15,10 @@ interface EmployeeCapacityCardProps {
   capacities: EmployeeCapacity[];
 }
 
-export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({ employee, capacities }) => {
+export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({
+  employee,
+  capacities,
+}) => {
   if (!capacities || capacities.length === 0) {
     return null;
   }
@@ -23,17 +26,17 @@ export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({ empl
   // Map capacity_type to display format
   const formatCapacityType = (capacityType: string): string => {
     const typeMap: Record<string, string> = {
-      'RB_NURSING_WEEKDAY': 'RB_NURSING_WEEKDAY',
-      'RB_NURSING_WEEKEND': 'RB_NURSING_WEEKEND',
-      'RB_DOCTORS_WEEKDAY': 'RB_DOCTORS_WEEKDAY',
-      'RB_DOCTORS_WEEKEND': 'RB_DOCTORS_WEEKEND',
-      'AW_NURSING': 'AW_NURSING',
+      RB_NURSING_WEEKDAY: 'RB_NURSING_WEEKDAY',
+      RB_NURSING_WEEKEND: 'RB_NURSING_WEEKEND',
+      RB_DOCTORS_WEEKDAY: 'RB_DOCTORS_WEEKDAY',
+      RB_DOCTORS_WEEKEND: 'RB_DOCTORS_WEEKEND',
+      AW_NURSING: 'AW_NURSING',
     };
     return typeMap[capacityType] || capacityType;
   };
 
   // Filter capacities: show if max_count > 0 OR if assigned > 0 (even with max_count = 0)
-  const activeCapacities = capacities.filter(cap => cap.max_count > 0 || (cap.assigned ?? 0) > 0);
+  const activeCapacities = capacities.filter((cap) => cap.max_count > 0 || (cap.assigned ?? 0) > 0);
 
   if (activeCapacities.length === 0) {
     return null;
@@ -42,37 +45,39 @@ export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({ empl
   // Get function color and German name
   const getFunctionInfo = (functionName: string) => {
     const functionMap: Record<string, { name: string; color: string; icon: ReactElement }> = {
-      'Arzt': {
+      Arzt: {
         name: 'Arzt',
         color: employeeTypeColors['Arzt'] || employeeTypeColors['default'],
         icon: <DoctorIcon sx={{ fontSize: '0.9rem' }} />,
       },
-      'Honorararzt': {
+      Honorararzt: {
         name: 'Honorararzt',
         color: employeeTypeColors['Honorararzt'] || employeeTypeColors['default'],
         icon: <DoctorIcon sx={{ fontSize: '0.9rem' }} />,
       },
-      'Pflegekraft': {
+      Pflegekraft: {
         name: 'Pflegekraft',
         color: employeeTypeColors['default'],
         icon: <NursingIcon sx={{ fontSize: '0.9rem' }} />,
       },
-      'PDL': {
+      PDL: {
         name: 'PDL',
         color: employeeTypeColors['default'],
         icon: <NursingIcon sx={{ fontSize: '0.9rem' }} />,
       },
-      'Physiotherapie': {
+      Physiotherapie: {
         name: 'Physiotherapie',
         color: employeeTypeColors['default'],
         icon: <NursingIcon sx={{ fontSize: '0.9rem' }} />,
       },
     };
-    return functionMap[functionName] || {
-      name: functionName,
-      color: employeeTypeColors['default'],
-      icon: <NursingIcon sx={{ fontSize: '0.9rem' }} />,
-    };
+    return (
+      functionMap[functionName] || {
+        name: functionName,
+        color: employeeTypeColors['default'],
+        icon: <NursingIcon sx={{ fontSize: '0.9rem' }} />,
+      }
+    );
   };
 
   const functionInfo = getFunctionInfo(employee.function);
@@ -88,11 +93,11 @@ export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({ empl
   // Format capacity type name in German
   const formatDutyName = (capacityType: string): string => {
     const dutyNameMap: Record<string, string> = {
-      'RB_NURSING_WEEKDAY': 'RB Pflege Wochentag',
-      'RB_NURSING_WEEKEND': 'RB Pflege Wochenende',
-      'RB_DOCTORS_WEEKDAY': 'RB Ärzte Wochentag',
-      'RB_DOCTORS_WEEKEND': 'RB Ärzte Wochenende',
-      'AW_NURSING': 'AW Pflege',
+      RB_NURSING_WEEKDAY: 'RB Pflege Wochentag',
+      RB_NURSING_WEEKEND: 'RB Pflege Wochenende',
+      RB_DOCTORS_WEEKDAY: 'RB Ärzte Wochentag',
+      RB_DOCTORS_WEEKEND: 'RB Ärzte Wochenende',
+      AW_NURSING: 'AW Pflege',
     };
     return dutyNameMap[capacityType] || capacityType;
   };
@@ -179,17 +184,21 @@ export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({ empl
 
         // Calculate percentage: if max_count = 0 and assigned > 0, show 100% (full bar)
         // Otherwise calculate normally, allowing > 100% when over capacity
-        const percentage = capacity.max_count > 0
-          ? (assigned / capacity.max_count) * 100
-          : (assigned > 0 ? 100 : 0);
+        const percentage =
+          capacity.max_count > 0 ? (assigned / capacity.max_count) * 100 : assigned > 0 ? 100 : 0;
 
         // Determine color based on relation to limit (max_count)
-        const isOverCapacity = assigned > capacity.max_count || (capacity.max_count === 0 && assigned > 0);
-        const isAtLimit = !isOverCapacity && capacity.max_count > 0 && assigned === capacity.max_count;
+        const isOverCapacity =
+          assigned > capacity.max_count || (capacity.max_count === 0 && assigned > 0);
+        const isAtLimit =
+          !isOverCapacity && capacity.max_count > 0 && assigned === capacity.max_count;
         const isUnderLimit = !isOverCapacity && !isAtLimit;
 
-        const color: 'primary' | 'success' | 'error' =
-          isOverCapacity ? 'error' : isAtLimit ? 'success' : 'primary';
+        const color: 'primary' | 'success' | 'error' = isOverCapacity
+          ? 'error'
+          : isAtLimit
+            ? 'success'
+            : 'primary';
 
         return (
           <Box key={capacity.id} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
@@ -255,11 +264,7 @@ export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({ empl
                 mt: 0.75,
                 display: 'block',
                 fontSize: '0.7rem',
-                color: isOverCapacity
-                  ? 'error.main'
-                  : isAtLimit
-                  ? 'success.main'
-                  : 'primary.main',
+                color: isOverCapacity ? 'error.main' : isAtLimit ? 'success.main' : 'primary.main',
                 fontWeight: isOverCapacity ? 600 : 500,
               }}
             >
@@ -271,4 +276,3 @@ export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({ empl
     </Box>
   );
 };
-

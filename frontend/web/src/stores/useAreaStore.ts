@@ -19,4 +19,4 @@ export const useAreaStore = create<AreaState>()(
       partialize: (state) => ({ currentArea: state.currentArea }),
     }
   )
-); 
+);

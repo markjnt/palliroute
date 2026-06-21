@@ -1,13 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Box,
-  Typography,
-  Button,
-  Grid,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Box, Typography, Button, Grid } from '@mui/material';
 import { ViewMode } from '../../../stores/useOnCallPlanningStore';
 import { getCalendarWeek, formatMonthYear } from '../../../utils/oncall/dateUtils';
 
@@ -58,32 +50,35 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
   const calendarWeeks = useMemo(() => {
     const weeks: Array<{ week: number; startDate: Date; endDate: Date }> = [];
     const seenWeeks = new Set<number>();
-    
+
     // Start from January 1st and find the first Monday
     const firstDay = new Date(currentYear, 0, 1);
     const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
     const firstMonday = new Date(firstDay);
     firstMonday.setDate(firstDay.getDate() - dayOfWeek);
-    
+
     // Generate weeks starting from the first Monday
     for (let i = 0; i < 54; i++) {
       const startDate = new Date(firstMonday);
       startDate.setDate(firstMonday.getDate() + i * 7);
       const endDate = new Date(startDate);
       endDate.setDate(startDate.getDate() + 6);
-      
+
       const week = getCalendarWeek(startDate);
-      
+
       // Only include weeks that belong to the current year and haven't been seen
-      if (!seenWeeks.has(week) && (startDate.getFullYear() === currentYear || endDate.getFullYear() === currentYear)) {
+      if (
+        !seenWeeks.has(week) &&
+        (startDate.getFullYear() === currentYear || endDate.getFullYear() === currentYear)
+      ) {
         seenWeeks.add(week);
         weeks.push({ week, startDate, endDate });
       }
-      
+
       // Stop if we have 52 weeks
       if (weeks.length >= 52) break;
     }
-    
+
     return weeks.sort((a, b) => a.week - b.week);
   }, [currentYear]);
 
@@ -99,10 +94,7 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
   };
 
   const isCurrentMonth = (monthIndex: number) => {
-    return (
-      monthIndex === today.getMonth() &&
-      currentYear === today.getFullYear()
-    );
+    return monthIndex === today.getMonth() && currentYear === today.getFullYear();
   };
 
   const isCurrentWeek = (week: number) => {
@@ -143,7 +135,7 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
             {months.map(({ name, index, date }) => {
               const isCurrent = isCurrentMonth(index);
               const isSelected = isSelectedMonth(index);
-              
+
               return (
                 <Grid size={{ xs: 4 }} key={index}>
                   <Button
@@ -157,34 +149,26 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
                       backgroundColor: isSelected
                         ? 'primary.main'
                         : isCurrent
-                        ? 'rgba(76, 175, 80, 0.15)'
-                        : 'transparent',
+                          ? 'rgba(76, 175, 80, 0.15)'
+                          : 'transparent',
                       color: isSelected
                         ? 'primary.contrastText'
                         : isCurrent
-                        ? '#2e7d32'
-                        : 'text.primary',
-                      border: isSelected
-                        ? '2px solid'
-                        : isCurrent
-                        ? '2px solid'
-                        : '1px solid',
-                      borderColor: isSelected
-                        ? 'primary.main'
-                        : isCurrent
-                        ? '#4caf50'
-                        : 'divider',
+                          ? '#2e7d32'
+                          : 'text.primary',
+                      border: isSelected ? '2px solid' : isCurrent ? '2px solid' : '1px solid',
+                      borderColor: isSelected ? 'primary.main' : isCurrent ? '#4caf50' : 'divider',
                       '&:hover': {
                         backgroundColor: isSelected
                           ? 'primary.dark'
                           : isCurrent
-                          ? 'rgba(76, 175, 80, 0.25)'
-                          : 'action.hover',
+                            ? 'rgba(76, 175, 80, 0.25)'
+                            : 'action.hover',
                         color: isSelected
                           ? 'primary.contrastText'
                           : isCurrent
-                          ? '#1b5e20'
-                          : 'text.primary',
+                            ? '#1b5e20'
+                            : 'text.primary',
                       },
                     }}
                   >
@@ -205,7 +189,7 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
               {calendarWeeks.map(({ week, startDate, endDate }) => {
                 const isCurrent = isCurrentWeek(week);
                 const isSelected = isSelectedWeek(week);
-                
+
                 return (
                   <Grid size={{ xs: 6, sm: 4 }} key={week}>
                     <Button
@@ -219,34 +203,30 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
                         backgroundColor: isSelected
                           ? 'primary.main'
                           : isCurrent
-                          ? 'rgba(76, 175, 80, 0.15)'
-                          : 'transparent',
+                            ? 'rgba(76, 175, 80, 0.15)'
+                            : 'transparent',
                         color: isSelected
                           ? 'primary.contrastText'
                           : isCurrent
-                          ? '#2e7d32'
-                          : 'text.primary',
-                        border: isSelected
-                          ? '2px solid'
-                          : isCurrent
-                          ? '2px solid'
-                          : '1px solid',
+                            ? '#2e7d32'
+                            : 'text.primary',
+                        border: isSelected ? '2px solid' : isCurrent ? '2px solid' : '1px solid',
                         borderColor: isSelected
                           ? 'primary.main'
                           : isCurrent
-                          ? '#4caf50'
-                          : 'divider',
+                            ? '#4caf50'
+                            : 'divider',
                         '&:hover': {
                           backgroundColor: isSelected
                             ? 'primary.dark'
                             : isCurrent
-                            ? 'rgba(76, 175, 80, 0.25)'
-                            : 'action.hover',
+                              ? 'rgba(76, 175, 80, 0.25)'
+                              : 'action.hover',
                           color: isSelected
                             ? 'primary.contrastText'
                             : isCurrent
-                            ? '#1b5e20'
-                            : 'text.primary',
+                              ? '#1b5e20'
+                              : 'text.primary',
                         },
                       }}
                     >
@@ -284,4 +264,3 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
     </Dialog>
   );
 };
-

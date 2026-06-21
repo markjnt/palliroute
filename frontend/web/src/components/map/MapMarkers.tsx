@@ -34,7 +34,7 @@ function groupMarkersByLatLng(markers: MarkerData[]) {
 function offsetLatLng(lat: number, lng: number, index: number, total: number) {
   if (total === 1) return { lat, lng };
   const offset = 0.0001;
-  const angle = (2 * Math.PI / total) * index;
+  const angle = ((2 * Math.PI) / total) * index;
   return {
     lat: lat + Math.sin(angle) * offset,
     lng: lng + Math.cos(angle) * offset,
@@ -47,10 +47,10 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
   employees,
   appointments,
   userArea,
-  routes
+  routes,
 }) => {
   const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
-  const hiddenMarkers = useRouteVisibility(state => state.hiddenMarkers);
+  const hiddenMarkers = useRouteVisibility((state) => state.hiddenMarkers);
 
   // Gruppiere alle Marker (keine Filterung mehr)
   const markerGroups = useMemo(() => groupMarkersByLatLng(markers), [markers]);
@@ -69,14 +69,16 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
           const displayPosition = new google.maps.LatLng(lat, lng);
           // Area-based styling
           let opacity = 1;
-          let icon = createMarkerIcon(
+          const icon = createMarkerIcon(
             marker.type,
             marker.employeeType,
             marker.visitType,
             false,
             marker.area
           );
-          let label = marker.isInactive ? undefined : createMarkerLabel(marker.routePosition, marker.visitType, marker.label);
+          const label = marker.isInactive
+            ? undefined
+            : createMarkerLabel(marker.routePosition, marker.visitType, marker.label);
           if (marker.isInactive) {
             opacity = 0.6;
           } else if (
@@ -84,7 +86,7 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
             userArea &&
             userArea !== 'Nord- und Südkreis' &&
             marker.employeeType &&
-            employees.find(e => e.id === marker.employeeId)?.area !== userArea
+            employees.find((e) => e.id === marker.employeeId)?.area !== userArea
           ) {
             opacity = 0.6;
           }
@@ -115,4 +117,4 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
       )}
     </>
   );
-}; 
+};

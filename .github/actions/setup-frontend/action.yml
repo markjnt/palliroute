@@ -1,0 +1,23 @@
+name: Setup Frontend
+description: Install Node.js and npm dependencies for the frontend workspace
+
+inputs:
+  node-version:
+    description: Node.js version
+    required: false
+    default: "22"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: frontend
+      run: npm ci

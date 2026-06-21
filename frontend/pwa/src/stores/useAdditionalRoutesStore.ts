@@ -11,17 +11,17 @@ interface AdditionalRoutesStore {
 
 export const useAdditionalRoutesStore = create<AdditionalRoutesStore>((set) => ({
   selectedEmployeeIds: [],
-  
+
   toggleEmployee: (employeeId: number | string) => {
     set((state) => {
       const isSelected = state.selectedEmployeeIds.includes(employeeId);
       if (isSelected) {
         return {
-          selectedEmployeeIds: state.selectedEmployeeIds.filter(id => id !== employeeId)
+          selectedEmployeeIds: state.selectedEmployeeIds.filter((id) => id !== employeeId),
         };
       } else {
         return {
-          selectedEmployeeIds: [...state.selectedEmployeeIds, employeeId]
+          selectedEmployeeIds: [...state.selectedEmployeeIds, employeeId],
         };
       }
     });
@@ -34,7 +34,7 @@ export const useAdditionalRoutesStore = create<AdditionalRoutesStore>((set) => (
   deselectAll: () => {
     set({ selectedEmployeeIds: [] });
   },
-  
+
   clearAll: () => {
     set({ selectedEmployeeIds: [] });
   },

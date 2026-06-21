@@ -5,4 +5,7 @@ export { useAppointmentManagement } from './useAppointmentManagement';
 export { useEmployeeManagement } from './useEmployeeManagement';
 export { useAreaManagement } from './useAreaManagement';
 export { useRouteVisibility } from './useRouteVisibility';
-export { useNrwpHolidayForTourDay, useNrwpHolidayLookupForSelectedKw } from './useNrwpHolidayForTourDay';
+export {
+  useNrwpHolidayForTourDay,
+  useNrwpHolidayLookupForSelectedKw,
+} from './useNrwpHolidayForTourDay';

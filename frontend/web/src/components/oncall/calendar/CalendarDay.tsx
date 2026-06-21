@@ -7,7 +7,10 @@ import { HolidayChip } from '../../common/HolidayChip';
 
 interface CalendarDayProps {
   date: Date;
-  assignments: Array<{ duty: { type: DutyType; label: string; area?: OnCallArea; shortLabel: string }; assignment?: Assignment }>;
+  assignments: Array<{
+    duty: { type: DutyType; label: string; area?: OnCallArea; shortLabel: string };
+    assignment?: Assignment;
+  }>;
   /** NRW-Feiertag (Kalenderansicht, Punkt + Tooltip wie Tabellenkopf) */
   holidayName?: string;
   /** Kleinere Punktgröße (Monatskalender) */
@@ -141,4 +144,3 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
     </Box>
   );
 };
-

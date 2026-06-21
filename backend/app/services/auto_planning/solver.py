@@ -2,8 +2,6 @@
 Run CP-SAT solver and extract assignment list from solution.
 """
 
-from typing import List, Optional, Tuple
-
 from ortools.sat.python import cp_model
 
 from .model_builder import PlanningModel
@@ -11,8 +9,8 @@ from .model_builder import PlanningModel
 
 def run_solver(
     planning_model: PlanningModel,
-    time_limit_seconds: Optional[float] = 30.0,
-) -> Tuple[str, float, List[Tuple[int, int]]]:
+    time_limit_seconds: float | None = 30.0,
+) -> tuple[str, float, list[tuple[int, int]]]:
     """
     Solve the model and return (status, objective_value, list of (employee_id, shift_instance_id)).
 
@@ -24,11 +22,13 @@ def run_solver(
         solver.parameters.max_time_in_seconds = time_limit_seconds
     status = solver.Solve(planning_model.model)
     status_name = solver.StatusName(status)
-    objective_value = float(solver.ObjectiveValue()) if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) else 0.0
-    assignments: List[Tuple[int, int]] = []
+    objective_value = (
+        float(solver.ObjectiveValue()) if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) else 0.0
+    )
+    assignments: list[tuple[int, int]] = []
     if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         ctx = planning_model.context
-        for (e_idx, s_idx) in planning_model.pairs:
+        for e_idx, s_idx in planning_model.pairs:
             if solver.Value(planning_model.x[(e_idx, s_idx)]) == 1:
                 employee_id = ctx.employees[e_idx].id
                 shift_instance_id = ctx.shifts[s_idx].id

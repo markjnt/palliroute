@@ -1,25 +1,29 @@
-from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
 from config import Config
+from flask import Flask, jsonify
+from flask_cors import CORS
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
 migrate = Migrate()
 
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
+
     # Enable CORS
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": app.config['CORS_ORIGINS'],  # Get allowed origins from config
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
-        }
-    })
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": app.config["CORS_ORIGINS"],  # Get allowed origins from config
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+            }
+        },
+    )
 
     # Initialize extensions
     db.init_app(app)
@@ -31,38 +35,38 @@ def create_app(config_class=Config):
     # Register error handlers
     @app.errorhandler(400)
     def bad_request_error(error):
-        return jsonify({'error': 'Bad Request', 'message': str(error)}), 400
+        return jsonify({"error": "Bad Request", "message": str(error)}), 400
 
     @app.errorhandler(404)
     def not_found_error(error):
-        return jsonify({'error': 'Not Found', 'message': str(error)}), 404
+        return jsonify({"error": "Not Found", "message": str(error)}), 404
 
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
-        return jsonify({'error': 'Internal Server Error', 'message': str(error)}), 500
+        return jsonify({"error": "Internal Server Error", "message": str(error)}), 500
 
     # Register blueprints
-    from .api_routes.employees import employees_bp
-    from .api_routes.patients import patients_bp
     from .api_routes.appointments import appointments_bp
-    from .api_routes.routes import routes_bp
     from .api_routes.config import bp as config_bp
     from .api_routes.employee_plannings import employee_planning_bp
-    from .api_routes.scheduling import scheduling_bp
+    from .api_routes.employees import employees_bp
+    from .api_routes.patients import patients_bp
     from .api_routes.pflegeheime import pflegeheime_bp
+    from .api_routes.routes import routes_bp
+    from .api_routes.scheduling import scheduling_bp
 
-    app.register_blueprint(employees_bp, url_prefix='/api/employees')
-    app.register_blueprint(patients_bp, url_prefix='/api/patients')
-    app.register_blueprint(appointments_bp, url_prefix='/api/appointments')
-    app.register_blueprint(routes_bp, url_prefix='/api/routes')
-    app.register_blueprint(config_bp, url_prefix='/api/config')
-    app.register_blueprint(employee_planning_bp, url_prefix='/api/employee-planning')
-    app.register_blueprint(scheduling_bp, url_prefix='/api/scheduling')
-    app.register_blueprint(pflegeheime_bp, url_prefix='/api/pflegeheime')
+    app.register_blueprint(employees_bp, url_prefix="/api/employees")
+    app.register_blueprint(patients_bp, url_prefix="/api/patients")
+    app.register_blueprint(appointments_bp, url_prefix="/api/appointments")
+    app.register_blueprint(routes_bp, url_prefix="/api/routes")
+    app.register_blueprint(config_bp, url_prefix="/api/config")
+    app.register_blueprint(employee_planning_bp, url_prefix="/api/employee-planning")
+    app.register_blueprint(scheduling_bp, url_prefix="/api/scheduling")
+    app.register_blueprint(pflegeheime_bp, url_prefix="/api/pflegeheime")
 
-    @app.route('/health')
+    @app.route("/health")
     def health_check():
-        return {'status': 'healthy'}
+        return {"status": "healthy"}
 
     return app

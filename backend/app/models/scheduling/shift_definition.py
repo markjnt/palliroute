@@ -20,4 +20,3 @@ class ShiftDefinition(db.Model):
 
     is_weekday = db.Column(db.Boolean, nullable=False)
     is_weekend = db.Column(db.Boolean, nullable=False)
-

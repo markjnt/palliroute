@@ -43,16 +43,13 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
     try {
       const geocoder = new google.maps.Geocoder();
       const result = await new Promise<google.maps.GeocoderResult | null>((resolve) => {
-        geocoder.geocode(
-          { address: address.trim(), region: 'DE' },
-          (results, status) => {
-            if (status === 'OK' && results && results.length > 0) {
-              resolve(results[0]);
-            } else {
-              resolve(null);
-            }
+        geocoder.geocode({ address: address.trim(), region: 'DE' }, (results, status) => {
+          if (status === 'OK' && results && results.length > 0) {
+            resolve(results[0]);
+          } else {
+            resolve(null);
           }
-        );
+        });
       });
 
       if (!result || !result.geometry?.location) {
@@ -124,7 +121,13 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
           onClick={handleSubmit}
           disabled={loading || !name.trim() || !address.trim()}
           sx={{ backgroundColor: '#ff5722', '&:hover': { backgroundColor: '#e64a19' } }}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <PlaceIcon sx={{ color: 'inherit' }} />}
+          startIcon={
+            loading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <PlaceIcon sx={{ color: 'inherit' }} />
+            )
+          }
         >
           {loading ? 'Suche...' : 'Marker setzen'}
         </Button>

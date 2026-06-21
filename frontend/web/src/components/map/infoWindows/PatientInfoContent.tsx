@@ -18,22 +18,22 @@ interface PatientInfoContentProps {
 /**
  * Component for displaying patient information in marker info windows
  */
-export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({ 
-  marker, 
-  patients, 
-  appointments, 
-  routes, 
-  employees 
+export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({
+  marker,
+  patients,
+  appointments,
+  routes,
+  employees,
 }) => {
-  const patient = patients.find(p => p.id === marker.patientId);
+  const patient = patients.find((p) => p.id === marker.patientId);
   if (!patient) return null;
 
   // Get all appointments for this patient
-  const patientAppointments = appointments.filter(a => a.patient_id === patient.id);
-  
+  const patientAppointments = appointments.filter((a) => a.patient_id === patient.id);
+
   // Group appointments by weekday
   const appointmentsByDay: Record<string, Appointment[]> = {};
-  patientAppointments.forEach(app => {
+  patientAppointments.forEach((app) => {
     if (!appointmentsByDay[app.weekday]) {
       appointmentsByDay[app.weekday] = [];
     }
@@ -43,26 +43,26 @@ export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({
   // Route für diesen Patienten finden (über marker.routeId)
   let route: Route | undefined = undefined;
   if (marker.routeId) {
-    route = routes.find(r => r.id === marker.routeId);
+    route = routes.find((r) => r.id === marker.routeId);
   }
-  
+
   // Get tour color from patient's appointments
   const patientAppointment = patientAppointments[0]; // Verwende den ersten Termin
   let tourColor = '#888';
   if (patientAppointment && patientAppointment.employee_id) {
-    const employee = employees.find(e => e.id === patientAppointment.employee_id);
+    const employee = employees.find((e) => e.id === patientAppointment.employee_id);
     if (employee && employee.id) {
       tourColor = getColorForTour(employee.id);
     }
   }
-  
+
   const area = marker.routeArea || patient.area || '';
   // Auslastung berechnen, falls Route und Mitarbeiter vorhanden
   let utilization: number | undefined = undefined;
   let durationMinutes: number | undefined = undefined;
   let targetMinutes: number | undefined = undefined;
   if (route && route.total_duration && route.employee_id) {
-    const employee = employees.find(e => e.id === route!.employee_id);
+    const employee = employees.find((e) => e.id === route!.employee_id);
     if (employee) {
       const workHours = employee.work_hours || 0;
       targetMinutes = Math.round(420 * (workHours / 100));
@@ -73,53 +73,63 @@ export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({
 
   return (
     <>
-      <Typography variant="subtitle1" component="div" sx={{ 
-        fontWeight: 'bold',
-        borderBottom: 1,
-        borderColor: 'divider',
-        pb: 0.5,
-        mb: 1
-      }}>
+      <Typography
+        variant="subtitle1"
+        component="div"
+        sx={{
+          fontWeight: 'bold',
+          borderBottom: 1,
+          borderColor: 'divider',
+          pb: 0.5,
+          mb: 1,
+        }}
+      >
         {marker.title.split(' - ')[0]}
       </Typography>
-      
+
       {marker.visitType && (
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: 1,
-          p: 0.5,
-          bgcolor: `${getColorForVisitType(marker.visitType)}20`,
-          borderRadius: 1
-        }}>
-          <Box 
-            sx={{ 
-              width: 12, 
-              height: 12, 
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mb: 1,
+            p: 0.5,
+            bgcolor: `${getColorForVisitType(marker.visitType)}20`,
+            borderRadius: 1,
+          }}
+        >
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
               borderRadius: '50%',
               bgcolor: getColorForVisitType(marker.visitType),
-              mr: 1
-            }} 
+              mr: 1,
+            }}
           />
           <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-            {marker.visitType === 'HB' ? 'Hausbesuch' : 
-             marker.visitType === 'TK' ? 'Telefonkontakt' :
-             marker.visitType === 'NA' ? 'Neuaufnahme' : marker.visitType}
+            {marker.visitType === 'HB'
+              ? 'Hausbesuch'
+              : marker.visitType === 'TK'
+                ? 'Telefonkontakt'
+                : marker.visitType === 'NA'
+                  ? 'Neuaufnahme'
+                  : marker.visitType}
           </Typography>
         </Box>
       )}
-      
+
       {/* Address with area display and vertical divider */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
         {patient.area && (
           <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
-            <NavigationIcon 
-              fontSize="small" 
-              sx={{ 
-                mr: 0.5, 
+            <NavigationIcon
+              fontSize="small"
+              sx={{
+                mr: 0.5,
                 color: 'text.secondary',
-                transform: patient.area.includes('Nordkreis') ? 'rotate(0deg)' : 'rotate(180deg)'
-              }} 
+                transform: patient.area.includes('Nordkreis') ? 'rotate(0deg)' : 'rotate(180deg)',
+              }}
             />
             <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
               {patient.area.includes('Nordkreis') ? 'N' : 'S'}
@@ -128,15 +138,17 @@ export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({
           </Box>
         )}
         <Typography variant="body2" color="text.secondary">
-          {patient.street}<br/>
+          {patient.street}
+          <br />
           {patient.zip_code} {patient.city}
         </Typography>
       </Box>
-      
+
       {/* TourInfoBox für Patienten */}
-      {patientAppointment && patientAppointment.employee_id && (
+      {patientAppointment &&
+        patientAppointment.employee_id &&
         (() => {
-          const employee = employees.find(e => e.id === patientAppointment.employee_id);
+          const employee = employees.find((e) => e.id === patientAppointment.employee_id);
           if (employee) {
             return (
               <TourInfoBox
@@ -150,8 +162,7 @@ export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({
             );
           }
           return null;
-        })()
-      )}
+        })()}
     </>
   );
 };

@@ -1,34 +1,39 @@
-from flask import Blueprint, request, jsonify
-from app import db
-from app.models.employee_planning import EmployeePlanning
-from app.models.appointment import Appointment
-from app.models.route import Route
-from app.services.aplano_sync import sync_employee_planning
 from datetime import datetime
 
-employee_planning_bp = Blueprint('employee_planning', __name__)
+from flask import Blueprint, jsonify, request
+
+from app import db
+from app.models.appointment import Appointment
+from app.models.employee_planning import EmployeePlanning
+from app.models.route import Route
+from app.services.aplano_sync import sync_employee_planning
+
+employee_planning_bp = Blueprint("employee_planning", __name__)
+
 
 def get_current_calendar_week():
     """Get current calendar week number"""
     return datetime.now().isocalendar()[1]
 
+
 def get_weekday_mapping():
     """Map German weekday names to English database format"""
     return {
-        'Montag': 'monday',
-        'Dienstag': 'tuesday', 
-        'Mittwoch': 'wednesday',
-        'Donnerstag': 'thursday',
-        'Freitag': 'friday',
-        'Samstag': 'saturday',
-        'Sonntag': 'sunday'
+        "Montag": "monday",
+        "Dienstag": "tuesday",
+        "Mittwoch": "wednesday",
+        "Donnerstag": "thursday",
+        "Freitag": "friday",
+        "Samstag": "saturday",
+        "Sonntag": "sunday",
     }
 
-@employee_planning_bp.route('/', methods=['GET'])
+
+@employee_planning_bp.route("/", methods=["GET"])
 def get_employee_planning():
     """Get all employee planning entries for current week"""
-    calendar_week = request.args.get('calendar_week', get_current_calendar_week(), type=int)
-    
+    calendar_week = request.args.get("calendar_week", get_current_calendar_week(), type=int)
+
     # Sync with Aplano before querying database
     sync_warning = None
     try:
@@ -36,66 +41,67 @@ def get_employee_planning():
     except Exception as e:
         # If sync fails, continue with existing data but report the error
         sync_warning = f"Aplano sync failed: {str(e)}"
-    
+
     planning_entries = EmployeePlanning.query.filter_by(calendar_week=calendar_week).all()
-    
+
     # Check for conflicts for each planning entry
     entries_with_conflicts = []
     for entry in planning_entries:
         entry_dict = entry.to_dict()
-        
+
         # Add replacement employee info if exists
         if entry.replacement:
-            entry_dict['replacement_employee'] = {
-                'id': entry.replacement.id,
-                'first_name': entry.replacement.first_name,
-                'last_name': entry.replacement.last_name,
-                'function': entry.replacement.function
+            entry_dict["replacement_employee"] = {
+                "id": entry.replacement.id,
+                "first_name": entry.replacement.first_name,
+                "last_name": entry.replacement.last_name,
+                "function": entry.replacement.function,
             }
         else:
-            entry_dict['replacement_employee'] = None
-        
+            entry_dict["replacement_employee"] = None
+
         # Check for appointments for this employee and weekday (including appointments without visit_type)
-        appointments = Appointment.query.filter(
-            Appointment.employee_id == entry.employee_id,
-            Appointment.weekday == entry.weekday,
-            Appointment.calendar_week == calendar_week
-        ).filter(
-            (Appointment.visit_type.in_(['HB', 'NA', 'TK'])) | 
-            (Appointment.visit_type.is_(None)) | 
-            (Appointment.visit_type == '')
-        ).all()
-        
+        appointments = (
+            Appointment.query.filter(
+                Appointment.employee_id == entry.employee_id,
+                Appointment.weekday == entry.weekday,
+                Appointment.calendar_week == calendar_week,
+            )
+            .filter(
+                (Appointment.visit_type.in_(["HB", "NA", "TK"]))
+                | (Appointment.visit_type.is_(None))
+                | (Appointment.visit_type == "")
+            )
+            .all()
+        )
+
         # Count unique patients (not appointments)
         unique_patients = set(app.patient_id for app in appointments)
         patient_count = len(unique_patients)
-        
+
         # Only show conflicts if not available AND there are appointments
-        entry_dict['has_conflicts'] = (not getattr(entry, 'available', True)) and len(appointments) > 0
-        entry_dict['appointments_count'] = len(appointments)
-        entry_dict['patient_count'] = patient_count
+        entry_dict["has_conflicts"] = (not getattr(entry, "available", True)) and len(
+            appointments
+        ) > 0
+        entry_dict["appointments_count"] = len(appointments)
+        entry_dict["patient_count"] = patient_count
 
         # Add count of appointments that would be affected by a replacement change for this entry
         affected_appointments = Appointment.query.filter(
             Appointment.weekday == entry.weekday,
             Appointment.calendar_week == calendar_week,
-            Appointment.origin_employee_id == entry.employee_id
+            Appointment.origin_employee_id == entry.employee_id,
         ).all()
-        entry_dict['replacement_affected_count'] = len(affected_appointments)
-        
+        entry_dict["replacement_affected_count"] = len(affected_appointments)
+
         entries_with_conflicts.append(entry_dict)
-    
+
     # Prepare response with optional sync warning
     response_data = entries_with_conflicts
     if sync_warning:
-        response_data = {
-            "data": entries_with_conflicts,
-            "warning": sync_warning
-        }
-    
+        response_data = {"data": entries_with_conflicts, "warning": sync_warning}
+
     return jsonify(response_data), 200
-
-
 
 
 def get_current_responsible(employee_id, weekday, calendar_week):
@@ -108,14 +114,12 @@ def get_current_responsible(employee_id, weekday, calendar_week):
         if current in visited:
             break  # Schutz gegen zirkuläre Vertretungen
         visited.add(current)
-        
+
         # Suche nach EmployeePlanning Eintrag für diesen Mitarbeiter und Wochentag
         planning = EmployeePlanning.query.filter_by(
-            employee_id=current,
-            weekday=weekday,
-            calendar_week=calendar_week
+            employee_id=current, weekday=weekday, calendar_week=calendar_week
         ).first()
-        
+
         if planning and planning.replacement_id:
             current = planning.replacement_id
         else:
@@ -123,36 +127,36 @@ def get_current_responsible(employee_id, weekday, calendar_week):
     return current
 
 
-@employee_planning_bp.route('/<int:employee_id>/<string:weekday>/replacement', methods=['PUT'])
+@employee_planning_bp.route("/<int:employee_id>/<string:weekday>/replacement", methods=["PUT"])
 def update_replacement(employee_id, weekday):
     """Update replacement for specific employee and weekday and automatically move appointments"""
     data = request.get_json()
-    
-    replacement_id = data.get('replacement_id')  # kann None sein, um zu entfernen
-    calendar_week = data.get('calendar_week', get_current_calendar_week())
+
+    replacement_id = data.get("replacement_id")  # kann None sein, um zu entfernen
+    calendar_week = data.get("calendar_week", get_current_calendar_week())
 
     # Map German weekday to English
     weekday_mapping = get_weekday_mapping()
     if weekday not in weekday_mapping:
-        return jsonify({"error": f"Invalid weekday. Must be one of: {list(weekday_mapping.keys())}"}), 400
-    
+        return jsonify(
+            {"error": f"Invalid weekday. Must be one of: {list(weekday_mapping.keys())}"}
+        ), 400
+
     db_weekday = weekday_mapping[weekday]
-    
+
     try:
         # Update oder erstellen der Vertretung
         existing_entry = EmployeePlanning.query.filter_by(
-            employee_id=employee_id,
-            weekday=db_weekday,
-            calendar_week=calendar_week
+            employee_id=employee_id, weekday=db_weekday, calendar_week=calendar_week
         ).first()
-        
+
         if not existing_entry:
             # Erstelle neuen Eintrag mit available=True
             existing_entry = EmployeePlanning(
                 employee_id=employee_id,
                 weekday=db_weekday,
                 available=True,
-                calendar_week=calendar_week
+                calendar_week=calendar_week,
             )
             db.session.add(existing_entry)
 
@@ -165,33 +169,29 @@ def update_replacement(employee_id, weekday):
             """Findet alle Mitarbeiter, die durch Änderungen in der Vertretungskette betroffen sein könnten"""
             affected = {start_employee_id}
             to_check = [start_employee_id]
-            
+
             while to_check:
                 current_emp = to_check.pop()
-                
+
                 # Finde alle Mitarbeiter, die diesen als Vertretung haben
                 for entry in EmployeePlanning.query.filter_by(
-                    replacement_id=current_emp,
-                    weekday=db_weekday,
-                    calendar_week=calendar_week
+                    replacement_id=current_emp, weekday=db_weekday, calendar_week=calendar_week
                 ).all():
                     if entry.employee_id not in affected:
                         affected.add(entry.employee_id)
                         to_check.append(entry.employee_id)
-                
+
                 # Finde auch die Vertretungskette von diesem Mitarbeiter
                 planning = EmployeePlanning.query.filter_by(
-                    employee_id=current_emp,
-                    weekday=db_weekday,
-                    calendar_week=calendar_week
+                    employee_id=current_emp, weekday=db_weekday, calendar_week=calendar_week
                 ).first()
-                
+
                 if planning and planning.replacement_id and planning.replacement_id not in affected:
                     affected.add(planning.replacement_id)
                     to_check.append(planning.replacement_id)
-            
+
             return affected
-        
+
         # Sammle alle betroffenen Mitarbeiter
         affected_employee_ids = find_all_affected_employees(employee_id)
         if replacement_id:
@@ -199,83 +199,101 @@ def update_replacement(employee_id, weekday):
 
         # Hole alle Termine, die betroffen sein könnten
         # Wir müssen alle Termine finden, deren origin_employee_id zu einem betroffenen Mitarbeiter gehört
-        appointments = Appointment.query.filter(
-            Appointment.weekday == db_weekday,
-            Appointment.calendar_week == calendar_week
-        ).filter(
-            (Appointment.employee_id.in_(affected_employee_ids)) |
-            (Appointment.origin_employee_id.in_(affected_employee_ids))
-        ).all()
+        appointments = (
+            Appointment.query.filter(
+                Appointment.weekday == db_weekday, Appointment.calendar_week == calendar_week
+            )
+            .filter(
+                (Appointment.employee_id.in_(affected_employee_ids))
+                | (Appointment.origin_employee_id.in_(affected_employee_ids))
+            )
+            .all()
+        )
 
         moved_appointments = []  # Track which appointments were moved for route updates
-        
+
         for appointment in appointments:
             # Bestimme den aktuell zuständigen Mitarbeiter
             base_employee_id = appointment.origin_employee_id or appointment.employee_id
-            if not base_employee_id or (not appointment.origin_employee_id and appointment.employee_id not in affected_employee_ids):
+            if not base_employee_id or (
+                not appointment.origin_employee_id
+                and appointment.employee_id not in affected_employee_ids
+            ):
                 continue
-            
-            current_responsible = get_current_responsible(base_employee_id, db_weekday, calendar_week)
-            
+
+            current_responsible = get_current_responsible(
+                base_employee_id, db_weekday, calendar_week
+            )
+
             # Wenn sich der zuständige Mitarbeiter geändert hat, aktualisiere den Termin
             if appointment.employee_id != current_responsible:
                 if not appointment.origin_employee_id:
                     appointment.origin_employee_id = base_employee_id
-                moved_appointments.append({
-                    'appointment': appointment,
-                    'old_employee_id': appointment.employee_id,
-                    'new_employee_id': current_responsible
-                })
+                moved_appointments.append(
+                    {
+                        "appointment": appointment,
+                        "old_employee_id": appointment.employee_id,
+                        "new_employee_id": current_responsible,
+                    }
+                )
                 appointment.employee_id = current_responsible
-        
+
         moved_count = len(moved_appointments)
 
         # Update route orders and recalculate routes for affected employees
         if moved_appointments:
             from app.services.route_optimizer import RouteOptimizer
-            
+
             route_optimizer = RouteOptimizer()
-            affected_employees = {move['old_employee_id'] for move in moved_appointments} | {move['new_employee_id'] for move in moved_appointments}
-            
+            affected_employees = {move["old_employee_id"] for move in moved_appointments} | {
+                move["new_employee_id"] for move in moved_appointments
+            }
+
             # Update routes for each affected employee
             for emp_id in affected_employees:
                 route = Route.query.filter_by(
-                    employee_id=emp_id,
-                    weekday=db_weekday,
-                    calendar_week=calendar_week
+                    employee_id=emp_id, weekday=db_weekday, calendar_week=calendar_week
                 ).first()
-                
+
                 if route:
                     route_order = route.get_route_order()
-                    
+
                     # Update route order in one pass
                     for move in moved_appointments:
-                        app_id = move['appointment'].id
+                        app_id = move["appointment"].id
                         # Remove from old employee
-                        if move['old_employee_id'] == emp_id and app_id in route_order:
+                        if move["old_employee_id"] == emp_id and app_id in route_order:
                             route_order.remove(app_id)
                         # Add to new employee (only HB/NA)
-                        elif (move['new_employee_id'] == emp_id and 
-                              move['appointment'].visit_type in ('HB', 'NA') and 
-                              app_id not in route_order):
+                        elif (
+                            move["new_employee_id"] == emp_id
+                            and move["appointment"].visit_type in ("HB", "NA")
+                            and app_id not in route_order
+                        ):
                             route_order.append(app_id)
-                    
+
                     route.set_route_order(route_order)
-                    
+
                     # Optimize route
                     try:
-                        route_optimizer.optimize_route(db_weekday, emp_id, calendar_week=calendar_week)
+                        route_optimizer.optimize_route(
+                            db_weekday, emp_id, calendar_week=calendar_week
+                        )
                     except Exception as e:
                         print(f"Warning: Failed to optimize route for employee {emp_id}: {str(e)}")
 
         db.session.commit()
-        
-        message = f"Vertretung erfolgreich aktualisiert"
+
+        message = "Vertretung erfolgreich aktualisiert"
         if moved_count > 0:
-            message += f" und {moved_count} Termin{'e' if moved_count != 1 else ''} automatisch verschoben"
-        
-        return jsonify({"success": True, "message": message, "moved_appointments": moved_count}), 200
-        
+            message += (
+                f" und {moved_count} Termin{'e' if moved_count != 1 else ''} automatisch verschoben"
+            )
+
+        return jsonify(
+            {"success": True, "message": message, "moved_appointments": moved_count}
+        ), 200
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Failed to update replacement: {str(e)}"}), 500

@@ -53,38 +53,43 @@ export const useAppointment = (id: number) => {
 // Hook zum Verschieben eines einzelnen Termins
 export const useMoveAppointment = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ appointmentId, sourceEmployeeId, targetEmployeeId }: { 
-      appointmentId: number; 
-      sourceEmployeeId: number; 
-      targetEmployeeId: number; 
+    mutationFn: ({
+      appointmentId,
+      sourceEmployeeId,
+      targetEmployeeId,
+    }: {
+      appointmentId: number;
+      sourceEmployeeId: number;
+      targetEmployeeId: number;
     }) => appointmentsApi.moveAppointment(appointmentId, sourceEmployeeId, targetEmployeeId),
     onSuccess: () => {
       // Invalidate all appointment queries to refetch data
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
-    }
+    },
   });
 };
 
 // Hook zum Verschieben aller Termine eines Mitarbeiters
 export const useBatchMoveAppointments = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ sourceEmployeeId, targetEmployeeId }: { 
-      sourceEmployeeId: number; 
-      targetEmployeeId: number; 
+    mutationFn: ({
+      sourceEmployeeId,
+      targetEmployeeId,
+    }: {
+      sourceEmployeeId: number;
+      targetEmployeeId: number;
     }) => appointmentsApi.batchMoveAppointments(sourceEmployeeId, targetEmployeeId),
     onSuccess: () => {
       // Invalidate all appointment queries to refetch data
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
-
-    }
+    },
   });
 };
-

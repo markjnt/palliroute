@@ -9,10 +9,14 @@ import {
   Box,
   Chip,
 } from '@mui/material';
+import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import {
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
-import { DutyType, OnCallArea, Employee, Assignment, EmployeeCapacity } from '../../../types/models';
+  DutyType,
+  OnCallArea,
+  Employee,
+  Assignment,
+  EmployeeCapacity,
+} from '../../../types/models';
 import { WEEKDAY_DUTIES, WEEKEND_DUTIES } from '../../../utils/oncall/constants';
 import { getDutyColor } from '../../../utils/oncall/colorUtils';
 import { isWeekend } from '../../../utils/oncall/dateUtils';
@@ -40,13 +44,14 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
   onClose,
   onDutyToggle,
 }) => {
-  if (!employee || !date) return null;
-
   const useWeekendPalette =
-    treatAsWeekendForDuties !== undefined ? treatAsWeekendForDuties : isWeekend(date);
+    date && treatAsWeekendForDuties !== undefined
+      ? treatAsWeekendForDuties
+      : date
+        ? isWeekend(date)
+        : false;
   const availableDuties = useWeekendPalette ? WEEKEND_DUTIES : WEEKDAY_DUTIES;
 
-  // Create a map of selected duties for quick lookup
   const selectedDutiesMap = useMemo(() => {
     const map = new Map<string, Assignment>();
     assignments.forEach((assignment) => {
@@ -59,10 +64,12 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
     return map;
   }, [assignments]);
 
+  if (!employee || !date) return null;
+
   // Get remaining capacity for an employee for this duty type
   const getRemainingCapacity = (dutyType: DutyType): number => {
     if (!employeeCapacities || !employee?.id) return -1;
-    
+
     // Map duty type to capacity type
     let capacityType: string;
     if (dutyType === 'rb_nursing_weekday') {
@@ -78,11 +85,11 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
     } else {
       return -1;
     }
-    
+
     const matchingCapacity = employeeCapacities.find(
-      cap => cap.employee_id === employee.id && cap.capacity_type === capacityType
+      (cap) => cap.employee_id === employee.id && cap.capacity_type === capacityType
     );
-    
+
     // Return remaining count from backend (already calculated)
     return matchingCapacity?.remaining ?? -1;
   };
@@ -161,9 +168,7 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {isSelected && (
-                    <CheckCircleIcon sx={{ color: fullColor, fontSize: 20 }} />
-                  )}
+                  {isSelected && <CheckCircleIcon sx={{ color: fullColor, fontSize: 20 }} />}
                   <Chip
                     label={duty.shortLabel}
                     size="small"
@@ -175,7 +180,14 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
                     }}
                   />
                 </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: 0.5,
+                  }}
+                >
                   <Typography
                     variant="body2"
                     sx={{
@@ -216,4 +228,3 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
     </Dialog>
   );
 };
-

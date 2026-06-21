@@ -13,7 +13,14 @@ import {
   Chip,
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon } from '@mui/icons-material';
-import { ShiftInstance, Employee, ShiftDefinition, EmployeeCapacity, DutyType, OnCallArea } from '../../../types/models';
+import {
+  ShiftInstance,
+  Employee,
+  ShiftDefinition,
+  EmployeeCapacity,
+  DutyType,
+  OnCallArea,
+} from '../../../types/models';
 import { WEEKDAY_DUTIES, WEEKEND_DUTIES } from '../../../utils/oncall/constants';
 import { shiftDefinitionToDutyType } from '../../../utils/oncall/shiftMapping';
 import { getDutyColor } from '../../../utils/oncall/colorUtils';
@@ -63,10 +70,8 @@ export const UnplannedShiftsDialog: React.FC<UnplannedShiftsDialogProps> = ({
   const dutyMapping = selectedShift?.shift_definition
     ? shiftDefinitionToDutyType(selectedShift.shift_definition)
     : null;
-  
-  const selectedDuty = dutyMapping
-    ? { type: dutyMapping.dutyType, area: dutyMapping.area }
-    : null;
+
+  const selectedDuty = dutyMapping ? { type: dutyMapping.dutyType, area: dutyMapping.area } : null;
 
   const shiftsByDate = useMemo(() => {
     const map = new Map<string, ShiftInstance[]>();
@@ -107,7 +112,8 @@ export const UnplannedShiftsDialog: React.FC<UnplannedShiftsDialogProps> = ({
             Noch nicht verplante Schichten
           </Box>
           <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 0.5 }}>
-            {monthLabel} · {unplannedShifts.length} Schicht{unplannedShifts.length !== 1 ? 'en' : ''} ohne Zuweisung
+            {monthLabel} · {unplannedShifts.length} Schicht
+            {unplannedShifts.length !== 1 ? 'en' : ''} ohne Zuweisung
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ px: 3, py: 2 }}>
@@ -165,7 +171,11 @@ export const UnplannedShiftsDialog: React.FC<UnplannedShiftsDialogProps> = ({
 
                         const dutyMapping = shiftDefinitionToDutyType(shiftDef);
                         const dutyColor = dutyMapping
-                          ? getDutyColor(dutyMapping.dutyType as DutyType, dutyMapping.area as OnCallArea, false)
+                          ? getDutyColor(
+                              dutyMapping.dutyType as DutyType,
+                              dutyMapping.area as OnCallArea,
+                              false
+                            )
                           : '#9e9e9e';
 
                         return (
@@ -186,8 +196,17 @@ export const UnplannedShiftsDialog: React.FC<UnplannedShiftsDialogProps> = ({
                             }}
                           >
                             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: 1,
+                                }}
+                              >
+                                <Box
+                                  sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}
+                                >
                                   <Chip
                                     label={label}
                                     size="small"

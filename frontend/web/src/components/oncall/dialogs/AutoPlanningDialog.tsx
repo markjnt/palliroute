@@ -69,7 +69,10 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
 
   useEffect(() => {
     if (!open) return;
-    configApi.getTimeAccountAsOf().then((res) => setTimeAccountAsOf(res.time_account_as_of ?? null)).catch(() => setTimeAccountAsOf(null));
+    configApi
+      .getTimeAccountAsOf()
+      .then((res) => setTimeAccountAsOf(res.time_account_as_of ?? null))
+      .catch(() => setTimeAccountAsOf(null));
   }, [open]);
 
   const handleExistingAssignmentsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,7 +188,11 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
                       <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>
                         Bestehende überschreiben
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: '0.8rem' }}
+                      >
                         Alle Positionen werden neu geplant, bestehende Zuweisungen werden ersetzt
                       </Typography>
                     </Box>
@@ -208,8 +215,13 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
                       <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>
                         Bestehende berücksichtigen
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                        Bestehende Zuweisungen werden bei der Planung berücksichtigt und nicht verändert
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: '0.8rem' }}
+                      >
+                        Bestehende Zuweisungen werden bei der Planung berücksichtigt und nicht
+                        verändert
                       </Typography>
                     </Box>
                   }
@@ -308,47 +320,76 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
                 display: 'none',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                }}
+              >
                 <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: 'text.primary' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 600, mb: 1.5, color: 'text.primary' }}
+                  >
                     Stundenkonto aus Aplano
                   </Typography>
                   {timeAccountAsOf && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mb: 1 }}
+                    >
                       Aktueller Stand: {formatStandDate(timeAccountAsOf)}
                     </Typography>
                   )}
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <input
-                  accept=".xlsx,.xls"
-                  style={{ display: 'none' }}
-                  id="time-account-excel"
-                  type="file"
-                  onChange={(e) => setTimeAccountFile(e.target.files?.[0] ?? null)}
-                />
-                <label htmlFor="time-account-excel">
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    component="span"
-                    startIcon={<UploadFileIcon />}
-                    sx={{ textTransform: 'none' }}
-                  >
-                    Excel auswählen
-                  </Button>
-                </label>
-                {timeAccountFile && (
-                  <Typography variant="caption" color="text.secondary">
-                    {timeAccountFile.name}
-                  </Typography>
-                )}
+                    <input
+                      accept=".xlsx,.xls"
+                      style={{ display: 'none' }}
+                      id="time-account-excel"
+                      type="file"
+                      onChange={(e) => setTimeAccountFile(e.target.files?.[0] ?? null)}
+                    />
+                    <label htmlFor="time-account-excel">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        component="span"
+                        startIcon={<UploadFileIcon />}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Excel auswählen
+                      </Button>
+                    </label>
+                    {timeAccountFile && (
+                      <Typography variant="caption" color="text.secondary">
+                        {timeAccountFile.name}
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
                 <Box sx={{ flexShrink: 0 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, textAlign: 'right' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 0.5, textAlign: 'right' }}
+                  >
                     Erforderliche Spalten (Dezimalstunden):
                   </Typography>
-                  <Table size="small" sx={{ maxWidth: 320, '& td, & th': { py: 0.5, px: 1, fontSize: '0.75rem' }, border: '1px solid', borderColor: 'grey.300', borderRadius: 1, overflow: 'hidden' }}>
+                  <Table
+                    size="small"
+                    sx={{
+                      maxWidth: 320,
+                      '& td, & th': { py: 0.5, px: 1, fontSize: '0.75rem' },
+                      border: '1px solid',
+                      borderColor: 'grey.300',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                    }}
+                  >
                     <TableHead>
                       <TableRow sx={{ backgroundColor: 'grey.200' }}>
                         <TableCell component="th">Mitarbeiter</TableCell>
@@ -458,4 +499,3 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
     </Dialog>
   );
 };
-

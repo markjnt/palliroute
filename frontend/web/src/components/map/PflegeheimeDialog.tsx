@@ -16,7 +16,13 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import { Business as BusinessIcon, Refresh as RefreshIcon, Visibility as VisibilityIcon, VisibilityOff as VisibilityOffIcon, Close as CloseIcon } from '@mui/icons-material';
+import {
+  Business as BusinessIcon,
+  Refresh as RefreshIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  Close as CloseIcon,
+} from '@mui/icons-material';
 import { usePflegeheime, useImportPflegeheime } from '../../services/queries/usePflegeheime';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
 import { usePflegeheimeVisibilityStore } from '../../stores/usePflegeheimeVisibilityStore';
@@ -28,13 +34,15 @@ interface PflegeheimeDialogProps {
 }
 
 const formatLastUpdateTime = (time: Date): string => {
-  return 'zuletzt ' + time.toLocaleDateString('de-DE') + ' ' + time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  return (
+    'zuletzt ' +
+    time.toLocaleDateString('de-DE') +
+    ' ' +
+    time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  );
 };
 
-export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({
-  open,
-  onClose,
-}) => {
+export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({ open, onClose }) => {
   const { data: pflegeheime = [], isLoading, error } = usePflegeheime();
   const importPflegeheimeMutation = useImportPflegeheime();
   const { lastPflegeheimeImportTime } = useLastUpdateStore();
@@ -49,13 +57,17 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({
       if (summary.added > 0) parts.push(`${summary.added} hinzugefügt`);
       if (summary.updated > 0) parts.push(`${summary.updated} aktualisiert`);
       if (summary.removed > 0) parts.push(`${summary.removed} entfernt`);
-      const message = parts.length > 0
-        ? 'Import erfolgreich: ' + parts.join(', ') + (parts.length > 1 ? ` (Gesamt: ${summary.total_processed})` : '')
-        : 'Keine Änderungen erforderlich';
+      const message =
+        parts.length > 0
+          ? 'Import erfolgreich: ' +
+            parts.join(', ') +
+            (parts.length > 1 ? ` (Gesamt: ${summary.total_processed})` : '')
+          : 'Keine Änderungen erforderlich';
       setNotification(message, 'success');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } }; message?: string };
-      const message = e?.response?.data?.error ?? e?.message ?? 'Fehler beim Importieren der Pflegeheime';
+      const message =
+        e?.response?.data?.error ?? e?.message ?? 'Fehler beim Importieren der Pflegeheime';
       setNotification(message, 'error');
     }
   };
@@ -69,7 +81,11 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({
         <IconButton
           onClick={toggleShowPflegeheimeOnMap}
           color={showPflegeheimeOnMap ? 'primary' : 'default'}
-          title={showPflegeheimeOnMap ? 'Pflegeheime auf Karte ausblenden' : 'Pflegeheime auf Karte anzeigen'}
+          title={
+            showPflegeheimeOnMap
+              ? 'Pflegeheime auf Karte ausblenden'
+              : 'Pflegeheime auf Karte anzeigen'
+          }
           size="small"
         >
           {showPflegeheimeOnMap ? <VisibilityIcon /> : <VisibilityOffIcon />}
@@ -84,7 +100,13 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({
             variant="contained"
             onClick={handleImport}
             fullWidth
-            startIcon={importPflegeheimeMutation.isPending ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
+            startIcon={
+              importPflegeheimeMutation.isPending ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <RefreshIcon />
+              )
+            }
             disabled={importPflegeheimeMutation.isPending}
             sx={{ bgcolor: '#388e3c', '&:hover': { bgcolor: '#2e7d32' } }}
           >
@@ -98,9 +120,7 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({
               <CircularProgress />
             </Box>
           )}
-          {error && (
-            <Typography color="error">Fehler beim Laden der Pflegeheime.</Typography>
-          )}
+          {error && <Typography color="error">Fehler beim Laden der Pflegeheime.</Typography>}
           {!isLoading && !error && (
             <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400 }}>
               <Table stickyHeader size="small">

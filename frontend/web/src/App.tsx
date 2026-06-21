@@ -79,9 +79,12 @@ const theme = createTheme({
           textTransform: 'none',
           fontWeight: 600,
           borderRadius: theme.spacing(2.5),
-          transition: theme.transitions.create(['background-color', 'border-color', 'color', 'box-shadow'], {
-            duration: theme.transitions.duration.short,
-          }),
+          transition: theme.transitions.create(
+            ['background-color', 'border-color', 'color', 'box-shadow'],
+            {
+              duration: theme.transitions.duration.short,
+            }
+          ),
         }),
         sizeSmall: ({ theme }) => ({
           padding: theme.spacing(1, 2.5),

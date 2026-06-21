@@ -41,19 +41,15 @@ interface UserSearchDrawerProps {
 type FilterType = 'all' | 'pflege-nord' | 'pflege-sued' | 'arzt' | 'honorararzt' | 'aw';
 
 const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) => {
-  const shouldRenderSheet = useDeferredSheetMount(open);
+  const { shouldRender: shouldRenderSheet, onCloseEnd } = useDeferredSheetMount(open);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [isTourAreaExpanded, setIsTourAreaExpanded] = useState(false);
   const [isAdditionalRoutesExpanded, setIsAdditionalRoutesExpanded] = useState(false);
   const { data: employees = [], isLoading, error } = useEmployees();
-  const { 
-    selectedUserId, 
-    selectedTourArea, 
-    setSelectedUser, 
-    setSelectedTourArea 
-  } = useUserStore();
-  const { selectedEmployeeIds, toggleEmployee, selectAll, deselectAll } = useAdditionalRoutesStore();
+  const { selectedUserId, selectedTourArea, setSelectedUser, setSelectedTourArea } = useUserStore();
+  const { selectedEmployeeIds, toggleEmployee, selectAll, deselectAll } =
+    useAdditionalRoutesStore();
 
   const filteredEmployees = useMemo(() => {
     let filtered = employees;
@@ -62,34 +58,33 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
     if (activeFilter !== 'all' && activeFilter !== 'aw') {
       switch (activeFilter) {
         case 'pflege-nord':
-          filtered = filtered.filter((emp: Employee) => 
-            emp.function === 'Pflegekraft' && emp.area === 'Nordkreis'
+          filtered = filtered.filter(
+            (emp: Employee) => emp.function === 'Pflegekraft' && emp.area === 'Nordkreis'
           );
           break;
         case 'pflege-sued':
-          filtered = filtered.filter((emp: Employee) => 
-            emp.function === 'Pflegekraft' && emp.area === 'Südkreis'
+          filtered = filtered.filter(
+            (emp: Employee) => emp.function === 'Pflegekraft' && emp.area === 'Südkreis'
           );
           break;
         case 'arzt':
-          filtered = filtered.filter((emp: Employee) => 
-            emp.function === 'Arzt'
-          );
+          filtered = filtered.filter((emp: Employee) => emp.function === 'Arzt');
           break;
         case 'honorararzt':
-          filtered = filtered.filter((emp: Employee) => 
-            emp.function === 'Honorararzt'
-          );
+          filtered = filtered.filter((emp: Employee) => emp.function === 'Honorararzt');
           break;
       }
     }
 
     // Apply search term
     if (searchTerm.trim()) {
-      filtered = filtered.filter((employee: Employee) =>
-        `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.function?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.city?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (employee: Employee) =>
+          `${employee.first_name} ${employee.last_name}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          employee.function?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          employee.city?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -164,27 +159,32 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
 
   return (
     <Sheet
-      isOpen
+      isOpen={open}
       onClose={onClose}
+      onCloseEnd={onCloseEnd}
       initialSnap={0}
       snapPoints={[0.87, 0]}
     >
       <Sheet.Container>
         <Sheet.Header>
           {/* Drag handle */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '8px 0',
-            cursor: 'grab',
-          }}>
-            <div style={{
-              width: '60px',
-              height: '4px',
-              backgroundColor: 'rgba(0, 0, 0, 0.2)',
-              borderRadius: '8px',
-            }} />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '8px 0',
+              cursor: 'grab',
+            }}
+          >
+            <div
+              style={{
+                width: '60px',
+                height: '4px',
+                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                borderRadius: '8px',
+              }}
+            />
           </div>
 
           {/* Fixed header with search */}
@@ -261,7 +261,8 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
                   bgcolor: activeFilter === 'pflege-nord' ? employeeTypeColors.default : undefined,
                   color: activeFilter === 'pflege-nord' ? 'white' : undefined,
                   '&:hover': {
-                    bgcolor: activeFilter === 'pflege-nord' ? employeeTypeColors.default : undefined,
+                    bgcolor:
+                      activeFilter === 'pflege-nord' ? employeeTypeColors.default : undefined,
                   },
                 }}
               />
@@ -275,7 +276,8 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
                   bgcolor: activeFilter === 'pflege-sued' ? employeeTypeColors.default : undefined,
                   color: activeFilter === 'pflege-sued' ? 'white' : undefined,
                   '&:hover': {
-                    bgcolor: activeFilter === 'pflege-sued' ? employeeTypeColors.default : undefined,
+                    bgcolor:
+                      activeFilter === 'pflege-sued' ? employeeTypeColors.default : undefined,
                   },
                 }}
               />
@@ -300,10 +302,12 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
                 variant={activeFilter === 'honorararzt' ? 'filled' : 'outlined'}
                 sx={{
                   fontWeight: activeFilter === 'honorararzt' ? 600 : 400,
-                  bgcolor: activeFilter === 'honorararzt' ? employeeTypeColors.Honorararzt : undefined,
+                  bgcolor:
+                    activeFilter === 'honorararzt' ? employeeTypeColors.Honorararzt : undefined,
                   color: activeFilter === 'honorararzt' ? 'white' : undefined,
                   '&:hover': {
-                    bgcolor: activeFilter === 'honorararzt' ? employeeTypeColors.Honorararzt : undefined,
+                    bgcolor:
+                      activeFilter === 'honorararzt' ? employeeTypeColors.Honorararzt : undefined,
                   },
                 }}
               />
@@ -384,150 +388,162 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
 
             {/* Scrollable employee list - Hide when AW filter is active */}
             {activeFilter !== 'aw' && (
-            <Box sx={{ 
-              px: 3,
-              pt: 0,
-              pb: 1.5,
-            }}>
-              {isLoading ? (
-                <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-                  <Typography variant="body1" color="text.secondary">
-                    Lade Mitarbeiter...
-                  </Typography>
-                </Box>
-              ) : error ? (
-                <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-                  <Typography variant="body1" color="error">
-                    Fehler beim Laden der Mitarbeiter
-                  </Typography>
-                </Box>
-              ) : filteredEmployees.length === 0 ? (
-                <Box display="flex" flexDirection="column" alignItems="center" py={4}>
-                  <PersonIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="body1" color="text.secondary">
-                    {searchTerm ? 'Keine Mitarbeiter gefunden' : 'Keine Mitarbeiter verfügbar'}
-                  </Typography>
-                </Box>
-              ) : (
-                <Grid container spacing={1.5}>
-                  {filteredEmployees.map((employee: Employee) => (
-                    <Grid size={{ xs: 12, sm: 6 }} key={employee.id}>
-                      <Card
-                        onClick={() => handleUserSelect(employee.id as number)}
-                        sx={{
-                          cursor: 'pointer',
-                          borderRadius: 2,
-                          border: selectedUserId === employee.id ? '2px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.08)',
-                          background: selectedUserId === employee.id 
-                            ? 'linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)'
-                            : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
-                          transition: 'all 0.2s ease-in-out',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                            borderColor: selectedUserId === employee.id ? '#007AFF' : 'rgba(0, 122, 255, 0.3)',
-                          },
-                        }}
-                      >
-                        <CardContent sx={{ p: 1.5 }}>
-                          <Box display="flex" alignItems="center">
-                            <Avatar
-                              sx={{
-                                width: 36,
-                                height: 36,
-                                bgcolor: selectedUserId === employee.id ? '#007AFF' : '#f0f0f0',
-                                color: selectedUserId === employee.id ? 'white' : '#666',
-                                mr: 1.5,
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                              }}
-                            >
-                              {getInitials(employee.first_name, employee.last_name)}
-                            </Avatar>
-                            <Box flex={1}>
-                              <Typography
-                                variant="subtitle1"
-                                component="h3"
+              <Box
+                sx={{
+                  px: 3,
+                  pt: 0,
+                  pb: 1.5,
+                }}
+              >
+                {isLoading ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+                    <Typography variant="body1" color="text.secondary">
+                      Lade Mitarbeiter...
+                    </Typography>
+                  </Box>
+                ) : error ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+                    <Typography variant="body1" color="error">
+                      Fehler beim Laden der Mitarbeiter
+                    </Typography>
+                  </Box>
+                ) : filteredEmployees.length === 0 ? (
+                  <Box display="flex" flexDirection="column" alignItems="center" py={4}>
+                    <PersonIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="body1" color="text.secondary">
+                      {searchTerm ? 'Keine Mitarbeiter gefunden' : 'Keine Mitarbeiter verfügbar'}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Grid container spacing={1.5}>
+                    {filteredEmployees.map((employee: Employee) => (
+                      <Grid size={{ xs: 12, sm: 6 }} key={employee.id}>
+                        <Card
+                          onClick={() => handleUserSelect(employee.id as number)}
+                          sx={{
+                            cursor: 'pointer',
+                            borderRadius: 2,
+                            border:
+                              selectedUserId === employee.id
+                                ? '2px solid #007AFF'
+                                : '1px solid rgba(0, 0, 0, 0.08)',
+                            background:
+                              selectedUserId === employee.id
+                                ? 'linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)'
+                                : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                              borderColor:
+                                selectedUserId === employee.id
+                                  ? '#007AFF'
+                                  : 'rgba(0, 122, 255, 0.3)',
+                            },
+                          }}
+                        >
+                          <CardContent sx={{ p: 1.5 }}>
+                            <Box display="flex" alignItems="center">
+                              <Avatar
                                 sx={{
+                                  width: 36,
+                                  height: 36,
+                                  bgcolor: selectedUserId === employee.id ? '#007AFF' : '#f0f0f0',
+                                  color: selectedUserId === employee.id ? 'white' : '#666',
+                                  mr: 1.5,
+                                  fontSize: '1rem',
                                   fontWeight: 600,
-                                  color: '#1d1d1f',
-                                  fontSize: '0.95rem',
-                                  lineHeight: 1.3,
-                                  mb: 0.25,
                                 }}
                               >
-                                {`${employee.first_name} ${employee.last_name}`}
-                              </Typography>
-                              <Box display="flex" alignItems="center" gap={0.5} flexWrap="wrap">
-                                {employee.function && (
-                                  <Chip
-                                    label={employee.function}
-                                    size="small"
-                                    sx={{
-                                      bgcolor: getEmployeeColor(employee.function),
-                                      color: 'white',
-                                      fontSize: '0.7rem',
-                                      fontWeight: 500,
-                                      height: 18,
-                                      '& .MuiChip-label': {
-                                        px: 0.75,
-                                      },
-                                    }}
-                                  />
-                                )}
-                                {employee.city && (
-                                  <Chip
-                                    label={employee.city}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{
-                                      fontSize: '0.7rem',
-                                      borderColor: 'rgba(0, 0, 0, 0.12)',
-                                      height: 18,
-                                      '& .MuiChip-label': {
-                                        px: 0.75,
-                                      },
-                                    }}
-                                  />
-                                )}
+                                {getInitials(employee.first_name, employee.last_name)}
+                              </Avatar>
+                              <Box flex={1}>
+                                <Typography
+                                  variant="subtitle1"
+                                  component="h3"
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: '#1d1d1f',
+                                    fontSize: '0.95rem',
+                                    lineHeight: 1.3,
+                                    mb: 0.25,
+                                  }}
+                                >
+                                  {`${employee.first_name} ${employee.last_name}`}
+                                </Typography>
+                                <Box display="flex" alignItems="center" gap={0.5} flexWrap="wrap">
+                                  {employee.function && (
+                                    <Chip
+                                      label={employee.function}
+                                      size="small"
+                                      sx={{
+                                        bgcolor: getEmployeeColor(employee.function),
+                                        color: 'white',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 500,
+                                        height: 18,
+                                        '& .MuiChip-label': {
+                                          px: 0.75,
+                                        },
+                                      }}
+                                    />
+                                  )}
+                                  {employee.city && (
+                                    <Chip
+                                      label={employee.city}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        fontSize: '0.7rem',
+                                        borderColor: 'rgba(0, 0, 0, 0.12)',
+                                        height: 18,
+                                        '& .MuiChip-label': {
+                                          px: 0.75,
+                                        },
+                                      }}
+                                    />
+                                  )}
+                                </Box>
                               </Box>
+                              <IconButton
+                                size="small"
+                                sx={{
+                                  color:
+                                    selectedUserId === employee.id
+                                      ? '#007AFF'
+                                      : 'rgba(0, 0, 0, 0.3)',
+                                  ml: 0.5,
+                                  '& .MuiSvgIcon-root': {
+                                    fontSize: '1.2rem',
+                                  },
+                                }}
+                              >
+                                {selectedUserId === employee.id ? (
+                                  <CheckCircleIcon />
+                                ) : (
+                                  <RadioButtonUncheckedIcon />
+                                )}
+                              </IconButton>
                             </Box>
-                            <IconButton
-                              size="small"
-                              sx={{
-                                color: selectedUserId === employee.id ? '#007AFF' : 'rgba(0, 0, 0, 0.3)',
-                                ml: 0.5,
-                                '& .MuiSvgIcon-root': {
-                                  fontSize: '1.2rem',
-                                },
-                              }}
-                            >
-                              {selectedUserId === employee.id ? (
-                                <CheckCircleIcon />
-                              ) : (
-                                <RadioButtonUncheckedIcon />
-                              )}
-                            </IconButton>
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </Box>
             )}
 
             {/* Tour-Area selector - only show when filter is 'all' or 'aw' */}
             {(activeFilter === 'all' || activeFilter === 'aw') && (
-            <Box sx={{ px: 3, pt: 0, pb: 2 }}>
-              <TourAreaSelector
-                selectedArea={selectedTourArea}
-                onAreaSelect={handleTourAreaSelect}
-                isExpanded={isTourAreaExpanded || activeFilter === 'aw'}
-                onToggleExpanded={() => setIsTourAreaExpanded(!isTourAreaExpanded)}
-              />
-            </Box>
+              <Box sx={{ px: 3, pt: 0, pb: 2 }}>
+                <TourAreaSelector
+                  selectedArea={selectedTourArea}
+                  onAreaSelect={handleTourAreaSelect}
+                  isExpanded={isTourAreaExpanded || activeFilter === 'aw'}
+                  onToggleExpanded={() => setIsTourAreaExpanded(!isTourAreaExpanded)}
+                />
+              </Box>
             )}
           </Sheet.Scroller>
         </Sheet.Content>
@@ -536,4 +552,4 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
   );
 };
 
-export default UserSearchDrawer; 
+export default UserSearchDrawer;

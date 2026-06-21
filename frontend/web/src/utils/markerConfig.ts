@@ -1,6 +1,12 @@
 import { getColorForVisitType, getColorForEmployeeType } from './mapUtils';
 
-export const createMarkerIcon = (type: 'employee' | 'patient' | 'tour_area' | 'tour_patient' | 'custom' | 'pflegeheim', employeeType?: string, visitType?: string, isGray: boolean = false, area?: string) => {
+export const createMarkerIcon = (
+  type: 'employee' | 'patient' | 'tour_area' | 'tour_patient' | 'custom' | 'pflegeheim',
+  employeeType?: string,
+  visitType?: string,
+  isGray: boolean = false,
+  area?: string
+) => {
   if (isGray) {
     return {
       path: google.maps.SymbolPath.CIRCLE,
@@ -28,13 +34,17 @@ export const createMarkerIcon = (type: 'employee' | 'patient' | 'tour_area' | 't
     const getAreaColor = (area?: string) => {
       if (area === 'Wochenend-Touren') return '#ff9800'; // Orange for general weekend marker
       switch (area) {
-        case 'Nord': return '#1976d2'; // Blue
-        case 'Mitte': return '#7b1fa2'; // Purple
-        case 'Süd': return '#388e3c'; // Green
-        default: return '#ff9800'; // Orange
+        case 'Nord':
+          return '#1976d2'; // Blue
+        case 'Mitte':
+          return '#7b1fa2'; // Purple
+        case 'Süd':
+          return '#388e3c'; // Green
+        default:
+          return '#ff9800'; // Orange
       }
     };
-    
+
     return {
       path: google.maps.SymbolPath.CIRCLE,
       fillColor: getAreaColor(area),
@@ -94,7 +104,7 @@ export const createMarkerLabel = (count?: number, visitType?: string, label?: st
       text: count.toString(),
       color: 'white',
       fontWeight: 'bold',
-      fontSize: '12px'
+      fontSize: '12px',
     };
   }
 
@@ -104,9 +114,9 @@ export const createMarkerLabel = (count?: number, visitType?: string, label?: st
       text: label,
       color: 'white',
       fontWeight: 'bold',
-      fontSize: '14px'
+      fontSize: '14px',
     };
   }
 
   return undefined;
-}; 
+};

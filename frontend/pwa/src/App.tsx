@@ -26,7 +26,8 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     h4: {
       fontWeight: 600,
     },
@@ -78,12 +79,7 @@ const App: React.FC = () => {
         <Router>
           <Routes>
             <Route path="/install" element={<InstallPrompt />} />
-            <Route 
-              path="/" 
-              element={
-                isInstalled ? <MainLayout /> : <Navigate to="/install" />
-              } 
-            />
+            <Route path="/" element={isInstalled ? <MainLayout /> : <Navigate to="/install" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>

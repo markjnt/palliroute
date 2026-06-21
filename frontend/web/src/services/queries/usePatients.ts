@@ -20,10 +20,11 @@ export const patientKeys = {
 // Hook zum Laden aller Patienten
 export const usePatients = (overrideCalendarWeek?: number) => {
   const { selectedCalendarWeek } = useCalendarWeekStore();
-  
+
   // Verwende override oder den ausgewählten Wert aus dem Store
-  const calendarWeek = overrideCalendarWeek !== undefined ? overrideCalendarWeek : selectedCalendarWeek;
-  
+  const calendarWeek =
+    overrideCalendarWeek !== undefined ? overrideCalendarWeek : selectedCalendarWeek;
+
   return useQuery({
     queryKey: [...patientKeys.lists(), { calendarWeek }],
     queryFn: () => patientsApi.getAll(calendarWeek || undefined),
@@ -53,20 +54,20 @@ export const usePatientImport = () => {
   const queryClient = useQueryClient();
   const { setLastPatientImportTime } = useLastUpdateStore();
   const { setAvailableCalendarWeeks, getCurrentCalendarWeek } = useCalendarWeekStore();
-  
+
   return useMutation({
     mutationFn: () => patientsApi.import(),
     onSuccess: async () => {
       // Patienten-Daten im Cache invalidieren
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
-      queryClient.invalidateQueries({ queryKey: appointmentKeys.all});
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
       queryClient.invalidateQueries({ queryKey: employeeKeys.all });
       queryClient.invalidateQueries({ queryKey: employeePlanningKeys.all });
-      
+
       // Update last import time in store
       setLastPatientImportTime(new Date());
-      
+
       // Lade verfügbare Kalenderwochen und setze sie im Store
       try {
         const calendarWeeks = await patientsApi.getCalendarWeeks();

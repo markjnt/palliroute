@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      docker: ${{ steps.filter.outputs.docker }}
+      github: ${{ steps.filter.outputs.github }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'backend/pyproject.toml'
+            frontend:
+              - 'frontend/**'
+            docker:
+              - 'docker/**'
+              - 'docker-compose.yml'
+              - '.dockerignore'
+            github:
+              - '.github/**'
+
+  backend-ci:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.github == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-backend
+      - name: Ruff lint
+        run: ruff check backend
+      - name: Ruff format
+        run: ruff format --check backend
+      - name: Import smoke test
+        run: python -m compileall backend/app
+      - name: Unit tests
+        run: |
+          if find backend -path '*/test_*.py' -o -path '*/tests/test_*.py' | grep -q .; then
+            pytest backend --tb=short -q
+          else
+            echo "::notice::No unit tests yet — skipping pytest"
+          fi
+      - name: Dependency audit
+        run: pip-audit -r backend/requirements.txt
+
+  frontend-ci:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.github == 'true'
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+      - name: ESLint
+        run: npm run lint
+      - name: Prettier
+        run: npm run format:check
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Unit tests
+        run: |
+          if find . -path '*/__tests__/*' -name '*.test.*' -o -path '*/__tests__/*' -name '*.spec.*' | grep -q .; then
+            npm test
+          else
+            echo "::notice::No unit tests yet — skipping vitest"
+          fi
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+  docker-ci:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      needs.changes.outputs.docker == 'true' ||
+      needs.changes.outputs.backend == 'true' ||
+      needs.changes.outputs.frontend == 'true' ||
+      needs.changes.outputs.github == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: docker/backend.Dockerfile
+      - name: Lint frontend web Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: docker/frontend_web.Dockerfile
+      - name: Lint frontend PWA Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: docker/frontend_pwa.Dockerfile
+      - uses: docker/setup-buildx-action@v3
+      - name: Verify backend API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/backend.Dockerfile
+          target: main
+          push: false
+          load: true
+          tags: palliroute-backend-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Verify backend scheduler image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/backend.Dockerfile
+          target: scheduler-image
+          push: false
+          load: true
+          tags: palliroute-backend-scheduler:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Verify frontend web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/frontend_web.Dockerfile
+          push: false
+          load: true
+          tags: palliroute-frontend-web:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Verify frontend PWA image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/frontend_pwa.Dockerfile
+          push: false
+          load: true
+          tags: palliroute-frontend-pwa:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  security-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

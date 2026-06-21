@@ -107,7 +107,12 @@ const timeMap: Record<string, string> = {
 
 function formatDateGerman(dateIso: string): string {
   const d = new Date(dateIso);
-  return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+  return d.toLocaleDateString('de-DE', {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 function getDutyTypeForRow(row: AplanoCompareEntry): DutyType | null {
@@ -115,8 +120,10 @@ function getDutyTypeForRow(row: AplanoCompareEntry): DutyType | null {
   if (row.category === 'RB_WEEKDAY' && row.role === 'NURSING') return 'rb_nursing_weekday';
   if (row.category === 'RB_WEEKDAY' && row.role === 'DOCTOR') return 'rb_doctors_weekday';
   if (row.category === 'RB_WEEKEND' && row.role === 'DOCTOR') return 'rb_doctors_weekend';
-  if (row.category === 'RB_WEEKEND' && row.role === 'NURSING' && row.time_of_day === 'DAY') return 'rb_nursing_weekend_day';
-  if (row.category === 'RB_WEEKEND' && row.role === 'NURSING' && row.time_of_day === 'NIGHT') return 'rb_nursing_weekend_night';
+  if (row.category === 'RB_WEEKEND' && row.role === 'NURSING' && row.time_of_day === 'DAY')
+    return 'rb_nursing_weekend_day';
+  if (row.category === 'RB_WEEKEND' && row.role === 'NURSING' && row.time_of_day === 'NIGHT')
+    return 'rb_nursing_weekend_night';
   return null;
 }
 
@@ -124,7 +131,8 @@ function getDutyLabelForRow(row: AplanoCompareEntry): string {
   const dutyType = getDutyTypeForRow(row);
   const area = row.area as OnCallArea;
   if (!dutyType) return `${categoryMap[row.category] ?? row.category} ${row.area}`;
-  const source = dutyType.includes('weekend') || dutyType.includes('aw_') ? WEEKEND_DUTIES : WEEKDAY_DUTIES;
+  const source =
+    dutyType.includes('weekend') || dutyType.includes('aw_') ? WEEKEND_DUTIES : WEEKDAY_DUTIES;
   const match = source.find((d) => d.type === dutyType && d.area === area);
   return match?.shortLabel ?? `${categoryMap[row.category] ?? row.category} ${row.area}`;
 }
@@ -202,7 +210,14 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
           pb: 2,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 2,
+          }}
+        >
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -242,7 +257,14 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
           <Alert severity="error">Aplano ist momentan nicht verfügbar.</Alert>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5, pt: 1 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1, mb: 1 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: 1,
+                mb: 1,
+              }}
+            >
               <Card
                 variant="outlined"
                 sx={{
@@ -253,7 +275,14 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                 }}
               >
                 <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.75 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 0.75,
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                       <CheckCircleOutlineIcon color="success" sx={{ fontSize: 16 }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
@@ -276,7 +305,14 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                 }}
               >
                 <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.75 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 0.75,
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                       <WarningAmberIcon color="warning" sx={{ fontSize: 16 }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
@@ -299,7 +335,14 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                 }}
               >
                 <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.75 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 0.75,
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                       <ErrorOutlineIcon color="error" sx={{ fontSize: 16 }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
@@ -353,7 +396,15 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
               </Box>
             </Box>
 
-            <Box sx={{ maxHeight: 460, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Box
+              sx={{
+                maxHeight: 460,
+                overflow: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+              }}
+            >
               {filteredRows.length === 0 ? (
                 <Alert severity="info">Keine Einträge für den gewählten Filter.</Alert>
               ) : (
@@ -373,7 +424,9 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                     </Typography>
                     {dayRows.map((row, idx) => {
                       const dutyType = getDutyTypeForRow(row);
-                      const dutyColor = dutyType ? getDutyColor(dutyType, row.area as OnCallArea, true) : '#e0e0e0';
+                      const dutyColor = dutyType
+                        ? getDutyColor(dutyType, row.area as OnCallArea, true)
+                        : '#e0e0e0';
                       return (
                         <Box
                           key={`${row.date}-${row.category}-${row.role}-${row.time_of_day}-${idx}`}
@@ -391,7 +444,15 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                             },
                           }}
                         >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'center', mb: 1 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              gap: 1,
+                              alignItems: 'center',
+                              mb: 1,
+                            }}
+                          >
                             <Box
                               sx={{
                                 display: 'inline-flex',
@@ -404,7 +465,10 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                               }}
                             >
                               {getDutyIconForRow(row)}
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700, color: 'text.primary' }}
+                              >
                                 {getDutyLabelForRow(row)}
                               </Typography>
                             </Box>
@@ -422,16 +486,36 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                               gap: 1,
                             }}
                           >
-                            <Box sx={{ p: 1, borderRadius: 2, backgroundColor: 'rgba(25,118,210,0.06)' }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(25,118,210,0.06)',
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'block', mb: 0.25 }}
+                              >
                                 PalliRoute
                               </Typography>
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                 {row.employee_internal?.name ?? '—'}
                               </Typography>
                             </Box>
-                            <Box sx={{ p: 1, borderRadius: 2, backgroundColor: 'rgba(2,136,209,0.08)' }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
+                            <Box
+                              sx={{
+                                p: 1,
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(2,136,209,0.08)',
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'block', mb: 0.25 }}
+                              >
                                 Aplano
                               </Typography>
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -443,7 +527,9 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                           {row.reason && (
                             <Box sx={{ mt: 1 }}>
                               <Alert severity="info" sx={{ py: 0, borderRadius: 2 }}>
-                                <Typography variant="caption">Hinweis: {humanizeReason(row.reason)}</Typography>
+                                <Typography variant="caption">
+                                  Hinweis: {humanizeReason(row.reason)}
+                                </Typography>
                               </Alert>
                             </Box>
                           )}

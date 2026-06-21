@@ -23,12 +23,14 @@ export const MapView: React.FC<MapViewProps> = ({ onMapClick }) => {
 
   if (isLoading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        height: '100%'
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -39,4 +41,4 @@ export const MapView: React.FC<MapViewProps> = ({ onMapClick }) => {
       <MapContainer apiKey={apiKey!} onMapClick={onMapClick} />
     </Box>
   );
-}; 
+};

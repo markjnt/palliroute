@@ -25,4 +25,3 @@ export const useEmployees = () => {
     refetchOnMount: true, // Mitarbeiter beim Mount refetchen
   });
 };
-

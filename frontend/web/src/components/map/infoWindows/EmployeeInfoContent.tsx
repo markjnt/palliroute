@@ -16,15 +16,15 @@ interface EmployeeInfoContentProps {
 /**
  * Component for displaying employee information in marker info windows
  */
-export const EmployeeInfoContent: React.FC<EmployeeInfoContentProps> = ({ 
-  marker, 
-  employees, 
-  routes 
+export const EmployeeInfoContent: React.FC<EmployeeInfoContentProps> = ({
+  marker,
+  employees,
+  routes,
 }) => {
-  const employee = employees.find(e => e.id === marker.employeeId);
+  const employee = employees.find((e) => e.id === marker.employeeId);
   if (!employee) return null;
-  
-  const route = routes.find(r => r.employee_id === employee.id);
+
+  const route = routes.find((r) => r.employee_id === employee.id);
   const routeDuration = route?.total_duration ?? 0; // in Minuten
   const workHours = employee.work_hours || 0;
   const targetMinutes = Math.round(420 * (workHours / 100));
@@ -34,66 +34,74 @@ export const EmployeeInfoContent: React.FC<EmployeeInfoContentProps> = ({
 
   return (
     <>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        fontWeight: 'bold',
-        borderBottom: 1,
-        borderColor: 'divider',
-        pb: 0.5,
-        mb: 1,
-        p: 0.5,
-        bgcolor: 'rgba(52, 52, 52, 0.1)',
-        borderRadius: 1
-      }}>
-        <Typography variant="subtitle1" component="div" sx={{ 
-          fontWeight: 'bold',
-          flexGrow: 1,
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1
-        }}>
+          fontWeight: 'bold',
+          borderBottom: 1,
+          borderColor: 'divider',
+          pb: 0.5,
+          mb: 1,
+          p: 0.5,
+          bgcolor: 'rgba(52, 52, 52, 0.1)',
+          borderRadius: 1,
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          component="div"
+          sx={{
+            fontWeight: 'bold',
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
           {marker.title.split(' - ')[0]}
           <span style={{ fontWeight: 500, color: '#888', marginLeft: 8 }}>{workHours}%</span>
         </Typography>
       </Box>
-      
+
       {/* Employee function/role */}
       {marker.employeeType && (
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: 1.5,
-          p: 0.5,
-          bgcolor: `${getColorForEmployeeType(marker.employeeType)}20`,
-          borderRadius: 1
-        }}>
-          <Box 
-            sx={{ 
-              width: 12, 
-              height: 12, 
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mb: 1.5,
+            p: 0.5,
+            bgcolor: `${getColorForEmployeeType(marker.employeeType)}20`,
+            borderRadius: 1,
+          }}
+        >
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
               borderRadius: '50%',
               bgcolor: getColorForEmployeeType(marker.employeeType),
-              mr: 1
-            }} 
+              mr: 1,
+            }}
           />
           <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
             {marker.employeeType}
           </Typography>
         </Box>
       )}
-      
+
       {/* Address with area display and vertical divider */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
         {employee.area && (
           <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
-            <NavigationIcon 
-              fontSize="small" 
-              sx={{ 
-                mr: 0.5, 
+            <NavigationIcon
+              fontSize="small"
+              sx={{
+                mr: 0.5,
                 color: 'text.secondary',
-                transform: employee.area.includes('Nordkreis') ? 'rotate(0deg)' : 'rotate(180deg)'
-              }} 
+                transform: employee.area.includes('Nordkreis') ? 'rotate(0deg)' : 'rotate(180deg)',
+              }}
             />
             <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
               {employee.area.includes('Nordkreis') ? 'N' : 'S'}
@@ -102,11 +110,12 @@ export const EmployeeInfoContent: React.FC<EmployeeInfoContentProps> = ({
           </Box>
         )}
         <Typography variant="body2" color="text.secondary">
-          {employee.street}<br/>
+          {employee.street}
+          <br />
           {employee.zip_code} {employee.city}
         </Typography>
       </Box>
-      
+
       {/* TourInfoBox für alle Mitarbeiter */}
       {employee.id && (
         <TourInfoBox

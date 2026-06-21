@@ -20,7 +20,7 @@ interface LayoutState {
   // State
   leftSidebar: SidebarState;
   rightSidebar: SidebarState;
-  
+
   // Actions
   setLeftSidebarFullscreen: (isFullscreen: boolean) => void;
   setRightSidebarFullscreen: (isFullscreen: boolean) => void;
@@ -45,41 +45,41 @@ export const useLayoutStore = create<LayoutState>()(
         width: Math.max(DEFAULT_SIDEBAR_WIDTH, MIN_RIGHT_SIDEBAR_WIDTH),
         isCollapsed: false,
       },
-      
+
       // Actions
-      setLeftSidebarFullscreen: (isFullscreen) => 
+      setLeftSidebarFullscreen: (isFullscreen) =>
         set((state) => ({
-          leftSidebar: { 
-            ...state.leftSidebar, 
+          leftSidebar: {
+            ...state.leftSidebar,
             isFullscreen,
             // If setting to fullscreen, ensure sidebar is not collapsed
-            isCollapsed: isFullscreen ? false : state.leftSidebar.isCollapsed 
+            isCollapsed: isFullscreen ? false : state.leftSidebar.isCollapsed,
           },
           // If setting left sidebar to fullscreen, ensure right is not fullscreen
-          rightSidebar: isFullscreen 
+          rightSidebar: isFullscreen
             ? { ...state.rightSidebar, isFullscreen: false }
-            : state.rightSidebar
+            : state.rightSidebar,
         })),
-      
-      setRightSidebarFullscreen: (isFullscreen) => 
+
+      setRightSidebarFullscreen: (isFullscreen) =>
         set((state) => ({
-          rightSidebar: { 
-            ...state.rightSidebar, 
+          rightSidebar: {
+            ...state.rightSidebar,
             isFullscreen,
             // If setting to fullscreen, ensure sidebar is not collapsed
-            isCollapsed: isFullscreen ? false : state.rightSidebar.isCollapsed 
+            isCollapsed: isFullscreen ? false : state.rightSidebar.isCollapsed,
           },
           // If setting right sidebar to fullscreen, ensure left is not fullscreen
-          leftSidebar: isFullscreen 
+          leftSidebar: isFullscreen
             ? { ...state.leftSidebar, isFullscreen: false }
-            : state.leftSidebar
+            : state.leftSidebar,
         })),
-      
-      setLeftSidebarWidth: (width) => 
+
+      setLeftSidebarWidth: (width) =>
         set((state) => ({
-          leftSidebar: { ...state.leftSidebar, width }
+          leftSidebar: { ...state.leftSidebar, width },
         })),
-      
+
       setRightSidebarWidth: (width) =>
         set((state) => ({
           rightSidebar: {
@@ -87,28 +87,28 @@ export const useLayoutStore = create<LayoutState>()(
             width: Math.max(MIN_RIGHT_SIDEBAR_WIDTH, width),
           },
         })),
-      
-      setLeftSidebarCollapsed: (isCollapsed) => 
+
+      setLeftSidebarCollapsed: (isCollapsed) =>
         set((state) => ({
-          leftSidebar: { 
-            ...state.leftSidebar, 
+          leftSidebar: {
+            ...state.leftSidebar,
             isCollapsed,
             // If uncollapsing, ensure it's not in fullscreen
-            isFullscreen: isCollapsed ? false : state.leftSidebar.isFullscreen 
-          }
+            isFullscreen: isCollapsed ? false : state.leftSidebar.isFullscreen,
+          },
         })),
-      
-      setRightSidebarCollapsed: (isCollapsed) => 
+
+      setRightSidebarCollapsed: (isCollapsed) =>
         set((state) => ({
-          rightSidebar: { 
-            ...state.rightSidebar, 
+          rightSidebar: {
+            ...state.rightSidebar,
             isCollapsed,
             // If uncollapsing, ensure it's not in fullscreen
-            isFullscreen: isCollapsed ? false : state.rightSidebar.isFullscreen 
-          }
+            isFullscreen: isCollapsed ? false : state.rightSidebar.isFullscreen,
+          },
         })),
-      
-      resetLayout: () => 
+
+      resetLayout: () =>
         set({
           leftSidebar: {
             isFullscreen: false,
@@ -119,8 +119,8 @@ export const useLayoutStore = create<LayoutState>()(
             isFullscreen: false,
             width: Math.max(DEFAULT_SIDEBAR_WIDTH, MIN_RIGHT_SIDEBAR_WIDTH),
             isCollapsed: false,
-          }
-        })
+          },
+        }),
     }),
     {
       name: 'layout-storage', // Name for localStorage entry
@@ -143,4 +143,4 @@ export const useLayoutStore = create<LayoutState>()(
       },
     }
   )
-); 
+);

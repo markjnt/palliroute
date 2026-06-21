@@ -33,13 +33,13 @@ export const usePatient = (id: number) => {
 // Hook für Excel-Import von Patienten
 export const usePatientImport = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (file: File) => patientsApi.import(file),
     onSuccess: () => {
       // Patienten-Daten im Cache invalidieren
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
-      queryClient.invalidateQueries({ queryKey: appointmentKeys.all});
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
       queryClient.invalidateQueries({ queryKey: employeeKeys.all });
     },

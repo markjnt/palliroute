@@ -1,7 +1,13 @@
 import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Assignment, DutyType, OnCallArea } from '../../../types/models';
-import { getCalendarDays, getWeekDays, formatDate, getCalendarWeek, isWeekendLayoutDate } from '../../../utils/oncall/dateUtils';
+import {
+  getCalendarDays,
+  getWeekDays,
+  formatDate,
+  getCalendarWeek,
+  isWeekendLayoutDate,
+} from '../../../utils/oncall/dateUtils';
 import { WEEKDAY_DUTIES, WEEKEND_DUTIES, WEEK_DAYS } from '../../../utils/oncall/constants';
 import { useNrwpHolidaysForYears } from '../../../services/queries/useConfig';
 import { CalendarDay } from './CalendarDay';
@@ -19,7 +25,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   assignmentsMap,
   onDutyClick,
 }) => {
-  const displayDates = viewMode === 'month' ? getCalendarDays(currentDate) : getWeekDays(currentDate);
+  const displayDates =
+    viewMode === 'month' ? getCalendarDays(currentDate) : getWeekDays(currentDate);
 
   const holidayYears = useMemo(() => {
     const years = new Set<number>();
@@ -34,25 +41,25 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   // Group dates by week for month view
   const weeks = useMemo(() => {
     if (viewMode !== 'month') return [];
-    
+
     const weeks: Array<Array<Date | null>> = [];
     let currentWeek: Array<Date | null> = [];
-    
+
     displayDates.forEach((date, idx) => {
       currentWeek.push(date);
-      
+
       // Every 7 days, start a new week
       if ((idx + 1) % 7 === 0) {
         weeks.push(currentWeek);
         currentWeek = [];
       }
     });
-    
+
     // Add remaining days if any
     if (currentWeek.length > 0) {
       weeks.push(currentWeek);
     }
-    
+
     return weeks;
   }, [displayDates, viewMode]);
 
@@ -70,12 +77,12 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Get calendar week for a date (use Monday of the week)
   const getWeekCalendarWeek = (week: Array<Date | null>): number | null => {
-    const monday = week.find(d => d !== null && d.getDay() === 1); // Monday
+    const monday = week.find((d) => d !== null && d.getDay() === 1); // Monday
     if (monday) {
       return getCalendarWeek(monday);
     }
     // If no Monday found, use first non-null date
-    const firstDate = week.find(d => d !== null);
+    const firstDate = week.find((d) => d !== null);
     if (firstDate) {
       return getCalendarWeek(firstDate);
     }
@@ -132,7 +139,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         {/* Calendar days grouped by week */}
         {weeks.map((week, weekIdx) => {
           const kw = getWeekCalendarWeek(week);
-          
+
           return (
             <Box
               key={weekIdx}
@@ -170,7 +177,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                   </Typography>
                 )}
               </Box>
-              
+
               {/* Days of the week */}
               {week.map((date, dayIdx) => {
                 if (date === null) {
@@ -274,4 +281,3 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     </Box>
   );
 };
-

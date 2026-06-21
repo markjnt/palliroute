@@ -18,12 +18,16 @@ export const PflegeheimInfoContent: React.FC<PflegeheimInfoContentProps> = ({ ma
     <>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <BusinessIcon sx={{ color: '#388e3c', fontSize: 20 }} />
-        <Typography variant="subtitle1" component="div" sx={{
-          fontWeight: 'bold',
-          borderBottom: 1,
-          borderColor: 'divider',
-          pb: 0.5,
-        }}>
+        <Typography
+          variant="subtitle1"
+          component="div"
+          sx={{
+            fontWeight: 'bold',
+            borderBottom: 1,
+            borderColor: 'divider',
+            pb: 0.5,
+          }}
+        >
           {name}
         </Typography>
       </Box>

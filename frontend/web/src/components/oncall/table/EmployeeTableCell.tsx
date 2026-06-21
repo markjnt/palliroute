@@ -19,7 +19,12 @@ interface EmployeeTableCellProps {
   /** Mo–Fr-Feiertag: wie Wochenend-Zelle (Duties/Farben). */
   weekendLayout?: boolean;
   onClick: () => void;
-  onMoveAssignment: (assignmentId: number, targetEmployeeId: number, sourceDate: string, targetDate: string) => Promise<void>;
+  onMoveAssignment: (
+    assignmentId: number,
+    targetEmployeeId: number,
+    sourceDate: string,
+    targetDate: string
+  ) => Promise<void>;
 }
 
 export const EmployeeTableCell: React.FC<EmployeeTableCellProps> = ({
@@ -186,10 +191,10 @@ export const EmployeeTableCell: React.FC<EmployeeTableCellProps> = ({
         backgroundColor: isTodayDate
           ? 'action.selected'
           : isWeekendDay
-          ? 'action.hover'
-          : hasAnyAssignment
-          ? 'background.paper'
-          : 'action.hover',
+            ? 'action.hover'
+            : hasAnyAssignment
+              ? 'background.paper'
+              : 'action.hover',
         borderRadius: 0.75,
         cursor: 'pointer',
         transition: 'all 0.2s ease',
@@ -251,4 +256,3 @@ export const EmployeeTableCell: React.FC<EmployeeTableCellProps> = ({
     </Box>
   );
 };
-

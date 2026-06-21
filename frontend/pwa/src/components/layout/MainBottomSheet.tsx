@@ -20,9 +20,9 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
   ({ isOpen, onClose }, ref) => {
     const sheetRef = useRef<SheetRef>(null);
     const [currentSnap, setCurrentSnap] = useState(1);
-    const shouldRenderSheet = useDeferredSheetMount(isOpen);
-  const { resetForNewUser } = useAdditionalRoutesStore();
-  const { selectedUserId, selectedTourArea } = useUserStore();
+    const { shouldRender: shouldRenderSheet, onCloseEnd } = useDeferredSheetMount(isOpen);
+    const { resetForNewUser } = useAdditionalRoutesStore();
+    const { selectedUserId, selectedTourArea } = useUserStore();
     const { isDragging } = useDragStore();
 
     const snapPoints = [0.85, 0];
@@ -57,20 +57,24 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
           <Sheet.Container>
             <Sheet.Header>
               {/* Drag handle */}
-              <div style={{
+              <div
+                style={{
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
                   padding: '8px 0',
                   cursor: 'grab',
-                  }}>
-                  <div style={{
-                      width: '60px',
-                      height: '4px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                      borderRadius: '8px',
-                  }} />
-                  </div>
+                }}
+              >
+                <div
+                  style={{
+                    width: '60px',
+                    height: '4px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '8px',
+                  }}
+                />
+              </div>
             </Sheet.Header>
             <Sheet.Content style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <Sheet.Scroller draggableAt="top" style={{ flex: 1, minHeight: 0 }}>

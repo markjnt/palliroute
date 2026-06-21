@@ -12,11 +12,11 @@ interface CapacityOverviewProps {
   activeFilter?: FilterType;
 }
 
-export const CapacityOverview: React.FC<CapacityOverviewProps> = ({ 
-  employees, 
-  employeeCapacities, 
-  currentDate, 
-  activeFilter = 'all' 
+export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
+  employees,
+  employeeCapacities,
+  currentDate,
+  activeFilter = 'all',
 }) => {
   // Create a map of capacities by employee ID
   const capacitiesMap = useMemo(() => {
@@ -32,9 +32,9 @@ export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
   const hasExceededCapacity = (employee: Employee): boolean => {
     const capacities = capacitiesMap.get(employee.id || 0);
     if (!capacities || capacities.length === 0) return false;
-    
+
     // Check if any capacity has assigned > max_count OR if assigned > 0 but max_count = 0
-    return capacities.some(cap => {
+    return capacities.some((cap) => {
       const assigned = cap.assigned ?? 0;
       return assigned > cap.max_count || (cap.max_count === 0 && assigned > 0);
     });
@@ -48,13 +48,13 @@ export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
     if (activeFilter !== 'all') {
       switch (activeFilter) {
         case 'pflege':
-          filtered = filtered.filter((emp: Employee) => 
-            emp.function === 'Pflegekraft' || emp.function === 'PDL'
+          filtered = filtered.filter(
+            (emp: Employee) => emp.function === 'Pflegekraft' || emp.function === 'PDL'
           );
           break;
         case 'arzt':
-          filtered = filtered.filter((emp: Employee) => 
-            emp.function === 'Arzt' || emp.function === 'Honorararzt'
+          filtered = filtered.filter(
+            (emp: Employee) => emp.function === 'Arzt' || emp.function === 'Honorararzt'
           );
           break;
       }
@@ -120,4 +120,3 @@ export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
     </Box>
   );
 };
-

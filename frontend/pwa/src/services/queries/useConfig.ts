@@ -24,7 +24,7 @@ export const useLastPatientImportTime = () => {
     queryFn: () => configApi.getLastImportTime(),
     refetchInterval: 30000, // Alle 30 Sekunden aktualisieren
   });
-}; 
+};
 
 /** Map YYYY-MM-DD -> holiday name for NRW (one calendar year). */
 export const useNrwpHolidaysMap = (year: number) => {

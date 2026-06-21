@@ -10,7 +10,7 @@ export const routeKeys = {
   details: () => [...routeKeys.all, 'detail'] as const,
   detail: (id: number) => [...routeKeys.details(), id] as const,
   byDay: () => [...routeKeys.all, 'byDay'] as const,
-  forDay: (date: string, employeeId?: number) => 
+  forDay: (date: string, employeeId?: number) =>
     [...routeKeys.byDay(), date, { employeeId }] as const,
 };
 
@@ -48,15 +48,15 @@ export const useRoutesForDay = (date: string, employeeId?: number) => {
 // Hook to optimize routes for a specific day
 export const useOptimizeRoutes = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ weekday, employeeId }: { weekday: string; employeeId: number }) => 
+    mutationFn: ({ weekday, employeeId }: { weekday: string; employeeId: number }) =>
       routesApi.optimizeRoutes(weekday, employeeId),
     onSuccess: () => {
       // Invalidate all route queries as they might be affected
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: routeKeys.byDay(),
-        exact: false 
+        exact: false,
       });
       queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
     },
@@ -65,15 +65,15 @@ export const useOptimizeRoutes = () => {
 
 export const useOptimizeTourAreaRoutes = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ weekday, area }: { weekday: string; area: string }) => 
+    mutationFn: ({ weekday, area }: { weekday: string; area: string }) =>
       routesApi.optimizeTourAreaRoutes(weekday, area),
     onSuccess: () => {
       // Invalidate all route queries as they might be affected
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: routeKeys.byDay(),
-        exact: false 
+        exact: false,
       });
       queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
     },
@@ -83,30 +83,30 @@ export const useOptimizeTourAreaRoutes = () => {
 // Hook to reorder an appointment in a route using direction or index
 export const useReorderAppointment = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ 
-      routeId, 
-      appointmentId, 
+    mutationFn: ({
+      routeId,
+      appointmentId,
       direction,
-      index
-    }: { 
-      routeId: number; 
-      appointmentId: number; 
+      index,
+    }: {
+      routeId: number;
+      appointmentId: number;
       direction?: 'up' | 'down';
       index?: number;
     }) => routesApi.reorderAppointment(routeId, appointmentId, { direction, index }),
     onSuccess: (updatedRoute) => {
       // Invalidate the specific route
-      queryClient.invalidateQueries({ 
-        queryKey: routeKeys.detail(updatedRoute.id)
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.detail(updatedRoute.id),
       });
-      
+
       // Also invalidate any lists that might contain this route
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: routeKeys.lists(),
-        exact: false 
+        exact: false,
       });
     },
   });
-}; 
+};

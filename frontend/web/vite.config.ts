@@ -9,10 +9,10 @@ export default defineConfig({
     react({
       jsxImportSource: '@emotion/react',
       babel: {
-        plugins: ['@emotion/babel-plugin', 'babel-plugin-react-compiler']
-      }
+        plugins: ['@emotion/babel-plugin', 'babel-plugin-react-compiler'],
+      },
     }),
-    tsconfigPaths()
+    tsconfigPaths(),
   ],
   resolve: {
     alias: {
@@ -48,5 +48,5 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-  }
-}); 
+  },
+});

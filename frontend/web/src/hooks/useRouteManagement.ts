@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 import { Route, Weekday } from '../types/models';
-import { useOptimizeRoutes, useOptimizeTourAreaRoutes, useReorderAppointment } from '../services/queries/useRoutes';
+import {
+  useOptimizeRoutes,
+  useOptimizeTourAreaRoutes,
+  useReorderAppointment,
+} from '../services/queries/useRoutes';
 import { useNotificationStore } from '../stores/useNotificationStore';
 
 interface UseRouteManagementProps {
@@ -21,7 +25,7 @@ interface RouteManagementReturn {
 export const useRouteManagement = ({
   selectedDay,
   employeeId,
-  area
+  area,
 }: UseRouteManagementProps): RouteManagementReturn => {
   const { setNotification, setLoading, resetLoading } = useNotificationStore();
   const optimizeRoutes = useOptimizeRoutes();
@@ -38,7 +42,7 @@ export const useRouteManagement = ({
       setLoading('Route wird optimiert...');
       await optimizeRoutes.mutateAsync({
         weekday: selectedDay.toLowerCase(),
-        employeeId
+        employeeId,
       });
       setNotification('Route erfolgreich optimiert', 'success');
     } catch (error) {
@@ -59,7 +63,7 @@ export const useRouteManagement = ({
       setLoading('AW-Tour wird optimiert...');
       await optimizeTourAreaRoutes.mutateAsync({
         weekday: selectedDay.toLowerCase(),
-        area
+        area,
       });
       setNotification('Route erfolgreich optimiert', 'success');
     } catch (error) {
@@ -70,39 +74,45 @@ export const useRouteManagement = ({
     }
   }, [area, selectedDay, optimizeTourAreaRoutes, setNotification, setLoading, resetLoading]);
 
-  const movePatientUp = useCallback(async (routeId: number, appointmentId: number) => {
-    try {
-      setLoading('Patient wird verschoben...');
-      await reorderAppointment.mutateAsync({
-        routeId,
-        appointmentId,
-        direction: 'up'
-      });
-      setNotification('Patient verschoben', 'success');
-    } catch (error) {
-      console.error('Fehler beim Verschieben des Patienten:', error);
-      setNotification('Fehler beim Verschieben des Patienten', 'error');
-    } finally {
-      resetLoading();
-    }
-  }, [reorderAppointment, setNotification, setLoading, resetLoading]);
+  const movePatientUp = useCallback(
+    async (routeId: number, appointmentId: number) => {
+      try {
+        setLoading('Patient wird verschoben...');
+        await reorderAppointment.mutateAsync({
+          routeId,
+          appointmentId,
+          direction: 'up',
+        });
+        setNotification('Patient verschoben', 'success');
+      } catch (error) {
+        console.error('Fehler beim Verschieben des Patienten:', error);
+        setNotification('Fehler beim Verschieben des Patienten', 'error');
+      } finally {
+        resetLoading();
+      }
+    },
+    [reorderAppointment, setNotification, setLoading, resetLoading]
+  );
 
-  const movePatientDown = useCallback(async (routeId: number, appointmentId: number) => {
-    try {
-      setLoading('Patient wird verschoben...');
-      await reorderAppointment.mutateAsync({
-        routeId,
-        appointmentId,
-        direction: 'down'
-      });
-      setNotification('Patient verschoben', 'success');
-    } catch (error) {
-      console.error('Fehler beim Verschieben des Patienten:', error);
-      setNotification('Fehler beim Verschieben des Patienten', 'error');
-    } finally {
-      resetLoading();
-    }
-  }, [reorderAppointment, setNotification, setLoading, resetLoading]);
+  const movePatientDown = useCallback(
+    async (routeId: number, appointmentId: number) => {
+      try {
+        setLoading('Patient wird verschoben...');
+        await reorderAppointment.mutateAsync({
+          routeId,
+          appointmentId,
+          direction: 'down',
+        });
+        setNotification('Patient verschoben', 'success');
+      } catch (error) {
+        console.error('Fehler beim Verschieben des Patienten:', error);
+        setNotification('Fehler beim Verschieben des Patienten', 'error');
+      } finally {
+        resetLoading();
+      }
+    },
+    [reorderAppointment, setNotification, setLoading, resetLoading]
+  );
 
   return {
     optimizeRoute,
@@ -110,6 +120,6 @@ export const useRouteManagement = ({
     movePatientUp,
     movePatientDown,
     isOptimizing: optimizeRoutes.isPending || optimizeTourAreaRoutes.isPending,
-    isReordering: reorderAppointment.isPending
+    isReordering: reorderAppointment.isPending,
   };
 };

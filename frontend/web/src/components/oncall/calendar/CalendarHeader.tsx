@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, ToggleButton, ToggleButtonGroup, Button } from '@mui/material';
+import {
+  Box,
+  Typography,
+  IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
+  Button,
+} from '@mui/material';
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
@@ -30,7 +37,17 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onAutoPlanningOpen,
   onUnplannedOpen,
 }) => {
-  const { viewMode, displayType, currentDate, setViewMode, setDisplayType, setCurrentDate, goToPrevious, goToNext, goToToday } = useOnCallPlanningStore();
+  const {
+    viewMode,
+    displayType,
+    currentDate,
+    setViewMode,
+    setDisplayType,
+    setCurrentDate,
+    goToPrevious,
+    goToNext,
+    goToToday,
+  } = useOnCallPlanningStore();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -87,7 +104,11 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             onClick={unplannedCount > 0 ? onUnplannedOpen : undefined}
             disabled={unplannedCount === 0}
             size="small"
-            title={unplannedCount > 0 ? `${unplannedCount} Schicht(en) diesen Monat noch nicht verplant` : 'Alle Schichten dieses Monats sind verplant'}
+            title={
+              unplannedCount > 0
+                ? `${unplannedCount} Schicht(en) diesen Monat noch nicht verplant`
+                : 'Alle Schichten dieses Monats sind verplant'
+            }
             sx={{
               textTransform: 'none',
               fontWeight: 600,
@@ -311,9 +332,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               color: 'text.primary',
             }}
           >
-            {viewMode === 'month'
-              ? formatMonthYear(currentDate)
-              : formatWeekWithKW(actualDates)}
+            {viewMode === 'month' ? formatMonthYear(currentDate) : formatWeekWithKW(actualDates)}
           </Typography>
         </Box>
       </Box>
@@ -328,4 +347,3 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     </Box>
   );
 };
-

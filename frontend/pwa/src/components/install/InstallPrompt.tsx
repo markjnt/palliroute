@@ -33,13 +33,13 @@ const InstallPrompt: React.FC = () => {
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
+
     if (outcome === 'accepted') {
       console.log('User accepted the install prompt');
     } else {
       console.log('User dismissed the install prompt');
     }
-    
+
     setDeferredPrompt(null);
     setShowInstallButton(false);
   };
@@ -67,7 +67,7 @@ const InstallPrompt: React.FC = () => {
         <Typography variant="h5" align="center" gutterBottom>
           PalliRoute installieren
         </Typography>
-        
+
         {showInstallButton && (
           <Box mb={3} display="flex" justifyContent="center">
             <Button
@@ -84,21 +84,20 @@ const InstallPrompt: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
                 '&:hover': {
                   boxShadow: '0 6px 16px rgba(0, 122, 255, 0.4)',
-                }
+                },
               }}
             >
               Jetzt installieren
             </Button>
           </Box>
         )}
-        
+
         <Typography variant="body2" align="center" color="text.secondary" mb={2}>
-          {showInstallButton 
-            ? "Oder folgen Sie den manuellen Schritten unten:"
-            : "Falls die automatische Installation nicht funktioniert, folgen Sie diesen Schritten:"
-          }
+          {showInstallButton
+            ? 'Oder folgen Sie den manuellen Schritten unten:'
+            : 'Falls die automatische Installation nicht funktioniert, folgen Sie diesen Schritten:'}
         </Typography>
-        
+
         <Stack spacing={2}>
           {/* Schritt 1 */}
           <Box display="flex" alignItems="center">
@@ -125,7 +124,8 @@ const InstallPrompt: React.FC = () => {
                 2. Schritt
               </Typography>
               <Typography variant="body2">
-                Wischen Sie nach oben und wählen Sie <b>Zum Startbildschirm hinzufügen</b> aus dem Menü aus.
+                Wischen Sie nach oben und wählen Sie <b>Zum Startbildschirm hinzufügen</b> aus dem
+                Menü aus.
               </Typography>
             </Box>
           </Box>
@@ -139,9 +139,7 @@ const InstallPrompt: React.FC = () => {
               <Typography variant="subtitle1" fontWeight="bold">
                 3. Schritt
               </Typography>
-              <Typography variant="body2">
-                Starten Sie PalliRoute vom Startbildschirm.
-              </Typography>
+              <Typography variant="body2">Starten Sie PalliRoute vom Startbildschirm.</Typography>
             </Box>
           </Box>
         </Stack>
@@ -150,4 +148,4 @@ const InstallPrompt: React.FC = () => {
   );
 };
 
-export default InstallPrompt; 
+export default InstallPrompt;

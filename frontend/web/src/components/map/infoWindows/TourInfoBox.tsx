@@ -14,19 +14,19 @@ interface TourInfoBoxProps {
  * Component for displaying tour information in a colored box
  * Used in weekday markers and AW tour (Nord/Mitte/Süd) markers
  */
-export const TourInfoBox: React.FC<TourInfoBoxProps> = ({ 
-  employeeName, 
-  area, 
-  utilization, 
-  tourColor, 
-  durationMinutes, 
-  targetMinutes 
+export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
+  employeeName,
+  area,
+  utilization,
+  tourColor,
+  durationMinutes,
+  targetMinutes,
 }) => {
   const isNord = area?.includes('Nordkreis');
   const isTourAreaLabel = area === 'Nord' || area === 'Mitte' || area === 'Süd';
-  const areaLabel = isTourAreaLabel ? area : (isNord ? 'N' : 'S');
+  const areaLabel = isTourAreaLabel ? area : isNord ? 'N' : 'S';
   const barColor = utilization !== undefined && utilization > 100 ? 'error.main' : 'success.main';
-  
+
   // Zeitformatierung
   const formatTime = (min?: number) => {
     if (typeof min !== 'number' || isNaN(min)) return '-';
@@ -36,16 +36,18 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
   };
 
   return (
-    <Box sx={{
-      bgcolor: tourColor,
-      borderRadius: 2,
-      p: 1.2,
-      mb: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-    }}>
+    <Box
+      sx={{
+        bgcolor: tourColor,
+        borderRadius: 2,
+        p: 1.2,
+        mb: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1, minWidth: 0 }}>
           {employeeName && (
@@ -62,8 +64,8 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
                 '& .MuiChip-label': {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }
+                  whiteSpace: 'nowrap',
+                },
               }}
             />
           )}
@@ -71,30 +73,39 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
             label={areaLabel}
             size="small"
             sx={{
-              bgcolor: isTourAreaLabel ? 'rgba(255,255,255,0.18)' : (isNord ? 'primary.main' : 'secondary.main'),
+              bgcolor: isTourAreaLabel
+                ? 'rgba(255,255,255,0.18)'
+                : isNord
+                  ? 'primary.main'
+                  : 'secondary.main',
               color: 'white',
               fontWeight: 'bold',
               fontSize: '1rem',
               letterSpacing: 0.5,
-              flexShrink: 0
+              flexShrink: 0,
             }}
           />
         </Box>
         {/* Zeit-Box ganz rechts, falls Platz */}
         {durationMinutes !== undefined && targetMinutes !== undefined && (
-          <Box sx={{
-            bgcolor: 'white',
-            borderRadius: 2,
-            px: 1.2,
-            py: 0.5,
-            minWidth: 80,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-            ml: 'auto'
-          }}>
-            <Typography variant="body2" sx={{ fontWeight: 'bold', color: barColor, fontVariantNumeric: 'tabular-nums' }}>
+          <Box
+            sx={{
+              bgcolor: 'white',
+              borderRadius: 2,
+              px: 1.2,
+              py: 0.5,
+              minWidth: 80,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+              ml: 'auto',
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 'bold', color: barColor, fontVariantNumeric: 'tabular-nums' }}
+            >
               {formatTime(durationMinutes)} / {formatTime(targetMinutes)}
             </Typography>
           </Box>
@@ -102,17 +113,19 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
       </Box>
       {utilization !== undefined && (
         <Box sx={{ width: '100%', mt: 1 }}>
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            bgcolor: 'white',
-            borderRadius: 2,
-            px: 1.2,
-            py: 0.5,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-            width: '100%',
-            gap: 1,
-          }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              bgcolor: 'white',
+              borderRadius: 2,
+              px: 1.2,
+              py: 0.5,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+              width: '100%',
+              gap: 1,
+            }}
+          >
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
               <LinearProgress
                 variant="determinate"
@@ -127,7 +140,10 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
                 }}
               />
             </Box>
-            <Typography variant="body2" sx={{ minWidth: 36, textAlign: 'right', fontWeight: 'bold', color: barColor, ml: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ minWidth: 36, textAlign: 'right', fontWeight: 'bold', color: barColor, ml: 1 }}
+            >
               {utilization !== undefined ? `${Math.round(utilization)}%` : '-'}
             </Typography>
           </Box>

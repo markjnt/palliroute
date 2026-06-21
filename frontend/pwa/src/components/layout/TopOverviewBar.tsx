@@ -23,7 +23,12 @@ interface TopOverviewBarProps {
   onWeekdayButtonClick?: () => void;
 }
 
-export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, onSheetToggle, onCloseWeekdaySelector, onWeekdayButtonClick }) => {
+export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
+  onUserSwitch,
+  onSheetToggle,
+  onCloseWeekdaySelector,
+  onWeekdayButtonClick,
+}) => {
   const barRef = useRef<HTMLDivElement | null>(null);
   const { selectedUserId, selectedTourArea } = useUserStore();
   const { selectedWeekday, setSelectedWeekday } = useWeekdayStore();
@@ -47,7 +52,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
   const { data: patients = [] } = usePatients();
   const { data: appointments = [] } = useAppointmentsByWeekday(selectedWeekday as Weekday);
 
-  const selectedEmployee = employees.find(emp => emp.id === selectedUserId);
+  const selectedEmployee = employees.find((emp) => emp.id === selectedUserId);
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -60,13 +65,13 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
   // Get German weekday name
   const getGermanWeekday = (weekday: string): string => {
     const weekdayMap: Record<string, string> = {
-      'monday': 'Mo',
-      'tuesday': 'Di',
-      'wednesday': 'Mi',
-      'thursday': 'Do',
-      'friday': 'Fr',
-      'saturday': 'Sa',
-      'sunday': 'So'
+      monday: 'Mo',
+      tuesday: 'Di',
+      wednesday: 'Mi',
+      thursday: 'Do',
+      friday: 'Fr',
+      saturday: 'Sa',
+      sunday: 'So',
     };
     return weekdayMap[weekday] || weekday;
   };
@@ -74,7 +79,15 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
   // Get current weekday
   const getCurrentWeekday = () => {
     const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const weekdayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const weekdayMap = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
     return weekdayMap[today] as any;
   };
 
@@ -95,17 +108,15 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
   };
 
   // Get appointments for the selected employee and day
-  const employeeAppointments = selectedTourArea 
-    ? appointments.filter(a => a.weekday === selectedWeekday && a.area === selectedTourArea) // For AW/tour-area tours, show only appointments for the selected area
-    : appointments.filter(a => a.employee_id === selectedUserId && a.weekday === selectedWeekday);
+  const employeeAppointments = selectedTourArea
+    ? appointments.filter((a) => a.weekday === selectedWeekday && a.area === selectedTourArea) // For AW/tour-area tours, show only appointments for the selected area
+    : appointments.filter((a) => a.employee_id === selectedUserId && a.weekday === selectedWeekday);
 
   // Group patients by visit type
   const getPatientsByVisitType = (visitType: 'HB' | 'NA' | 'TK') => {
-    const typeAppointments = employeeAppointments.filter(a => a.visit_type === visitType);
-    const patientIds = Array.from(new Set(typeAppointments.map(a => a.patient_id)));
-    return patientIds
-      .map(id => patients.find(p => p.id === id))
-      .filter(p => p !== undefined);
+    const typeAppointments = employeeAppointments.filter((a) => a.visit_type === visitType);
+    const patientIds = Array.from(new Set(typeAppointments.map((a) => a.patient_id)));
+    return patientIds.map((id) => patients.find((p) => p.id === id)).filter((p) => p !== undefined);
   };
 
   const hbPatients = getPatientsByVisitType('HB');
@@ -195,7 +206,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
           >
             {getGermanWeekday(selectedWeekday)}
           </Typography>
-          
+
           {/* Current day indicator */}
           {currentWeekday === selectedWeekday && (
             <Box
@@ -236,22 +247,22 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
           onClick={onSheetToggle}
         >
           <MenuIcon sx={{ color: '#007AFF', fontSize: 20 }} />
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              gap: 0.5, 
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 0.5,
               flexWrap: 'nowrap',
               width: '100%',
             }}
           >
-            <Chip 
-              size="small" 
-              icon={<HomeIcon fontSize="small" />} 
-              label={hbPatients.length} 
-              color="primary" 
+            <Chip
+              size="small"
+              icon={<HomeIcon fontSize="small" />}
+              label={hbPatients.length}
+              color="primary"
               variant="outlined"
-              sx={{ 
-                height: 20, 
+              sx={{
+                height: 20,
                 fontSize: '0.7rem',
                 borderColor: 'rgba(25, 118, 210, 0.3)',
                 bgcolor: 'rgba(25, 118, 210, 0.05)',
@@ -260,17 +271,17 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
                 '& .MuiChip-label': {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                }
+                },
               }}
             />
-            <Chip 
-              size="small" 
-              icon={<PhoneIcon fontSize="small" />} 
-              label={tkPatients.length} 
-              color="success" 
+            <Chip
+              size="small"
+              icon={<PhoneIcon fontSize="small" />}
+              label={tkPatients.length}
+              color="success"
               variant="outlined"
-              sx={{ 
-                height: 20, 
+              sx={{
+                height: 20,
                 fontSize: '0.7rem',
                 borderColor: 'rgba(76, 175, 80, 0.3)',
                 bgcolor: 'rgba(76, 175, 80, 0.05)',
@@ -279,17 +290,17 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
                 '& .MuiChip-label': {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                }
+                },
               }}
             />
-            <Chip 
-              size="small" 
-              icon={<AddCircleIcon fontSize="small" />} 
-              label={naPatients.length} 
-              color="secondary" 
+            <Chip
+              size="small"
+              icon={<AddCircleIcon fontSize="small" />}
+              label={naPatients.length}
+              color="secondary"
               variant="outlined"
-              sx={{ 
-                height: 20, 
+              sx={{
+                height: 20,
                 fontSize: '0.7rem',
                 borderColor: 'rgba(156, 39, 176, 0.3)',
                 bgcolor: 'rgba(156, 39, 176, 0.05)',
@@ -298,7 +309,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
                 '& .MuiChip-label': {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                }
+                },
               }}
             />
           </Box>
@@ -310,9 +321,11 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
           sx={{
             width: 48,
             height: 48,
-            bgcolor: selectedTourArea 
+            bgcolor: selectedTourArea
               ? '#ff9800'
-              : selectedEmployee ? getEmployeeColor(selectedEmployee.function) : '#007AFF',
+              : selectedEmployee
+                ? getEmployeeColor(selectedEmployee.function)
+                : '#007AFF',
             color: 'white',
             fontSize: '1rem',
             fontWeight: 600,
@@ -327,16 +340,17 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({ onUserSwitch, on
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          {selectedTourArea ? (
-            selectedTourArea === 'Nord' ? 'N' : 
-            selectedTourArea === 'Mitte' ? 'M' : 
-            selectedTourArea === 'Süd' ? 'S' : 
-            selectedTourArea.charAt(0)
-          ) : selectedEmployee ? (
-            getInitials(selectedEmployee.first_name, selectedEmployee.last_name)
-          ) : (
-            '?'
-          )}
+          {selectedTourArea
+            ? selectedTourArea === 'Nord'
+              ? 'N'
+              : selectedTourArea === 'Mitte'
+                ? 'M'
+                : selectedTourArea === 'Süd'
+                  ? 'S'
+                  : selectedTourArea.charAt(0)
+            : selectedEmployee
+              ? getInitials(selectedEmployee.first_name, selectedEmployee.last_name)
+              : '?'}
         </Avatar>
       </Box>
 

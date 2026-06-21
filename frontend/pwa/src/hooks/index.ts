@@ -1,1 +1,4 @@
-export { useNrwpHolidayForTourDay, useNrwpHolidayLookupForSelectedKw } from './useNrwpHolidayForTourDay';
+export {
+  useNrwpHolidayForTourDay,
+  useNrwpHolidayLookupForSelectedKw,
+} from './useNrwpHolidayForTourDay';

@@ -8,9 +8,7 @@ import {
   Box,
   Chip,
 } from '@mui/material';
-import {
-  Close as CloseIcon,
-} from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
 import { Employee, EmployeeCapacity } from '../../../types/models';
 import { CapacityOverview } from '../capacity/CapacityOverview';
 import { formatMonthYear } from '../../../utils/oncall/dateUtils';
@@ -131,13 +129,15 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
               fontSize: '0.875rem',
               height: 32,
               borderRadius: 2.5,
-              backgroundColor: activeFilter === 'pflege' ? employeeTypeColors.default : 'rgba(0, 0, 0, 0.04)',
+              backgroundColor:
+                activeFilter === 'pflege' ? employeeTypeColors.default : 'rgba(0, 0, 0, 0.04)',
               color: activeFilter === 'pflege' ? 'white' : 'text.primary',
               border: activeFilter === 'pflege' ? 'none' : '1px solid',
               borderColor: 'rgba(0, 0, 0, 0.1)',
               transition: 'all 0.2s ease',
               '&:hover': {
-                backgroundColor: activeFilter === 'pflege' ? employeeTypeColors.default : 'rgba(0, 0, 0, 0.08)',
+                backgroundColor:
+                  activeFilter === 'pflege' ? employeeTypeColors.default : 'rgba(0, 0, 0, 0.08)',
                 transform: 'translateY(-1px)',
               },
               '&:active': {
@@ -153,13 +153,15 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
               fontSize: '0.875rem',
               height: 32,
               borderRadius: 2.5,
-              backgroundColor: activeFilter === 'arzt' ? employeeTypeColors.Arzt : 'rgba(0, 0, 0, 0.04)',
+              backgroundColor:
+                activeFilter === 'arzt' ? employeeTypeColors.Arzt : 'rgba(0, 0, 0, 0.04)',
               color: activeFilter === 'arzt' ? 'white' : 'text.primary',
               border: activeFilter === 'arzt' ? 'none' : '1px solid',
               borderColor: 'rgba(0, 0, 0, 0.1)',
               transition: 'all 0.2s ease',
               '&:hover': {
-                backgroundColor: activeFilter === 'arzt' ? employeeTypeColors.Arzt : 'rgba(0, 0, 0, 0.08)',
+                backgroundColor:
+                  activeFilter === 'arzt' ? employeeTypeColors.Arzt : 'rgba(0, 0, 0, 0.08)',
                 transform: 'translateY(-1px)',
               },
               '&:active': {
@@ -175,9 +177,13 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
           pb: 3,
         }}
       >
-        <CapacityOverview employees={employees} employeeCapacities={employeeCapacities} currentDate={currentDate} activeFilter={activeFilter} />
+        <CapacityOverview
+          employees={employees}
+          employeeCapacities={employeeCapacities}
+          currentDate={currentDate}
+          activeFilter={activeFilter}
+        />
       </DialogContent>
     </Dialog>
   );
 };
-

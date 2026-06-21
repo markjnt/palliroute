@@ -75,7 +75,7 @@ import {
 export const MapContainer: React.FC<MapContainerProps> = ({
   apiKey,
   selectedWeekday,
-  userArea
+  userArea,
 }) => {
   const navigate = useNavigate();
   const customMarker = useCustomMarkerStore((s) => s.marker);
@@ -92,7 +92,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const downloadPdfMutation = useDownloadRoutePdf();
   const { data: pflegeheime = [] } = usePflegeheime();
   const showPflegeheimeOnMap = usePflegeheimeVisibilityStore((s) => s.showPflegeheimeOnMap);
-  const toggleShowPflegeheimeOnMap = usePflegeheimeVisibilityStore((s) => s.toggleShowPflegeheimeOnMap);
+  const toggleShowPflegeheimeOnMap = usePflegeheimeVisibilityStore(
+    (s) => s.toggleShowPflegeheimeOnMap
+  );
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
@@ -100,7 +102,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     googleMapsApiKey: apiKey,
     libraries,
     language: 'de',
-    region: 'DE'
+    region: 'DE',
   });
 
   // Map state
@@ -150,63 +152,82 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
 
   // Data hooks - verwenden automatisch selectedCalendarWeek aus dem Store
-  const { data: employees = [], isLoading: employeesLoading, refetch: refetchEmployees } = useEmployees();
-  const { data: patients = [], isLoading: patientsLoading, error: patientsError, refetch: refetchPatients } = usePatients();
-  const { data: appointments = [], isLoading: appointmentsLoading, error: appointmentsError, refetch: refetchAppointments } = useAppointmentsByWeekday(selectedWeekday as Weekday);
-  const { data: routes = [], isLoading: routesLoading, error: routesError, refetch: refetchRoutes } = useRoutes({ 
+  const {
+    data: employees = [],
+    isLoading: employeesLoading,
+    refetch: refetchEmployees,
+  } = useEmployees();
+  const {
+    data: patients = [],
+    isLoading: patientsLoading,
+    error: patientsError,
+    refetch: refetchPatients,
+  } = usePatients();
+  const {
+    data: appointments = [],
+    isLoading: appointmentsLoading,
+    error: appointmentsError,
+    refetch: refetchAppointments,
+  } = useAppointmentsByWeekday(selectedWeekday as Weekday);
+  const {
+    data: routes = [],
+    isLoading: routesLoading,
+    error: routesError,
+    refetch: refetchRoutes,
+  } = useRoutes({
     weekday: selectedWeekday as Weekday,
     tour_area_day: isAreaTourDay,
   });
 
   // Nur die passenden Routen für den Tag und die Area
   const isAllAreas = userArea === 'Nord- und Südkreis' || !userArea;
-  const dayRoutes = useMemo(
-    () => {
-      if (isAreaTourDay) {
-        // Weekend / Feiertags-AW: Mitte + Nord/Süd je nach userArea
-        return routes.filter(route => {
-          if (route.weekday !== selectedWeekday) return false;
-          if (isAllAreas) return true;
-          // Always show Mitte
-          if ((route.area as string) === 'Mitte') return true;
-          // Filter others based on userArea - handle both "Nordkreis"/"Nord" and "Südkreis"/"Süd"
-          if (userArea === 'Nordkreis' || userArea === 'Nord') return (route.area as string) === 'Nord';
-          if (userArea === 'Südkreis' || userArea === 'Süd') return (route.area as string) === 'Süd';
-          return false;
-        });
-      } else {
-        // Weekday routes - handle both "Nordkreis"/"Nord" and "Südkreis"/"Süd"
-        let targetArea = userArea;
-        if (userArea === 'Nord') {
-          targetArea = 'Nordkreis';
-        } else if (userArea === 'Süd') {
-          targetArea = 'Südkreis';
-        }
-        return routes.filter(route => route.weekday === selectedWeekday && (isAllAreas || route.area === targetArea));
+  const dayRoutes = useMemo(() => {
+    if (isAreaTourDay) {
+      // Weekend / Feiertags-AW: Mitte + Nord/Süd je nach userArea
+      return routes.filter((route) => {
+        if (route.weekday !== selectedWeekday) return false;
+        if (isAllAreas) return true;
+        // Always show Mitte
+        if ((route.area as string) === 'Mitte') return true;
+        // Filter others based on userArea - handle both "Nordkreis"/"Nord" and "Südkreis"/"Süd"
+        if (userArea === 'Nordkreis' || userArea === 'Nord')
+          return (route.area as string) === 'Nord';
+        if (userArea === 'Südkreis' || userArea === 'Süd') return (route.area as string) === 'Süd';
+        return false;
+      });
+    } else {
+      // Weekday routes - handle both "Nordkreis"/"Nord" and "Südkreis"/"Süd"
+      let targetArea = userArea;
+      if (userArea === 'Nord') {
+        targetArea = 'Nordkreis';
+      } else if (userArea === 'Süd') {
+        targetArea = 'Südkreis';
       }
-    },
-    [routes, selectedWeekday, userArea, isAllAreas, isAreaTourDay]
-  );
+      return routes.filter(
+        (route) => route.weekday === selectedWeekday && (isAllAreas || route.area === targetArea)
+      );
+    }
+  }, [routes, selectedWeekday, userArea, isAllAreas, isAreaTourDay]);
 
   // Sichtbare Routen-IDs für den Tag
-  const visibleRouteIds = dayRoutes.map(r => r.id);
+  const visibleRouteIds = dayRoutes.map((r) => r.id);
 
   // Marker-Berechnung mit useMemo
   const markers = useMemo((): MarkerData[] => {
     if (!isLoaded) return [];
     const newMarkers: MarkerData[] = [];
-    
+
     if (isAreaTourDay) {
       // Wochenende / Feiertag: Startmarker je Bereich + AW-Patientenmarker
-      
+
       // Get unique areas from visible routes
       const visibleAreas = new Set<string>();
-      dayRoutes.forEach(route => {
+      dayRoutes.forEach((route) => {
         if (route.area) {
           visibleAreas.add(route.area as string);
         }
       });
-      
+
       // If no routes but we're in weekend mode, show all areas or based on userArea
       if (visibleAreas.size === 0) {
         if (isAllAreas) {
@@ -224,24 +245,28 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           }
         }
       }
-      
+
       // Create weekend start marker for each visible area
-      visibleAreas.forEach(area => {
+      visibleAreas.forEach((area) => {
         const marker = createTourAreaMarkerData(area);
         if (marker) newMarkers.push(marker);
       });
-      
+
       // AW-Patientenmarker (Sa/So und Feiertags-Mo–Fr): Nummer aus route_order der Flächenroute
       if (patients.length > 0 && appointments.length > 0) {
-        const awTourAppointments = appointments.filter(a => 
-          a.weekday === selectedWeekday && 
-          (a.visit_type === 'HB' || a.visit_type === 'NA') &&
-          !a.employee_id
+        const awTourAppointments = appointments.filter(
+          (a) =>
+            a.weekday === selectedWeekday &&
+            (a.visit_type === 'HB' || a.visit_type === 'NA') &&
+            !a.employee_id
         );
-        
+
         const tourFlacheAreas = new Set(['Nord', 'Mitte', 'Süd']);
-        const appointmentPositions = new Map<number, { position: number; routeId: number; area?: string }>();
-        routes.forEach(route => {
+        const appointmentPositions = new Map<
+          number,
+          { position: number; routeId: number; area?: string }
+        >();
+        routes.forEach((route) => {
           if (
             route.weekday === selectedWeekday &&
             route.area &&
@@ -249,22 +274,32 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           ) {
             const routeOrder = parseRouteOrder(route.route_order);
             routeOrder.forEach((appointmentId, idx) => {
-              appointmentPositions.set(appointmentId, { position: idx + 1, routeId: route.id, area: route.area });
+              appointmentPositions.set(appointmentId, {
+                position: idx + 1,
+                routeId: route.id,
+                area: route.area,
+              });
             });
           }
         });
-        
+
         for (const appointment of awTourAppointments) {
-          const patient = patients.find(p => p.id === appointment.patient_id);
+          const patient = patients.find((p) => p.id === appointment.patient_id);
           if (patient) {
             const posInfo = appointment.id ? appointmentPositions.get(appointment.id) : undefined;
             const position = posInfo ? posInfo.position : undefined;
             const routeId = posInfo ? posInfo.routeId : undefined;
             const area = posInfo ? posInfo.area : appointment.area;
-            
+
             // Prüfe, ob die Route sichtbar ist
             const isInactive = !routeId || !visibleRouteIds.includes(routeId);
-            const baseMarker = createTourPatientMarkerData(patient, appointment, area || 'Unknown', position, routeId);
+            const baseMarker = createTourPatientMarkerData(
+              patient,
+              appointment,
+              area || 'Unknown',
+              position,
+              routeId
+            );
             if (baseMarker) {
               const marker = { ...baseMarker, isInactive };
               newMarkers.push(marker);
@@ -278,25 +313,29 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       for (const employee of employees) {
         if (employee.latitude && employee.longitude) {
           // Finde ggf. die Route für diesen Mitarbeiter am ausgewählten Tag
-          const route = routes.find(r => r.employee_id === employee.id && r.weekday === selectedWeekday);
+          const route = routes.find(
+            (r) => r.employee_id === employee.id && r.weekday === selectedWeekday
+          );
           const marker = createEmployeeMarkerData(employee, route?.id);
           if (marker) newMarkers.push(marker);
         }
       }
-      
+
       // Appointments/Patients
       if (patients.length > 0 && appointments.length > 0) {
         // Nur HB- und NA-Termine (Hausbesuch und Neuaufnahme)
-        const appointmentsForDay = appointments.filter(a => a.weekday === selectedWeekday && (a.visit_type === 'HB' || a.visit_type === 'NA'));
+        const appointmentsForDay = appointments.filter(
+          (a) => a.weekday === selectedWeekday && (a.visit_type === 'HB' || a.visit_type === 'NA')
+        );
         const appointmentPositions = new Map();
-        routes.forEach(route => {
+        routes.forEach((route) => {
           const routeOrder = parseRouteOrder(route.route_order);
           routeOrder.forEach((appointmentId, idx) => {
             appointmentPositions.set(appointmentId, { position: idx + 1, routeId: route.id });
           });
         });
         for (const appointment of appointmentsForDay) {
-          const patient = patients.find(p => p.id === appointment.patient_id);
+          const patient = patients.find((p) => p.id === appointment.patient_id);
           if (patient) {
             const posInfo = appointment.id ? appointmentPositions.get(appointment.id) : undefined;
             const position = posInfo ? posInfo.position : undefined;
@@ -306,7 +345,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             const baseMarker = createPatientMarkerData(patient, appointment, position, routeId);
             if (baseMarker) {
               // Area der zugehörigen Route ermitteln
-              const routeArea = routeId ? routes.find(r => r.id === routeId)?.area : undefined;
+              const routeArea = routeId ? routes.find((r) => r.id === routeId)?.area : undefined;
               const marker = { ...baseMarker, isInactive, routeArea };
               newMarkers.push(marker);
             }
@@ -314,7 +353,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         }
       }
     }
-    
+
     // Custom-Marker hinzufügen
     if (customMarker) {
       newMarkers.push({
@@ -340,24 +379,40 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
 
     return newMarkers;
-  }, [isLoaded, employees, patients, appointments, routes, selectedWeekday, visibleRouteIds, isAreaTourDay, customMarker, showPflegeheimeOnMap, pflegeheime]);
+  }, [
+    isLoaded,
+    employees,
+    patients,
+    appointments,
+    routes,
+    selectedWeekday,
+    visibleRouteIds,
+    isAreaTourDay,
+    customMarker,
+    showPflegeheimeOnMap,
+    pflegeheime,
+  ]);
 
   // Route-Polylines
   const routePaths = useMemo(() => {
-    return dayRoutes.map(route => {
+    return dayRoutes.map((route) => {
       if (isAreaTourDay) {
         // AW-Flächenrouten (Wochenende / Feiertag) – ggf. mit employee_id
         const getAreaColor = (area?: string) => {
           switch (area) {
-            case 'Nord': return '#1976d2';
-            case 'Mitte': return '#7b1fa2';
-            case 'Süd': return '#388e3c';
-            default: return '#ff9800';
+            case 'Nord':
+              return '#1976d2';
+            case 'Mitte':
+              return '#7b1fa2';
+            case 'Süd':
+              return '#388e3c';
+            default:
+              return '#ff9800';
           }
         };
         const color = getAreaColor(route.area as string);
-        const employee = employees.find(e => e.id === route.employee_id);
-        const employeeName = employee 
+        const employee = employees.find((e) => e.id === route.employee_id);
+        const employeeName = employee
           ? `${employee.first_name} ${employee.last_name} (AW ${route.area})`
           : `AW-Tour ${route.area}`;
         return {
@@ -368,11 +423,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           polyline: route.polyline,
           totalDistance: route.total_distance || 0,
           totalDuration: route.total_duration || 0,
-          employeeName
+          employeeName,
         };
       } else {
         // Weekday routes - employee-based
-        const employee = employees.find(e => e.id === route.employee_id);
+        const employee = employees.find((e) => e.id === route.employee_id);
         const color = employee?.id ? getColorForTour(employee.id) : '#9E9E9E';
         return {
           employeeId: route.employee_id,
@@ -382,15 +437,22 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           polyline: route.polyline,
           totalDistance: route.total_distance || 0,
           totalDuration: route.total_duration || 0,
-          employeeName: employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee'
+          employeeName: employee
+            ? `${employee.first_name} ${employee.last_name}`
+            : 'Unknown Employee',
         };
       }
     });
   }, [dayRoutes, employees, isAreaTourDay]);
 
   // Fehler- und Ladezustände
-  const isLoading = employeesLoading || patientsLoading || appointmentsLoading || routesLoading || !isLoaded;
-  const error = mapError || (patientsError instanceof Error ? patientsError.message : null) || (appointmentsError instanceof Error ? appointmentsError.message : null) || (routesError instanceof Error ? routesError.message : null);
+  const isLoading =
+    employeesLoading || patientsLoading || appointmentsLoading || routesLoading || !isLoaded;
+  const error =
+    mapError ||
+    (patientsError instanceof Error ? patientsError.message : null) ||
+    (appointmentsError instanceof Error ? appointmentsError.message : null) ||
+    (routesError instanceof Error ? routesError.message : null);
 
   if (isLoading) {
     return (
@@ -401,7 +463,15 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   }
 
   return (
-    <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <Box
+      sx={{
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
       {/* Karten-Menü: Bereich, RB/AW, PDF — links oben */}
       <Box
         sx={{
@@ -430,10 +500,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           open={Boolean(mapMenuAnchor)}
           onClose={(_event, reason) => {
             // MUI Menu leitet Schließen nach Eintrag-Klick weiter (Popover-Typung ohne menuItemClick).
-            if (
-              String(reason) === 'menuItemClick' &&
-              suppressMenuCloseFromPdfItemRef.current
-            ) {
+            if (String(reason) === 'menuItemClick' && suppressMenuCloseFromPdfItemRef.current) {
               return;
             }
             setMapMenuAnchor(null);
@@ -503,7 +570,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               <ListItemText
                 primary="PDFs herunterladen"
                 secondary={
-                  selectedCalendarWeek ? `Kalenderwoche ${selectedCalendarWeek}` : 'Keine KW gewählt'
+                  selectedCalendarWeek
+                    ? `Kalenderwoche ${selectedCalendarWeek}`
+                    : 'Keine KW gewählt'
                 }
                 primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                 secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
@@ -532,7 +601,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                 primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                 secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
               />
-              <OpenInNewIcon fontSize="small" sx={{ color: 'text.secondary', ml: 0.5, flexShrink: 0 }} />
+              <OpenInNewIcon
+                fontSize="small"
+                sx={{ color: 'text.secondary', ml: 0.5, flexShrink: 0 }}
+              />
             </MenuItem>
           </MenuList>
         </Menu>
@@ -604,9 +676,15 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             color="success"
             size="small"
             onClick={toggleShowPflegeheimeOnMap}
-            title={showPflegeheimeOnMap ? 'Pflegeheime auf Karte ausblenden' : 'Pflegeheime auf Karte anzeigen'}
+            title={
+              showPflegeheimeOnMap
+                ? 'Pflegeheime auf Karte ausblenden'
+                : 'Pflegeheime auf Karte anzeigen'
+            }
             aria-label={
-              showPflegeheimeOnMap ? 'Pflegeheime auf Karte ausblenden' : 'Pflegeheime auf Karte anzeigen'
+              showPflegeheimeOnMap
+                ? 'Pflegeheime auf Karte ausblenden'
+                : 'Pflegeheime auf Karte anzeigen'
             }
             sx={{
               ...mapToolbarIconButtonSx,
@@ -668,7 +746,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             color="warning"
             size="small"
             aria-label="Eigenen Marker entfernen"
-            sx={{ ...mapFloatingControlSx, minWidth: 40, width: 40, height: 40, p: 0, alignSelf: 'flex-end' }}
+            sx={{
+              ...mapFloatingControlSx,
+              minWidth: 40,
+              width: 40,
+              height: 40,
+              p: 0,
+              alignSelf: 'flex-end',
+            }}
           >
             <DeleteIcon fontSize="small" />
           </Button>
@@ -679,7 +764,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             color="warning"
             size="small"
             aria-label="Eigenen Marker setzen"
-            sx={{ ...mapFloatingControlSx, minWidth: 40, width: 40, height: 40, p: 0, alignSelf: 'flex-end' }}
+            sx={{
+              ...mapFloatingControlSx,
+              minWidth: 40,
+              width: 40,
+              height: 40,
+              p: 0,
+              alignSelf: 'flex-end',
+            }}
           >
             <AddLocationIcon fontSize="small" />
           </Button>
@@ -696,39 +788,39 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             overflow: 'hidden',
           }}
         >
-        <IconButton
-          size="small"
-          onClick={zoomIn}
-          disabled={zoomLevel >= MAP_MAX_ZOOM}
-          aria-label="Einzoomen"
-          title="Einzoomen"
-          sx={{
-            borderRadius: 0,
-            width: 40,
-            height: 40,
-            bgcolor: 'background.paper',
-            '&:hover': { bgcolor: 'grey.100' },
-          }}
-        >
-          <ZoomInIcon />
-        </IconButton>
-        <Divider flexItem sx={{ borderColor: 'divider', opacity: 1 }} />
-        <IconButton
-          size="small"
-          onClick={zoomOut}
-          disabled={zoomLevel <= MAP_MIN_ZOOM}
-          aria-label="Rauszoomen"
-          title="Rauszoomen"
-          sx={{
-            borderRadius: 0,
-            width: 40,
-            height: 40,
-            bgcolor: 'background.paper',
-            '&:hover': { bgcolor: 'grey.100' },
-          }}
-        >
-          <ZoomOutIcon />
-        </IconButton>
+          <IconButton
+            size="small"
+            onClick={zoomIn}
+            disabled={zoomLevel >= MAP_MAX_ZOOM}
+            aria-label="Einzoomen"
+            title="Einzoomen"
+            sx={{
+              borderRadius: 0,
+              width: 40,
+              height: 40,
+              bgcolor: 'background.paper',
+              '&:hover': { bgcolor: 'grey.100' },
+            }}
+          >
+            <ZoomInIcon />
+          </IconButton>
+          <Divider flexItem sx={{ borderColor: 'divider', opacity: 1 }} />
+          <IconButton
+            size="small"
+            onClick={zoomOut}
+            disabled={zoomLevel <= MAP_MIN_ZOOM}
+            aria-label="Rauszoomen"
+            title="Rauszoomen"
+            sx={{
+              borderRadius: 0,
+              width: 40,
+              height: 40,
+              bgcolor: 'background.paper',
+              '&:hover': { bgcolor: 'grey.100' },
+            }}
+          >
+            <ZoomOutIcon />
+          </IconButton>
         </Box>
       </Box>
 

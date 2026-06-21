@@ -9,7 +9,7 @@ export const createMarkerIcon = (
   routeColor?: string
 ): google.maps.Symbol | undefined => {
   let baseColor: string;
-  
+
   if (type === 'tour_area') {
     // Tour-area colors (AW)
     baseColor = routeColor || '#ff9800';
@@ -18,14 +18,14 @@ export const createMarkerIcon = (
   } else {
     baseColor = getColorForVisitType(visitType);
   }
-  
+
   // If routeColor is provided, use it instead of the default color
   if (routeColor) {
     baseColor = routeColor;
   }
-  
+
   const color = isInactive ? '#9E9E9E' : baseColor;
-  
+
   return {
     path: google.maps.SymbolPath.CIRCLE,
     scale: type === 'employee' ? 12 : 12,
@@ -50,7 +50,7 @@ export const createMarkerLabel = (
       fontWeight: 'bold',
     };
   }
-  
+
   if (routePosition) {
     return {
       text: routePosition.toString(),
@@ -59,6 +59,6 @@ export const createMarkerLabel = (
       fontWeight: 'bold',
     };
   }
-  
+
   return undefined;
-}; 
+};

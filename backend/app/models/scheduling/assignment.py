@@ -30,4 +30,3 @@ class Assignment(db.Model):
             name="unique_employee_shift_instance",
         ),
     )
-

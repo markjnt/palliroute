@@ -14,7 +14,7 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  
+
   // Verfolge die vorherige Tour-Art, um zu erkennen, ob zwischen Tour-Arten gewechselt wurde
   const previousTourTypeRef = useRef<'employee' | 'tour_area' | null>(null);
   const isInitialMountRef = useRef(true);
@@ -22,17 +22,28 @@ const MainLayout: React.FC = () => {
   // Automatisch den aktuellen Tag auswählen beim Laden der App oder beim Wechsel zwischen Tour-Arten
   useEffect(() => {
     // Bestimme die aktuelle Tour-Art
-    const currentTourType: 'employee' | 'tour_area' | null = 
-      selectedTourArea ? 'tour_area' : (selectedUserId ? 'employee' : null);
+    const currentTourType: 'employee' | 'tour_area' | null = selectedTourArea
+      ? 'tour_area'
+      : selectedUserId
+        ? 'employee'
+        : null;
 
     // Beim ersten Laden oder wenn zwischen Tour-Arten gewechselt wird
-    const isTourTypeChange = previousTourTypeRef.current !== null && 
-                             previousTourTypeRef.current !== currentTourType;
-    
+    const isTourTypeChange =
+      previousTourTypeRef.current !== null && previousTourTypeRef.current !== currentTourType;
+
     if (isInitialMountRef.current || isTourTypeChange) {
       if (selectedTourArea) {
         // AW-Tour: aktueller Sa/So oder Samstag als Fallback
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+        const days = [
+          'sunday',
+          'monday',
+          'tuesday',
+          'wednesday',
+          'thursday',
+          'friday',
+          'saturday',
+        ] as const;
         const currentDay = days[new Date().getDay()];
         const isAreaDay = currentDay === 'saturday' || currentDay === 'sunday';
         setSelectedWeekday(isAreaDay && currentDay ? currentDay : 'saturday');
@@ -86,22 +97,24 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <Box sx={{ 
-      width: '100vw', 
-      height: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      position: 'fixed', // Fix position to prevent viewport issues
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0
-    }}>
+    <Box
+      sx={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'fixed', // Fix position to prevent viewport issues
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
+    >
       <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         <MapView onMapClick={handleSheetClose} />
-        
+
         {/* Top Overview Bar */}
-        <TopOverviewBar 
+        <TopOverviewBar
           onUserSwitch={handleUserSwitch}
           onSheetToggle={handleSheetToggle}
           onCloseWeekdaySelector={() => {}}
@@ -111,15 +124,9 @@ const MainLayout: React.FC = () => {
           }}
         />
 
-        <MainBottomSheet 
-          isOpen={isSheetOpen}
-          onClose={handleSheetClose}
-        />
+        <MainBottomSheet isOpen={isSheetOpen} onClose={handleSheetClose} />
 
-        <UserSearchDrawer
-          open={isUserDrawerOpen}
-          onClose={handleDrawerClose}
-        />
+        <UserSearchDrawer open={isUserDrawerOpen} onClose={handleDrawerClose} />
       </Box>
     </Box>
   );

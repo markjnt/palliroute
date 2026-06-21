@@ -6,16 +6,14 @@ from __future__ import annotations
 
 import logging
 from datetime import date, datetime
-from typing import Dict, Optional
 
 import requests
-
 from config import Config
 
 logger = logging.getLogger(__name__)
 
 # year -> date -> holiday name
-_year_cache: Dict[int, Dict[date, str]] = {}
+_year_cache: dict[int, dict[date, str]] = {}
 
 
 def _api_base() -> str:
@@ -27,7 +25,7 @@ def _state_code() -> str:
     return getattr(Config, "HOLIDAY_STATE", None) or "NW"
 
 
-def fetch_holidays_for_year(year: int, timeout: float = 10.0) -> Dict[date, str]:
+def fetch_holidays_for_year(year: int, timeout: float = 10.0) -> dict[date, str]:
     """
     Load NRW holidays for calendar year from API. Successful parses are cached in memory.
 
@@ -47,7 +45,7 @@ def fetch_holidays_for_year(year: int, timeout: float = 10.0) -> Dict[date, str]
         logger.warning("Holiday API request failed for year %s: %s", year, e)
         return {}
 
-    out: Dict[date, str] = {}
+    out: dict[date, str] = {}
     if not isinstance(data, dict):
         logger.warning(
             "Holiday API returned unexpected JSON type for year %s: %s",
@@ -79,7 +77,7 @@ def clear_holiday_cache() -> None:
     _year_cache.clear()
 
 
-def holiday_name_for_date(d: date) -> Optional[str]:
+def holiday_name_for_date(d: date) -> str | None:
     """Return German holiday name if d is a public holiday in NRW, else None."""
     holidays = fetch_holidays_for_year(d.year)
     return holidays.get(d)
@@ -122,7 +120,7 @@ def default_planning_year() -> int:
     return datetime.now().year
 
 
-def is_aw_area_assignment_day(calendar_week: Optional[int], english_weekday: str) -> bool:
+def is_aw_area_assignment_day(calendar_week: int | None, english_weekday: str) -> bool:
     """
     True if tours use AW-style area assignment (Nord/Mitte/Süd): Saturday/Sunday or
     NRW public holiday on Monday–Friday for the date from ISO week + weekday.

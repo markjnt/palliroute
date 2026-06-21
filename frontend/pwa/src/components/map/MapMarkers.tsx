@@ -38,7 +38,7 @@ function groupMarkersByLatLng(markers: MarkerData[]) {
 function offsetLatLng(lat: number, lng: number, index: number, total: number) {
   if (total === 1) return { lat, lng };
   const offset = 0.0001;
-  const angle = (2 * Math.PI / total) * index;
+  const angle = ((2 * Math.PI) / total) * index;
   return {
     lat: lat + Math.sin(angle) * offset,
     lng: lng + Math.cos(angle) * offset,
@@ -50,7 +50,7 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
   patients,
   employees,
   appointments,
-  routes
+  routes,
 }) => {
   const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
   const { setCurrentWeekday } = useRouteCompletionStore();
@@ -67,14 +67,14 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
     if (!selectedMarker || selectedMarker.type !== 'patient' || !selectedMarker.patientId) {
       return undefined;
     }
-    return patients.find(p => p.id === selectedMarker.patientId);
+    return patients.find((p) => p.id === selectedMarker.patientId);
   }, [selectedMarker, patients]);
 
   const selectedAppointment = useMemo(() => {
     if (!selectedMarker || selectedMarker.type !== 'patient' || !selectedMarker.appointmentId) {
       return undefined;
     }
-    return appointments.find(a => a.id === selectedMarker.appointmentId);
+    return appointments.find((a) => a.id === selectedMarker.appointmentId);
   }, [selectedMarker, appointments]);
 
   // Check if marker belongs to additional route (not main user route)
@@ -84,14 +84,14 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
       return false;
     }
     if (!marker.routeId) return false;
-    const route = routes.find(r => r.id === marker.routeId);
+    const route = routes.find((r) => r.id === marker.routeId);
     if (!route) return false;
-    
+
     // For AW/tour-area routes (no employee_id), check if it's an additional area
     if (!route.employee_id) {
       return route.area !== selectedTourArea && selectedEmployeeIds.includes(route.area);
     }
-    
+
     // For employee routes, check if it's an additional employee
     return route.employee_id !== selectedUserId && selectedEmployeeIds.includes(route.employee_id);
   };
@@ -102,46 +102,50 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
       // Tour-area start marker uses orange color
       return '#ff9800';
     }
-    
+
     if (!marker.routeId) return null;
-    const route = routes.find(r => r.id === marker.routeId);
+    const route = routes.find((r) => r.id === marker.routeId);
     if (!route) return null;
-    
+
     // For AW/tour-area routes (no employee_id), use area-based colors
     if (!route.employee_id) {
       const getTourAreaColor = (area: string) => {
         switch (area) {
-          case 'Nord': return '#1976d2'; // Blue
-          case 'Mitte': return '#7b1fa2'; // Purple
-          case 'Süd': return '#388e3c'; // Green
-          default: return '#ff9800'; // Orange fallback
+          case 'Nord':
+            return '#1976d2'; // Blue
+          case 'Mitte':
+            return '#7b1fa2'; // Purple
+          case 'Süd':
+            return '#388e3c'; // Green
+          default:
+            return '#ff9800'; // Orange fallback
         }
       };
-      
+
       // Main tour-area route (selected area) is always blue
       if (route.area === selectedTourArea) {
         return '#2196F3';
       }
-      
+
       // Additional tour-area routes get their area color
       if (selectedEmployeeIds.includes(route.area)) {
         return getTourAreaColor(route.area);
       }
-      
+
       return null;
     }
-    
+
     // For employee routes
     // Main user route is always blue
     if (route.employee_id === selectedUserId) {
       return '#2196F3';
     }
-    
+
     // Additional routes get their assigned color
     if (selectedEmployeeIds.includes(route.employee_id)) {
       return getColorForTour(route.employee_id);
     }
-    
+
     return null;
   };
 
@@ -162,19 +166,21 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
           const origLng = marker.position.lng();
           const { lat, lng } = offsetLatLng(origLat, origLng, idx, group.length);
           const displayPosition = new google.maps.LatLng(lat, lng);
-          
+
           // Check if this is an additional route marker
           const isAdditionalRoute = isAdditionalRouteMarker(marker);
-          
+
           // Get route color for this marker
           const routeColor = getMarkerRouteColor(marker);
-          
+
           // Check if this marker's appointment is completed
-          const isCompleted = marker.appointmentId ? completedStops.has(marker.appointmentId) : false;
-          
+          const isCompleted = marker.appointmentId
+            ? completedStops.has(marker.appointmentId)
+            : false;
+
           // Area-based styling
           let opacity = 1;
-          
+
           // For main user route: use standard colors (HB=blue, NA=red, etc.)
           // For additional routes: use route color
           let icon: google.maps.Symbol | undefined;
@@ -196,21 +202,23 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
               marker.isInactive || false
             );
           }
-          
+
           // If completed, reduce opacity only (keep original color)
           if (isCompleted) {
             opacity = 0.4; // Reduced opacity for completed markers
           }
-          
-          let label = marker.isInactive ? undefined : createMarkerLabel(marker.routePosition, marker.visitType, marker.label);
-          
+
+          const label = marker.isInactive
+            ? undefined
+            : createMarkerLabel(marker.routePosition, marker.visitType, marker.label);
+
           if (marker.isInactive) {
             opacity = 0.6;
           }
-          
+
           // Include completion status in key to force re-render when status changes
           const markerKey = `marker-${groupIdx}-${idx}-${marker.appointmentId || 'none'}-${isCompleted ? 'completed' : 'active'}`;
-          
+
           return (
             <Marker
               key={markerKey}
@@ -234,12 +242,12 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
           isAdditionalRoute={isAdditionalRouteMarker(selectedMarker)}
           employee={(() => {
             if (!selectedMarker.routeId) return undefined;
-            const route = routes.find(r => r.id === selectedMarker.routeId);
+            const route = routes.find((r) => r.id === selectedMarker.routeId);
             if (!route) return undefined;
-            return employees.find(e => e.id === route.employee_id);
+            return employees.find((e) => e.id === route.employee_id);
           })()}
         />
       )}
     </>
   );
-}; 
+};

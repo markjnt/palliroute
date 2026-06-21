@@ -1,6 +1,13 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import { Employee, Assignment, DutyType, OnCallArea, EmployeeCapacity, ShiftDefinition } from '../../../types/models';
+import {
+  Employee,
+  Assignment,
+  DutyType,
+  OnCallArea,
+  EmployeeCapacity,
+  ShiftDefinition,
+} from '../../../types/models';
 import { EmployeeTableRow } from './EmployeeTableRow';
 import { EmployeeDutyDialog } from './EmployeeDutyDialog';
 import { DemandRow } from './DemandRow';
@@ -44,7 +51,9 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [employeeFilter, setEmployeeFilter] = useState<'all' | 'pflege_n' | 'pflege_s' | 'arzt'>('all');
+  const [employeeFilter, setEmployeeFilter] = useState<'all' | 'pflege_n' | 'pflege_s' | 'arzt'>(
+    'all'
+  );
 
   const holidayYears = useMemo(() => {
     const s = new Set<number>();
@@ -82,8 +91,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
     if (employeeFilter === 'arzt') {
       base = base.filter(
-        (employee) =>
-          employee.function === 'Arzt' || employee.function === 'Honorararzt'
+        (employee) => employee.function === 'Arzt' || employee.function === 'Honorararzt'
       );
     }
 
@@ -93,22 +101,22 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   // Sort employees: first by function, then by area (Nord/Süd), then alphabetically
   const sortedEmployees = useMemo(() => {
     const functionPriority: Record<string, number> = {
-      'Pflegekraft': 1,
-      'PDL': 2,
-      'Physiotherapie': 3,
-      'Arzt': 4,
-      'Honorararzt': 5,
+      Pflegekraft: 1,
+      PDL: 2,
+      Physiotherapie: 3,
+      Arzt: 4,
+      Honorararzt: 5,
     };
 
     return [...filteredEmployees].sort((a, b) => {
       // First sort by function priority
       const aPriority = functionPriority[a.function] || 999;
       const bPriority = functionPriority[b.function] || 999;
-      
+
       if (aPriority !== bPriority) {
         return aPriority - bPriority;
       }
-      
+
       // Then sort by area (Nordkreis first, then Südkreis)
       const getAreaOrder = (area?: string) => {
         if (!area) return 2;
@@ -116,18 +124,18 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         if (area.includes('Südkreis')) return 1;
         return 2;
       };
-      
+
       const areaOrderA = getAreaOrder(a.area);
       const areaOrderB = getAreaOrder(b.area);
-      
+
       if (areaOrderA !== areaOrderB) {
         return areaOrderA - areaOrderB;
       }
-      
+
       // Finally sort alphabetically by last name, then first name
       const aName = `${a.last_name} ${a.first_name}`.toLowerCase();
       const bName = `${b.last_name} ${b.first_name}`.toLowerCase();
-      
+
       return aName.localeCompare(bName);
     });
   }, [filteredEmployees]);
@@ -143,7 +151,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       if (!selectedEmployee || !selectedDate || shiftDefinitions.length === 0) return;
 
       const dateStr = formatDate(selectedDate);
-      
+
       // Find existing assignment for this employee, date, and duty
       const existing = assignments.find((a) => {
         if (!a.shift_instance || !a.shift_definition || a.employee_id !== selectedEmployee.id) {
@@ -169,7 +177,14 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         });
       }
     },
-    [selectedEmployee, selectedDate, assignments, onCreateAssignment, onDeleteAssignment, shiftDefinitions]
+    [
+      selectedEmployee,
+      selectedDate,
+      assignments,
+      onCreateAssignment,
+      onDeleteAssignment,
+      shiftDefinitions,
+    ]
   );
 
   const handleDialogClose = useCallback(() => {
@@ -179,14 +194,20 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   }, []);
 
   const handleMoveAssignment = useCallback(
-    async (assignmentId: number, targetEmployeeId: number, sourceDate: string, targetDate: string) => {
+    async (
+      assignmentId: number,
+      targetEmployeeId: number,
+      sourceDate: string,
+      targetDate: string
+    ) => {
       // Guard: only allow drag-move inside the same day column.
       if (sourceDate !== targetDate) return;
 
       const assignmentToMove = assignments.find((assignment) => assignment.id === assignmentId);
       if (!assignmentToMove?.id) return;
       if (assignmentToMove.employee_id === targetEmployeeId) return;
-      if (!assignmentToMove.shift_instance || assignmentToMove.shift_instance.date !== sourceDate) return;
+      if (!assignmentToMove.shift_instance || assignmentToMove.shift_instance.date !== sourceDate)
+        return;
 
       await onUpdateAssignment({
         id: assignmentToMove.id,
@@ -238,138 +259,138 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
               borderColor: 'divider',
             }}
           >
-        {/* Employee column header – sticky links */}
-        <Box
-          sx={{
-            px: viewMode === 'month' ? 1 : 1.5,
-            py: 1,
-            position: 'sticky',
-            left: 0,
-            backgroundColor: 'background.paper',
-            zIndex: 3,
-            borderRight: '1px solid',
-            borderColor: 'divider',
-            boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{
-              fontWeight: 600,
-              color: 'text.secondary',
-              textTransform: 'uppercase',
-              fontSize: viewMode === 'month' ? '0.7rem' : '0.75rem',
-              letterSpacing: '0.05em',
-              mb: 1,
-            }}
-          >
-            Mitarbeiter
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-            <Chip
-              label="Alle"
-              size="small"
-              clickable
-              color={employeeFilter === 'all' ? 'primary' : 'default'}
-              variant={employeeFilter === 'all' ? 'filled' : 'outlined'}
-              onClick={() => setEmployeeFilter('all')}
-              sx={{
-                fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                height: viewMode === 'month' ? 22 : 24,
-              }}
-            />
-            <Chip
-              label="Pflege N"
-              size="small"
-              clickable
-              color={employeeFilter === 'pflege_n' ? 'primary' : 'default'}
-              variant={employeeFilter === 'pflege_n' ? 'filled' : 'outlined'}
-              onClick={() => setEmployeeFilter('pflege_n')}
-              sx={{
-                fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                height: viewMode === 'month' ? 22 : 24,
-              }}
-            />
-            <Chip
-              label="Pflege S"
-              size="small"
-              clickable
-              color={employeeFilter === 'pflege_s' ? 'primary' : 'default'}
-              variant={employeeFilter === 'pflege_s' ? 'filled' : 'outlined'}
-              onClick={() => setEmployeeFilter('pflege_s')}
-              sx={{
-                fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                height: viewMode === 'month' ? 22 : 24,
-              }}
-            />
-            <Chip
-              label="Arzt"
-              size="small"
-              clickable
-              color={employeeFilter === 'arzt' ? 'primary' : 'default'}
-              variant={employeeFilter === 'arzt' ? 'filled' : 'outlined'}
-              onClick={() => setEmployeeFilter('arzt')}
-              sx={{
-                fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                height: viewMode === 'month' ? 22 : 24,
-              }}
-            />
-          </Box>
-        </Box>
-
-        {/* Date headers */}
-        {dates.map((date, idx) => {
-          // Convert JS Date.getDay() (0=Sunday, 1=Monday, ...) to WEEK_DAYS index (0=Monday, ...)
-          const jsDay = date.getDay();
-          const weekDayIndex = jsDay === 0 ? 6 : jsDay - 1;
-          const dayOfWeek = WEEK_DAYS[weekDayIndex];
-          const ymd = formatDate(date);
-          const holidayNameCol = holidayByYmd.get(ymd);
-          const weekendStyle = weekendLayoutForDate(date);
-          return (
+            {/* Employee column header – sticky links */}
             <Box
-              key={date.toISOString()}
               sx={{
-                textAlign: 'center',
-                py: viewMode === 'month' ? 0.5 : 0.75,
-                px: viewMode === 'month' ? 0.25 : 0.5,
-                backgroundColor: weekendStyle ? 'rgba(255, 152, 0, 0.08)' : 'transparent',
-                borderRight: idx < dates.length - 1 ? '1px solid' : 'none',
+                px: viewMode === 'month' ? 1 : 1.5,
+                py: 1,
+                position: 'sticky',
+                left: 0,
+                backgroundColor: 'background.paper',
+                zIndex: 3,
+                borderRight: '1px solid',
                 borderColor: 'divider',
+                boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
               }}
             >
               <Typography
-                variant="caption"
+                variant="subtitle2"
                 sx={{
-                  display: 'block',
                   fontWeight: 600,
                   color: 'text.secondary',
                   textTransform: 'uppercase',
-                  fontSize: viewMode === 'month' ? '0.6rem' : '0.65rem',
+                  fontSize: viewMode === 'month' ? '0.7rem' : '0.75rem',
                   letterSpacing: '0.05em',
+                  mb: 1,
                 }}
               >
-                {dayOfWeek}
+                Mitarbeiter
               </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  fontSize: viewMode === 'month' ? '0.75rem' : '0.8rem',
-                  mt: 0.25,
-                }}
-              >
-                {date.getDate()}.{date.getMonth() + 1}
-              </Typography>
-              {holidayNameCol ? (
-                <Box sx={{ mt: 0.25, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
-                  <HolidayChip name={holidayNameCol} compact={viewMode === 'month'} />
-                </Box>
-              ) : null}
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                <Chip
+                  label="Alle"
+                  size="small"
+                  clickable
+                  color={employeeFilter === 'all' ? 'primary' : 'default'}
+                  variant={employeeFilter === 'all' ? 'filled' : 'outlined'}
+                  onClick={() => setEmployeeFilter('all')}
+                  sx={{
+                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
+                    height: viewMode === 'month' ? 22 : 24,
+                  }}
+                />
+                <Chip
+                  label="Pflege N"
+                  size="small"
+                  clickable
+                  color={employeeFilter === 'pflege_n' ? 'primary' : 'default'}
+                  variant={employeeFilter === 'pflege_n' ? 'filled' : 'outlined'}
+                  onClick={() => setEmployeeFilter('pflege_n')}
+                  sx={{
+                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
+                    height: viewMode === 'month' ? 22 : 24,
+                  }}
+                />
+                <Chip
+                  label="Pflege S"
+                  size="small"
+                  clickable
+                  color={employeeFilter === 'pflege_s' ? 'primary' : 'default'}
+                  variant={employeeFilter === 'pflege_s' ? 'filled' : 'outlined'}
+                  onClick={() => setEmployeeFilter('pflege_s')}
+                  sx={{
+                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
+                    height: viewMode === 'month' ? 22 : 24,
+                  }}
+                />
+                <Chip
+                  label="Arzt"
+                  size="small"
+                  clickable
+                  color={employeeFilter === 'arzt' ? 'primary' : 'default'}
+                  variant={employeeFilter === 'arzt' ? 'filled' : 'outlined'}
+                  onClick={() => setEmployeeFilter('arzt')}
+                  sx={{
+                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
+                    height: viewMode === 'month' ? 22 : 24,
+                  }}
+                />
+              </Box>
             </Box>
-          );
-        })}
+
+            {/* Date headers */}
+            {dates.map((date, idx) => {
+              // Convert JS Date.getDay() (0=Sunday, 1=Monday, ...) to WEEK_DAYS index (0=Monday, ...)
+              const jsDay = date.getDay();
+              const weekDayIndex = jsDay === 0 ? 6 : jsDay - 1;
+              const dayOfWeek = WEEK_DAYS[weekDayIndex];
+              const ymd = formatDate(date);
+              const holidayNameCol = holidayByYmd.get(ymd);
+              const weekendStyle = weekendLayoutForDate(date);
+              return (
+                <Box
+                  key={date.toISOString()}
+                  sx={{
+                    textAlign: 'center',
+                    py: viewMode === 'month' ? 0.5 : 0.75,
+                    px: viewMode === 'month' ? 0.25 : 0.5,
+                    backgroundColor: weekendStyle ? 'rgba(255, 152, 0, 0.08)' : 'transparent',
+                    borderRight: idx < dates.length - 1 ? '1px solid' : 'none',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      fontSize: viewMode === 'month' ? '0.6rem' : '0.65rem',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {dayOfWeek}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.primary',
+                      fontSize: viewMode === 'month' ? '0.75rem' : '0.8rem',
+                      mt: 0.25,
+                    }}
+                  >
+                    {date.getDate()}.{date.getMonth() + 1}
+                  </Typography>
+                  {holidayNameCol ? (
+                    <Box sx={{ mt: 0.25, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
+                      <HolidayChip name={holidayNameCol} compact={viewMode === 'month'} />
+                    </Box>
+                  ) : null}
+                </Box>
+              );
+            })}
           </Box>
 
           {/* Zeile 2: Bedarf – Teil des Sticky-Blocks, kein eigenes sticky */}
@@ -407,13 +428,10 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         date={selectedDate}
         assignments={selectedAssignments}
         employeeCapacities={employeeCapacities}
-        treatAsWeekendForDuties={
-          selectedDate ? weekendLayoutForDate(selectedDate) : undefined
-        }
+        treatAsWeekendForDuties={selectedDate ? weekendLayoutForDate(selectedDate) : undefined}
         onClose={handleDialogClose}
         onDutyToggle={handleDutyToggle}
       />
     </Box>
   );
 };
-

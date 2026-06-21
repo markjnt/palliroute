@@ -71,4 +71,4 @@ export const useRouteVisibility = create<RouteVisibilityStore>((set, get) => ({
   showAllMarkers: () => {
     set({ hiddenMarkers: new Set() });
   },
-})); 
+}));

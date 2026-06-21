@@ -75,7 +75,7 @@ export const RoutePolylines: React.FC<RoutePolylinesProps> = ({ routes, map }) =
     // Clean up: entferne Polylines, die nicht mehr in routes sind
     Object.keys(polylineRefs.current).forEach((idStr) => {
       const id = Number(idStr);
-      if (!routes.some(r => r.routeId === id && r.polyline)) {
+      if (!routes.some((r) => r.routeId === id && r.polyline)) {
         polylineRefs.current[id].setMap(null);
         delete polylineRefs.current[id];
         delete previousDataRef.current[id];
@@ -84,4 +84,4 @@ export const RoutePolylines: React.FC<RoutePolylinesProps> = ({ routes, map }) =
   }, [routes, map, selectedUserId]);
 
   return null;
-}; 
+};

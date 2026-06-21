@@ -118,4 +118,3 @@ export const DutyChip: React.FC<DutyChipProps> = ({ duty, assignment, onClick })
     />
   );
 };
-

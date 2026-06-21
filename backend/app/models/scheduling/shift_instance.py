@@ -25,4 +25,3 @@ class ShiftInstance(db.Model):
             name="unique_shift_per_day",
         ),
     )
-

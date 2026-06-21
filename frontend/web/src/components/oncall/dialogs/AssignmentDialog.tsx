@@ -16,7 +16,14 @@ import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
 } from '@mui/icons-material';
-import { DutyType, OnCallArea, Employee, Assignment, EmployeeCapacity, ShiftDefinition } from '../../../types/models';
+import {
+  DutyType,
+  OnCallArea,
+  Employee,
+  Assignment,
+  EmployeeCapacity,
+  ShiftDefinition,
+} from '../../../types/models';
 import { WEEKDAY_DUTIES, WEEKEND_DUTIES } from '../../../utils/oncall/constants';
 import { getDutyColor } from '../../../utils/oncall/colorUtils';
 import { employeeTypeColors } from '@palliroute/shared';
@@ -44,20 +51,25 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
   onClose,
   onEmployeeChange,
 }) => {
-  if (!selectedDate || !selectedDuty) return null;
-
   const dutyLabel =
-    WEEKDAY_DUTIES.find((d) => d.type === selectedDuty.type && d.area === selectedDuty.area)?.label ||
-    WEEKEND_DUTIES.find((d) => d.type === selectedDuty.type && d.area === selectedDuty.area)?.label ||
-    '';
+    selectedDate && selectedDuty
+      ? WEEKDAY_DUTIES.find((d) => d.type === selectedDuty.type && d.area === selectedDuty.area)
+          ?.label ||
+        WEEKEND_DUTIES.find((d) => d.type === selectedDuty.type && d.area === selectedDuty.area)
+          ?.label ||
+        ''
+      : '';
 
-  // Get duty color for dialog styling
-  const dutyColor = getDutyColor(selectedDuty.type, selectedDuty.area, !!assignment);
+  const dutyColor =
+    selectedDate && selectedDuty
+      ? getDutyColor(selectedDuty.type, selectedDuty.area, !!assignment)
+      : undefined;
 
-  // Filter and sort employees based on duty type
   const filteredEmployees = useMemo(() => {
+    if (!selectedDate || !selectedDuty) return [];
+
     let filtered: Employee[] = [];
-    
+
     if (selectedDuty.type.includes('doctors')) {
       // For doctor duties: only show doctors
       filtered = availableEmployees.filter(
@@ -72,7 +84,7 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
 
     // Sort employees: first by area (matching tour area first), then by function
     const targetArea = selectedDuty.area;
-    
+
     return [...filtered].sort((a, b) => {
       // First: Sort by area (matching tour area first)
       const getAreaOrder = (area?: string) => {
@@ -93,7 +105,7 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
 
       const areaOrderA = getAreaOrder(a.area);
       const areaOrderB = getAreaOrder(b.area);
-      
+
       if (areaOrderA !== areaOrderB) {
         return areaOrderA - areaOrderB;
       }
@@ -109,7 +121,7 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
 
       const functionOrderA = getFunctionOrder(a.function);
       const functionOrderB = getFunctionOrder(b.function);
-      
+
       if (functionOrderA !== functionOrderB) {
         return functionOrderA - functionOrderB;
       }
@@ -119,21 +131,26 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
       const nameB = `${b.last_name} ${b.first_name}`.toLowerCase();
       return nameA.localeCompare(nameB);
     });
-  }, [availableEmployees, selectedDuty.type, selectedDuty.area]);
+  }, [availableEmployees, selectedDate, selectedDuty]);
+
+  if (!selectedDate || !selectedDuty) return null;
 
   // Get remaining capacity for an employee for this duty type
   const getRemainingCapacity = (employeeId: number): number => {
     if (!employeeCapacities || employeeCapacities.length === 0) return -1;
-    
+
     // Find capacity for this employee
-    const employeeCapacity = employeeCapacities.find(cap => cap.employee_id === employeeId);
+    const employeeCapacity = employeeCapacities.find((cap) => cap.employee_id === employeeId);
     if (!employeeCapacity) return -1;
-    
+
     // Map duty type to capacity type
     let capacityType: string;
     if (selectedDuty.type === 'rb_nursing_weekday') {
       capacityType = 'RB_NURSING_WEEKDAY';
-    } else if (selectedDuty.type === 'rb_nursing_weekend_day' || selectedDuty.type === 'rb_nursing_weekend_night') {
+    } else if (
+      selectedDuty.type === 'rb_nursing_weekend_day' ||
+      selectedDuty.type === 'rb_nursing_weekend_night'
+    ) {
       capacityType = 'RB_NURSING_WEEKEND';
     } else if (selectedDuty.type === 'rb_doctors_weekday') {
       capacityType = 'RB_DOCTORS_WEEKDAY';
@@ -144,12 +161,12 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
     } else {
       return -1;
     }
-    
+
     // Find matching capacity entry
     const matchingCapacity = employeeCapacities.find(
-      cap => cap.employee_id === employeeId && cap.capacity_type === capacityType
+      (cap) => cap.employee_id === employeeId && cap.capacity_type === capacityType
     );
-    
+
     // Return remaining count from backend (already calculated)
     return matchingCapacity?.remaining ?? -1;
   };
@@ -157,27 +174,29 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
   // Get function info for chip
   const getFunctionInfo = (functionName: string) => {
     const functionMap: Record<string, { name: string; color: string }> = {
-      'Arzt': {
+      Arzt: {
         name: 'Arzt',
         color: employeeTypeColors['Arzt'] || employeeTypeColors['default'],
       },
-      'Honorararzt': {
+      Honorararzt: {
         name: 'Honorararzt',
         color: employeeTypeColors['Honorararzt'] || employeeTypeColors['default'],
       },
-      'Pflegekraft': {
+      Pflegekraft: {
         name: 'Pflegekraft',
         color: employeeTypeColors['default'],
       },
-      'PDL': {
+      PDL: {
         name: 'PDL',
         color: employeeTypeColors['default'],
       },
     };
-    return functionMap[functionName] || {
-      name: functionName,
-      color: employeeTypeColors['default'],
-    };
+    return (
+      functionMap[functionName] || {
+        name: functionName,
+        color: employeeTypeColors['default'],
+      }
+    );
   };
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -245,9 +264,7 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                 <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.secondary' }}>
                   Keine Zuweisung
                 </Typography>
-                {!assignment?.employee_id && (
-                  <CheckCircleIcon sx={{ color: 'text.disabled' }} />
-                )}
+                {!assignment?.employee_id && <CheckCircleIcon sx={{ color: 'text.disabled' }} />}
               </Box>
             </CardContent>
           </Card>
@@ -269,9 +286,7 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                   borderRadius: 2,
                   border: isSelected ? '2px solid' : '1px solid',
                   borderColor: isSelected ? dutyColor : 'divider',
-                  backgroundColor: isSelected
-                    ? `${dutyColor}20`
-                    : 'background.paper',
+                  backgroundColor: isSelected ? `${dutyColor}20` : 'background.paper',
                   transition: 'all 0.2s ease',
                   '&:hover': {
                     transform: 'translateY(-2px)',
@@ -310,7 +325,9 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                             label={employee.area.includes('Nordkreis') ? 'N' : 'S'}
                             size="small"
                             sx={{
-                              bgcolor: employee.area.includes('Nordkreis') ? 'primary.main' : 'secondary.main',
+                              bgcolor: employee.area.includes('Nordkreis')
+                                ? 'primary.main'
+                                : 'secondary.main',
                               color: 'white',
                               fontSize: '0.7rem',
                               height: 20,

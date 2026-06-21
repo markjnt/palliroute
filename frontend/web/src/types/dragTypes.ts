@@ -9,4 +9,4 @@ export interface PatientDragItem {
   patientId: number;
   appointmentIds: number[];
   sourceEmployeeId?: number;
-} 
+}

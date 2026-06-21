@@ -13,7 +13,7 @@ import {
   Checkbox,
   FormControlLabel,
   Divider,
-  Chip
+  Chip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -22,7 +22,7 @@ import {
   Info as InfoIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as UncheckedIcon,
-  Phone as PhoneIcon
+  Phone as PhoneIcon,
 } from '@mui/icons-material';
 
 interface StopPopupProps {
@@ -40,7 +40,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
   appointment,
   onClose,
   isAdditionalRoute = false,
-  employee
+  employee,
 }) => {
   const appointmentId = appointment?.id ?? null;
   const toggleStop = useRouteCompletionStore((state) => state.toggleStop);
@@ -50,14 +50,14 @@ export const StopPopup: React.FC<StopPopupProps> = ({
       [appointmentId]
     )
   );
-  
+
   if (!patient || !appointment || appointmentId === null) {
     return null;
   }
   const visitTypeLabels = {
-    'HB': 'Hausbesuch',
-    'TK': 'Telefonkontakt',
-    'NA': 'Neuaufnahme'
+    HB: 'Hausbesuch',
+    TK: 'Telefonkontakt',
+    NA: 'Neuaufnahme',
   };
 
   const handleCheckboxChange = () => {
@@ -81,7 +81,9 @@ export const StopPopup: React.FC<StopPopupProps> = ({
       <Box sx={{ padding: 1.5, maxWidth: 320 }}>
         {/* Header with patient info */}
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               {/* Route Position Number */}
               {marker.routePosition && (
@@ -112,13 +114,13 @@ export const StopPopup: React.FC<StopPopupProps> = ({
               onClick={onClose}
               sx={{
                 color: '#8E8E93',
-                '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
               }}
             >
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
-          
+
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
               label={visitTypeLabels[appointment.visit_type]}
@@ -140,27 +142,31 @@ export const StopPopup: React.FC<StopPopupProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
             <LocationIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.5, mt: 0.25 }} />
             <Box sx={{ flex: 1 }}>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: '#1d1d1f', 
-                  fontWeight: 500, 
-                  mb: 0.25
+              <Typography
+                variant="body2"
+                sx={{
+                  color: '#1d1d1f',
+                  fontWeight: 500,
+                  mb: 0.25,
                 }}
                 onClick={() => {
-                  const encodedAddress = encodeURIComponent(`${patient.street}, ${patient.zip_code} ${patient.city}`);
+                  const encodedAddress = encodeURIComponent(
+                    `${patient.street}, ${patient.zip_code} ${patient.city}`
+                  );
                   window.location.href = `https://maps.google.com/?q=${encodedAddress}`;
                 }}
               >
                 {patient.street}
               </Typography>
-              <Typography 
-                variant="caption" 
-                sx={{ 
+              <Typography
+                variant="caption"
+                sx={{
                   color: '#8E8E93',
                 }}
                 onClick={() => {
-                  const encodedAddress = encodeURIComponent(`${patient.street}, ${patient.zip_code} ${patient.city}`);
+                  const encodedAddress = encodeURIComponent(
+                    `${patient.street}, ${patient.zip_code} ${patient.city}`
+                  );
                   window.location.href = `https://maps.google.com/?q=${encodedAddress}`;
                 }}
               >
@@ -207,7 +213,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                   <Typography
                     variant="body2"
                     sx={{
-                      color: '#1d1d1f'
+                      color: '#1d1d1f',
                     }}
                     onClick={() => {
                       const cleanPhone = patient.phone2!.replace(/\s+/g, '');
@@ -226,14 +232,17 @@ export const StopPopup: React.FC<StopPopupProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <InfoIcon sx={{ fontSize: 18, color: '#007AFF', mr: 1.5 }} />
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" sx={{ 
-                  color: '#007AFF',
-                  bgcolor: 'rgba(0, 122, 255, 0.1)',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1,
-                  display: 'block',
-                }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: '#007AFF',
+                    bgcolor: 'rgba(0, 122, 255, 0.1)',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                    display: 'block',
+                  }}
+                >
                   {appointment.info}
                 </Typography>
               </Box>
@@ -264,18 +273,29 @@ export const StopPopup: React.FC<StopPopupProps> = ({
               />
             </>
           )}
-          
+
           {/* Employee name chip for additional routes - shown at the bottom */}
           {isAdditionalRoute && (
             <Box sx={{ mt: 2 }}>
               <Chip
-                label={employee ? `${employee.first_name} ${employee.last_name}` : `AW ${marker.area || 'Bereich'}`}
+                label={
+                  employee
+                    ? `${employee.first_name} ${employee.last_name}`
+                    : `AW ${marker.area || 'Bereich'}`
+                }
                 size="small"
                 sx={{
-                  bgcolor: employee ? getColorForTour(employee.id) : (marker.area ? 
-                    (marker.area === 'Nord' ? '#1976d2' : 
-                     marker.area === 'Mitte' ? '#7b1fa2' : 
-                     marker.area === 'Süd' ? '#388e3c' : '#ff9800') : '#ff9800'),
+                  bgcolor: employee
+                    ? getColorForTour(employee.id)
+                    : marker.area
+                      ? marker.area === 'Nord'
+                        ? '#1976d2'
+                        : marker.area === 'Mitte'
+                          ? '#7b1fa2'
+                          : marker.area === 'Süd'
+                            ? '#388e3c'
+                            : '#ff9800'
+                      : '#ff9800',
                   color: 'white',
                   fontWeight: 600,
                   fontSize: '0.875rem',

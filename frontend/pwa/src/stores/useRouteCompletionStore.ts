@@ -19,7 +19,7 @@ export const useRouteCompletionStore = create<RouteCompletionState>()(
     (set, get) => ({
       currentWeekday: null,
       completedStopsByWeekday: {},
-      
+
       setCurrentWeekday: (weekday: string) => {
         set((state) => {
           // If switching to a different day, keep the completed stops for that day
@@ -27,69 +27,69 @@ export const useRouteCompletionStore = create<RouteCompletionState>()(
           return { currentWeekday: weekday };
         });
       },
-      
+
       toggleStop: (appointmentId: number) => {
         const state = get();
         const weekday = state.currentWeekday;
         if (!weekday) return;
-        
+
         set((state) => {
           const newCompletedStopsByWeekday = { ...state.completedStopsByWeekday };
           const currentStops = newCompletedStopsByWeekday[weekday];
-          
+
           // Create new Set only if it doesn't exist or if we need to modify it
           const newStops = currentStops ? new Set(currentStops) : new Set<number>();
-          
+
           if (newStops.has(appointmentId)) {
             newStops.delete(appointmentId);
           } else {
             newStops.add(appointmentId);
           }
-          
+
           newCompletedStopsByWeekday[weekday] = newStops;
           return { completedStopsByWeekday: newCompletedStopsByWeekday };
         });
       },
-      
+
       setStopCompleted: (appointmentId: number, completed: boolean) => {
         const state = get();
         const weekday = state.currentWeekday;
         if (!weekday) return;
-        
+
         set((state) => {
           const newCompletedStopsByWeekday = { ...state.completedStopsByWeekday };
           const currentStops = newCompletedStopsByWeekday[weekday];
-          
+
           // Create new Set only if it doesn't exist or if we need to modify it
           const newStops = currentStops ? new Set(currentStops) : new Set<number>();
-          
+
           if (completed) {
             newStops.add(appointmentId);
           } else {
             newStops.delete(appointmentId);
           }
-          
+
           newCompletedStopsByWeekday[weekday] = newStops;
           return { completedStopsByWeekday: newCompletedStopsByWeekday };
         });
       },
-      
+
       clearCompletedStops: () => {
         const state = get();
         const weekday = state.currentWeekday;
         if (!weekday) return;
-        
+
         set((state) => {
           const newCompletedStopsByWeekday = { ...state.completedStopsByWeekday };
           newCompletedStopsByWeekday[weekday] = new Set<number>();
           return { completedStopsByWeekday: newCompletedStopsByWeekday };
         });
       },
-      
+
       clearAllCompletedStops: () => {
         set({ completedStopsByWeekday: {} });
       },
-      
+
       isStopCompleted: (appointmentId: number) => {
         const state = get();
         if (!state.currentWeekday) return false;
@@ -121,11 +121,17 @@ export const useRouteCompletionStore = create<RouteCompletionState>()(
           state.completedStopsByWeekday = completedStopsByWeekday;
         } else if (state) {
           // Migration: if old format exists, convert it
-          if ('completedStopsByWeekAndDay' in state && typeof (state as any).completedStopsByWeekAndDay === 'object') {
+          if (
+            'completedStopsByWeekAndDay' in state &&
+            typeof (state as any).completedStopsByWeekAndDay === 'object'
+          ) {
             // Migrate from old format (week -> weekday -> Set) to new format (weekday -> Set)
             // Just take the current week's data or clear if no current week
             state.completedStopsByWeekday = {};
-          } else if ('completedStopsByWeekday' in state && typeof (state as any).completedStopsByWeekday === 'object') {
+          } else if (
+            'completedStopsByWeekday' in state &&
+            typeof (state as any).completedStopsByWeekday === 'object'
+          ) {
             // Already in correct format, just convert Sets
             const oldData = (state as any).completedStopsByWeekday;
             const completedStopsByWeekday: Record<string, Set<number>> = {};
@@ -139,10 +145,10 @@ export const useRouteCompletionStore = create<RouteCompletionState>()(
             // Very old format: single completedStops array
             const oldStops = (state as any).completedStops;
             const currentWeekday = state.currentWeekday;
-            
+
             if (currentWeekday) {
               state.completedStopsByWeekday = {
-                [currentWeekday]: new Set(oldStops)
+                [currentWeekday]: new Set(oldStops),
               };
             } else {
               state.completedStopsByWeekday = {};
@@ -169,9 +175,9 @@ export const useCompletedStops = () => {
     if (!state.currentWeekday) {
       return EMPTY_SET;
     }
-    
+
     // Return the Set directly - Zustand uses Object.is() for comparison
     // This ensures we only re-render when the Set reference actually changes
     return state.completedStopsByWeekday[state.currentWeekday] || EMPTY_SET;
   });
-}; 
+};

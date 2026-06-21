@@ -30,4 +30,3 @@ class EmployeeCapacity(db.Model):
             name="unique_employee_capacity",
         ),
     )
-

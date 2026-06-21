@@ -1,9 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-} from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import {
   DirectionsCar as DirectionsCarIcon,
   AccessTime as AccessTimeIcon,
@@ -12,7 +8,11 @@ import {
 } from '@mui/icons-material';
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
-import { useRoutes, useOptimizeRoutes, useOptimizeTourAreaRoutes } from '../../services/queries/useRoutes';
+import {
+  useRoutes,
+  useOptimizeRoutes,
+  useOptimizeTourAreaRoutes,
+} from '../../services/queries/useRoutes';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { useRouteCompletionStore } from '../../stores/useRouteCompletionStore';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
@@ -27,7 +27,7 @@ export const RouteInfo: React.FC = () => {
   const { clearCompletedStops } = useRouteCompletionStore();
   const { lastUpdateTime } = useLastUpdateStore();
   const { refreshData } = useRefresh();
-  
+
   const { data: routes = [] } = useRoutes({
     weekday: selectedWeekday as Weekday,
     ...(selectedTourArea ? { tour_area_day: isAreaTourDay } : {}),
@@ -39,13 +39,13 @@ export const RouteInfo: React.FC = () => {
   // Get German weekday name
   const getGermanWeekday = (weekday: string): string => {
     const weekdayMap: Record<string, string> = {
-      'monday': 'Montag',
-      'tuesday': 'Dienstag',
-      'wednesday': 'Mittwoch',
-      'thursday': 'Donnerstag',
-      'friday': 'Freitag',
-      'saturday': 'Samstag',
-      'sunday': 'Sonntag'
+      monday: 'Montag',
+      tuesday: 'Dienstag',
+      wednesday: 'Mittwoch',
+      thursday: 'Donnerstag',
+      friday: 'Freitag',
+      saturday: 'Samstag',
+      sunday: 'Sonntag',
     };
     return weekdayMap[weekday] || weekday;
   };
@@ -53,15 +53,20 @@ export const RouteInfo: React.FC = () => {
   // Immer nur die Route des ausgewählten Mitarbeiters oder AW-Bereichs anzeigen
   const selectedRoute = useMemo(() => {
     if (selectedTourArea) {
-      return routes.find(route => !route.employee_id && route.area === selectedTourArea && route.weekday === selectedWeekday);
+      return routes.find(
+        (route) =>
+          !route.employee_id && route.area === selectedTourArea && route.weekday === selectedWeekday
+      );
     } else {
-      return routes.find(route => route.employee_id === selectedUserId && route.weekday === selectedWeekday);
+      return routes.find(
+        (route) => route.employee_id === selectedUserId && route.weekday === selectedWeekday
+      );
     }
   }, [routes, selectedUserId, selectedTourArea, selectedWeekday]);
 
   // Get selected employee for work_hours (only for employee routes)
   const selectedEmployee = useMemo(() => {
-    return employees.find(emp => emp.id === selectedUserId);
+    return employees.find((emp) => emp.id === selectedUserId);
   }, [employees, selectedUserId]);
 
   if (!selectedRoute) {
@@ -86,16 +91,18 @@ export const RouteInfo: React.FC = () => {
 
   // Format distance (backend already provides distance in km, format with German locale)
   const formatDistance = (distance: number): string => {
-    return distance.toLocaleString('de-DE', { 
-      minimumFractionDigits: 1, 
-      maximumFractionDigits: 1 
-    }) + ' km';
+    return (
+      distance.toLocaleString('de-DE', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }) + ' km'
+    );
   };
 
   // Calculate utilization percentage with color logic
   const calculateUtilization = (duration: number) => {
     let targetMinutes: number;
-    
+
     if (selectedTourArea) {
       // For AW/tour-area tours: 75% of 420 minutes = 315 minutes target
       targetMinutes = 315;
@@ -103,10 +110,10 @@ export const RouteInfo: React.FC = () => {
       // For employees: based on work_hours percentage
       targetMinutes = Math.round(420 * ((selectedEmployee?.work_hours || 0) / 100));
     }
-    
+
     // Calculate utilization percentage
     const utilizationPercent = targetMinutes > 0 ? Math.round((duration / targetMinutes) * 100) : 0;
-    
+
     // Determine color based on utilization
     let utilizationColor = 'success.main'; // Green by default
     if (utilizationPercent > 100) {
@@ -116,10 +123,10 @@ export const RouteInfo: React.FC = () => {
     } else if (utilizationPercent > 70) {
       utilizationColor = 'success.light'; // Light green if over 70%
     }
-    
+
     return {
       utilizationPercent,
-      utilizationColor
+      utilizationColor,
     };
   };
 
@@ -130,28 +137,33 @@ export const RouteInfo: React.FC = () => {
   // Format last update time for display
   const formatLastUpdateTime = (time: Date | null): string => {
     if (!time) return 'Noch nicht aktualisiert';
-    
-    return 'zuletzt ' + time.toLocaleDateString('de-DE') + ' ' + time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+    return (
+      'zuletzt ' +
+      time.toLocaleDateString('de-DE') +
+      ' ' +
+      time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+    );
   };
 
   const handleOptimize = async () => {
     if (!selectedWeekday) return;
-    
+
     try {
       if (selectedTourArea) {
         // Optimize AW/tour-area route
         await optimizeTourAreaRoutesMutation.mutateAsync({
           weekday: selectedWeekday,
-          area: selectedTourArea
+          area: selectedTourArea,
         });
       } else if (selectedUserId) {
         // Optimize employee route
         await optimizeRoutesMutation.mutateAsync({
           weekday: selectedWeekday,
-          employeeId: selectedUserId
+          employeeId: selectedUserId,
         });
       }
-      
+
       // Reset route completion status after optimization
       clearCompletedStops();
     } catch (error) {
@@ -173,11 +185,13 @@ export const RouteInfo: React.FC = () => {
         }}
       >
         {/* Route Stats Grid */}
-        <Box sx={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: 1, // Consistent gap matching the container gap
-        }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 1, // Consistent gap matching the container gap
+          }}
+        >
           {/* Distance */}
           <Box
             sx={{
@@ -192,7 +206,10 @@ export const RouteInfo: React.FC = () => {
           >
             <DirectionsCarIcon sx={{ color: '#007AFF', fontSize: 18 }} />
             <Box>
-              <Typography variant="caption" sx={{ color: '#007AFF', fontWeight: 500, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{ color: '#007AFF', fontWeight: 500, display: 'block' }}
+              >
                 Distanz
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#1d1d1f' }}>
@@ -215,10 +232,16 @@ export const RouteInfo: React.FC = () => {
           >
             <AccessTimeIcon sx={{ color: '#FF9500', fontSize: 18 }} />
             <Box>
-              <Typography variant="caption" sx={{ color: '#FF9500', fontWeight: 500, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{ color: '#FF9500', fontWeight: 500, display: 'block' }}
+              >
                 Auslastung
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: utilizationInfo.utilizationColor }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: utilizationInfo.utilizationColor }}
+              >
                 {utilizationInfo.utilizationPercent}%
               </Typography>
             </Box>
@@ -247,13 +270,13 @@ export const RouteInfo: React.FC = () => {
             },
             '&:disabled': {
               bgcolor: 'rgba(76, 175, 80, 0.5)',
-            }
+            },
           }}
         >
           <RouteIcon sx={{ fontSize: 18 }} />
           <Typography variant="caption" sx={{ fontWeight: 500 }}>
-            {(optimizeRoutesMutation.isPending || optimizeTourAreaRoutesMutation.isPending) 
-              ? 'Optimiere...' 
+            {optimizeRoutesMutation.isPending || optimizeTourAreaRoutesMutation.isPending
+              ? 'Optimiere...'
               : 'Optimieren'}
           </Typography>
         </Button>

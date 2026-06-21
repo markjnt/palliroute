@@ -1,20 +1,20 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { 
-    Box, 
-    Typography, 
-    Paper,
-    Divider,
-    IconButton,
-    Collapse,
-    Alert,
-    CircularProgress
+import {
+  Box,
+  Typography,
+  Paper,
+  Divider,
+  IconButton,
+  Collapse,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
-import { 
-    Weekend as WeekendIcon, 
-    ExpandMore as ExpandMoreIcon, 
-    ExpandLess as ExpandLessIcon,
-    Home as HomeIcon,
-    Phone as PhoneIcon
+import {
+  Weekend as WeekendIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Home as HomeIcon,
+  Phone as PhoneIcon,
 } from '@mui/icons-material';
 import { Weekday, Route, Patient, Appointment, Employee } from '../../../types/models';
 import { useRoutes } from '../../../services/queries/useRoutes';
@@ -28,433 +28,444 @@ import { WeekendTourStats } from './tour/WeekendTourStats';
 import { WeekendTourControls } from './tour/WeekendTourControls';
 import { WeekendTourSummary } from './tour/WeekendTourSummary';
 import { UnassignedWeekendAppointments } from './UnassignedWeekendAppointments';
-import { 
-    usePatientManagement, 
-    useRouteManagement, 
-    useAppointmentManagement, 
-    useAreaManagement,
-    useRouteVisibility,
-    useNrwpHolidayForTourDay,
+import {
+  usePatientManagement,
+  useRouteManagement,
+  useAppointmentManagement,
+  useAreaManagement,
+  useRouteVisibility,
+  useNrwpHolidayForTourDay,
 } from '../../../hooks';
 
 interface WeekendToursViewProps {
-    selectedDay: Weekday;
+  selectedDay: Weekday;
 }
 
 const tourAreaLabels = ['Nord', 'Mitte', 'Süd'] as const;
-type TourArea = typeof tourAreaLabels[number];
+type TourArea = (typeof tourAreaLabels)[number];
 
 // Weekend Tour Container Component (similar to TourContainer)
 interface WeekendTourContainerProps {
-    area: TourArea;
-    routes: Route[];
-    appointments: Appointment[];
-    patients: Patient[];
-    employees: Employee[];
-    selectedDay: Weekday;
+  area: TourArea;
+  routes: Route[];
+  appointments: Appointment[];
+  patients: Patient[];
+  employees: Employee[];
+  selectedDay: Weekday;
 }
 
 const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
+  area,
+  routes,
+  appointments,
+  patients,
+  employees,
+  selectedDay,
+}) => {
+  const [expanded, setExpanded] = useState(false);
+
+  // Custom hooks for business logic
+  const patientManagement = usePatientManagement({
+    patients,
+    appointments,
+    selectedDay,
     area,
+  });
+
+  const routeManagement = useRouteManagement({
+    selectedDay,
+    area,
+  });
+
+  const appointmentManagement = useAppointmentManagement({
+    selectedDay,
+  });
+
+  const areaManagement = useAreaManagement({
     routes,
     appointments,
-    patients,
-    employees,
-    selectedDay
-}) => {
-    const [expanded, setExpanded] = useState(false);
+    selectedDay,
+    useTourAreaLayout: true,
+  });
 
-    // Custom hooks for business logic
-    const patientManagement = usePatientManagement({
-        patients,
-        appointments,
-        selectedDay,
-        area
-    });
+  // Find the route for this area and day (can have employee_id now)
+  // Normalize area for comparison (handle both "Nordkreis"/"Südkreis" and "Nord"/"Süd")
+  const normalizeAreaForRoute = (routeArea: string): string => {
+    if (!routeArea) return '';
+    const areaLower = routeArea.toLowerCase();
+    if (areaLower.includes('nord') && !areaLower.includes('süd')) return 'Nord';
+    if (areaLower.includes('süd') && !areaLower.includes('nord')) return 'Süd';
+    if (areaLower.includes('mitte')) return 'Mitte';
+    return routeArea;
+  };
 
-    const routeManagement = useRouteManagement({
-        selectedDay,
-        area
-    });
+  const matchingRoutes = routes.filter((r) => {
+    const routeAreaNormalized = normalizeAreaForRoute(r.area as string);
+    return routeAreaNormalized === area && r.weekday === selectedDay;
+  });
 
-    const appointmentManagement = useAppointmentManagement({
-        selectedDay
-    });
+  // Prefer the most "real" route in case duplicate area/day entries exist:
+  // 1) more stops in route_order, 2) higher duration, 3) newer updated_at.
+  const route = matchingRoutes.slice().sort((a, b) => {
+    const aStops = Array.isArray(a.route_order) ? a.route_order.length : 0;
+    const bStops = Array.isArray(b.route_order) ? b.route_order.length : 0;
+    if (bStops !== aStops) return bStops - aStops;
 
-    const areaManagement = useAreaManagement({
-        routes,
-        appointments,
-        selectedDay,
-        useTourAreaLayout: true,
-    });
+    const aDuration = a.total_duration ?? 0;
+    const bDuration = b.total_duration ?? 0;
+    if (bDuration !== aDuration) return bDuration - aDuration;
 
-    // Find the route for this area and day (can have employee_id now)
-    // Normalize area for comparison (handle both "Nordkreis"/"Südkreis" and "Nord"/"Süd")
-    const normalizeAreaForRoute = (routeArea: string): string => {
-        if (!routeArea) return '';
-        const areaLower = routeArea.toLowerCase();
-        if (areaLower.includes('nord') && !areaLower.includes('süd')) return 'Nord';
-        if (areaLower.includes('süd') && !areaLower.includes('nord')) return 'Süd';
-        if (areaLower.includes('mitte')) return 'Mitte';
-        return routeArea;
-    };
-    
-    const matchingRoutes = routes.filter((r) => {
-        const routeAreaNormalized = normalizeAreaForRoute(r.area as string);
-        return routeAreaNormalized === area && r.weekday === selectedDay;
-    });
+    const aUpdated = a.updated_at ? Date.parse(a.updated_at) : 0;
+    const bUpdated = b.updated_at ? Date.parse(b.updated_at) : 0;
+    return bUpdated - aUpdated;
+  })[0];
+  const routeId = route?.id;
 
-    // Prefer the most "real" route in case duplicate area/day entries exist:
-    // 1) more stops in route_order, 2) higher duration, 3) newer updated_at.
-    const route = matchingRoutes
-        .slice()
-        .sort((a, b) => {
-            const aStops = Array.isArray(a.route_order) ? a.route_order.length : 0;
-            const bStops = Array.isArray(b.route_order) ? b.route_order.length : 0;
-            if (bStops !== aStops) return bStops - aStops;
+  // Get route visibility using custom hook
+  const routeVisibility = useRouteVisibility({ routeId });
+  const isVisible = routeVisibility.isVisible;
 
-            const aDuration = a.total_duration ?? 0;
-            const bDuration = b.total_duration ?? 0;
-            if (bDuration !== aDuration) return bDuration - aDuration;
+  // Get patients using custom hook
+  const { hbPatients, tkPatients, naPatients, getSortedRoutePatients, hasAppointmentsForDay } =
+    patientManagement;
 
-            const aUpdated = a.updated_at ? Date.parse(a.updated_at) : 0;
-            const bUpdated = b.updated_at ? Date.parse(b.updated_at) : 0;
-            return bUpdated - aUpdated;
-        })[0];
-    const routeId = route?.id;
+  const sortedRoutePatients = getSortedRoutePatients(route);
 
-    // Get route visibility using custom hook
-    const routeVisibility = useRouteVisibility({ routeId });
-    const isVisible = routeVisibility.isVisible;
+  // Get area colors using custom hook
+  const backgroundColor = areaManagement.getAreaBackgroundColor(area);
+  const areaColor = areaManagement.getAreaColor(area);
 
-    // Get patients using custom hook
-    const {
-        hbPatients,
-        tkPatients,
-        naPatients,
-        getSortedRoutePatients,
-        hasAppointmentsForDay
-    } = patientManagement;
+  // Get appointments for this area
+  const areaAppointments = appointments.filter(
+    (app) => (app.area as string) === area && !app.employee_id
+  );
 
-    const sortedRoutePatients = getSortedRoutePatients(route);
+  // Group appointments by visit type
+  const hbAppointments = areaAppointments.filter((app) => app.visit_type === 'HB');
+  const tkAppointments = areaAppointments.filter((app) => app.visit_type === 'TK');
+  const naAppointments = areaAppointments.filter((app) => app.visit_type === 'NA');
 
-    // Get area colors using custom hook
-    const backgroundColor = areaManagement.getAreaBackgroundColor(area);
-    const areaColor = areaManagement.getAreaColor(area);
+  // Handler functions
+  const handleOptimizeRoute = async () => {
+    await routeManagement.optimizeTourAreaRoute();
+  };
 
-    // Get appointments for this area
-    const areaAppointments = appointments.filter(app => (app.area as string) === area && !app.employee_id);
-    
-    // Group appointments by visit type
-    const hbAppointments = areaAppointments.filter(app => app.visit_type === 'HB');
-    const tkAppointments = areaAppointments.filter(app => app.visit_type === 'TK');
-    const naAppointments = areaAppointments.filter(app => app.visit_type === 'NA');
+  const handleMoveUp = async (patientId: number) => {
+    if (!routeId) return;
 
+    const appointment = areaAppointments.find((a) => a.patient_id === patientId);
+    if (!appointment || !appointment.id) return;
 
-    // Handler functions
-    const handleOptimizeRoute = async () => {
-        await routeManagement.optimizeTourAreaRoute();
-    };
+    await routeManagement.movePatientUp(routeId, appointment.id);
+  };
 
+  const handleMoveDown = async (patientId: number) => {
+    if (!routeId) return;
 
+    const appointment = areaAppointments.find((a) => a.patient_id === patientId);
+    if (!appointment || !appointment.id) return;
 
-    const handleMoveUp = async (patientId: number) => {
-        if (!routeId) return;
-        
-        const appointment = areaAppointments.find(a => a.patient_id === patientId);
-        if (!appointment || !appointment.id) return;
-        
-        await routeManagement.movePatientUp(routeId, appointment.id);
-    };
+    await routeManagement.movePatientDown(routeId, appointment.id);
+  };
 
-    const handleMoveDown = async (patientId: number) => {
-        if (!routeId) return;
-        
-        const appointment = areaAppointments.find(a => a.patient_id === patientId);
-        if (!appointment || !appointment.id) return;
-        
-        await routeManagement.movePatientDown(routeId, appointment.id);
-    };
+  return (
+    <Paper
+      elevation={2}
+      sx={{
+        mb: 0,
+        p: 2,
+        transition: 'all 0.3s ease',
+        width: '100%',
+        height: 'fit-content',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        minHeight: expanded ? 'auto' : '100px',
+        borderWidth: 2.5,
+        borderColor: areaColor,
+        borderStyle: 'solid',
+        backgroundColor: backgroundColor,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <WeekendTourHeader area={area} />
 
-    return (
-        <Paper 
-            elevation={2} 
-            sx={{ 
-                mb: 0,
-                p: 2,
-                transition: 'all 0.3s ease',
-                width: '100%',
-                height: 'fit-content',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                minHeight: expanded ? 'auto' : '100px',
-                borderWidth: 2.5,
-                borderColor: areaColor,
-                borderStyle: 'solid',
-                backgroundColor: backgroundColor
-            }}
+          <WeekendTourStats area={area} route={route} />
+
+          <WeekendTourControls
+            expanded={expanded}
+            isOptimizing={routeManagement.isOptimizing}
+            tourPatientsCount={sortedRoutePatients.length}
+            routeId={routeId}
+            isVisible={isVisible}
+            onOptimizeRoute={handleOptimizeRoute}
+            onToggleVisibility={routeVisibility.toggleVisibility}
+          />
+        </Box>
+
+        <IconButton
+          onClick={() => setExpanded(!expanded)}
+          size="small"
+          aria-label={expanded ? 'Einklappen' : 'Ausklappen'}
+          color="primary"
+          sx={{ ml: 1 }}
         >
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'flex-start' 
-            }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <WeekendTourHeader area={area} />
+          {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </Box>
 
-                    <WeekendTourStats area={area} route={route} />
-                    
-                    <WeekendTourControls
-                        expanded={expanded}
-                        isOptimizing={routeManagement.isOptimizing}
-                        tourPatientsCount={sortedRoutePatients.length}
-                        routeId={routeId}
-                        isVisible={isVisible}
-                        onOptimizeRoute={handleOptimizeRoute}
-                        onToggleVisibility={routeVisibility.toggleVisibility}
-                    />
+      {!expanded && (
+        <WeekendTourSummary
+          hbAppointmentsCount={hbAppointments.length}
+          tkAppointmentsCount={tkAppointments.length}
+          naAppointmentsCount={naAppointments.length}
+        />
+      )}
+
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <Divider sx={{ my: 1 }} />
+
+        {hasAppointmentsForDay ? (
+          <>
+            {/* HB Patienten (Route) */}
+            {sortedRoutePatients.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'primary.main' }}>
+                  <HomeIcon color="primary" />
+                  <Typography variant="h6" sx={{ ml: 1 }}>
+                    Route ({sortedRoutePatients.length})
+                  </Typography>
                 </Box>
-                
-                <IconButton 
-                    onClick={() => setExpanded(!expanded)} 
-                    size="small"
-                    aria-label={expanded ? "Einklappen" : "Ausklappen"}
-                    color="primary"
-                    sx={{ ml: 1 }}
-                >
-                    {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
-            </Box>
-            
-            {!expanded && (
-                <WeekendTourSummary
-                    hbAppointmentsCount={hbAppointments.length}
-                    tkAppointmentsCount={tkAppointments.length}
-                    naAppointmentsCount={naAppointments.length}
-                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {sortedRoutePatients.map((patient, index) => {
+                    const patientAppointments = areaAppointments.filter(
+                      (app) =>
+                        app.patient_id === patient.id &&
+                        (app.visit_type === 'HB' || app.visit_type === 'NA')
+                    );
+                    const hasHB = patientAppointments.some((app) => app.visit_type === 'HB');
+                    const hasNA = patientAppointments.some((app) => app.visit_type === 'NA');
+                    const visitType = hasHB ? 'HB' : hasNA ? 'NA' : 'HB'; // Default to HB if somehow neither exists
+
+                    return (
+                      <TourPatientCard
+                        key={patient.id}
+                        patient={patient}
+                        appointments={patientAppointments}
+                        visitType={visitType}
+                        index={index + 1}
+                        selectedDay={selectedDay}
+                        area={area}
+                        onMoveUp={handleMoveUp}
+                        onMoveDown={handleMoveDown}
+                        isFirst={index === 0}
+                        isLast={index === sortedRoutePatients.length - 1}
+                      />
+                    );
+                  })}
+                </Box>
+              </Box>
             )}
-            
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <Divider sx={{ my: 1 }} />
-                
-                {hasAppointmentsForDay ? (
-                    <>
-                        {/* HB Patienten (Route) */}
-                        {sortedRoutePatients.length > 0 && (
-                            <Box sx={{ mb: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'primary.main' }}>
-                                    <HomeIcon color="primary" />
-                                    <Typography variant="h6" sx={{ ml: 1 }}>
-                                        Route ({sortedRoutePatients.length})
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                    {sortedRoutePatients.map((patient, index) => {
-                                        const patientAppointments = areaAppointments.filter(app => 
-                                            app.patient_id === patient.id && 
-                                            (app.visit_type === 'HB' || app.visit_type === 'NA')
-                                        );
-                                        const hasHB = patientAppointments.some(app => app.visit_type === 'HB');
-                                        const hasNA = patientAppointments.some(app => app.visit_type === 'NA');
-                                        const visitType = hasHB ? 'HB' : hasNA ? 'NA' : 'HB'; // Default to HB if somehow neither exists
-                                        
-                                        return (
-                                            <TourPatientCard
-                                                key={patient.id}
-                                                patient={patient}
-                                                appointments={patientAppointments}
-                                                visitType={visitType}
-                                                index={index + 1}
-                                                selectedDay={selectedDay}
-                                                area={area}
-                                                onMoveUp={handleMoveUp}
-                                                onMoveDown={handleMoveDown}
-                                                isFirst={index === 0}
-                                                isLast={index === sortedRoutePatients.length - 1}
-                                            />
-                                        );
-                                    })}
-                                </Box>
-                            </Box>
-                        )}
 
-                        {/* TK Patienten */}
-                        {tkPatients.length > 0 && (
-                            <Box sx={{ mb: 3 }}>
-                                <Paper 
-                                    variant="outlined" 
-                                    sx={{ 
-                                        p: 2,
-                                        bgcolor: 'rgba(76, 175, 80, 0.04)'
-                                    }}
-                                >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'success.main' }}>
-                                        <PhoneIcon color="success" />
-                                        <Typography variant="h6" sx={{ ml: 1 }}>
-                                            Telefonkontakte ({tkPatients.length})
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                        {tkPatients.map((patient) => {
-                                            const patientAppointments = areaAppointments.filter(app => 
-                                                app.patient_id === patient.id && app.visit_type === 'TK'
-                                            );
-                                            return (
-                                                <TourPatientCard
-                                                    key={patient.id}
-                                                    patient={patient}
-                                                    appointments={patientAppointments}
-                                                    visitType="TK"
-                                                    compact={true}
-                                                    selectedDay={selectedDay}
-                                                    area={area}
-                                                />
-                                            );
-                                        })}
-                                    </Box>
-                                </Paper>
-                            </Box>
-                        )}
-
-                    </>
-                ) : (
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                        Keine Termine geplant.
-                    </Alert>
-                )}
-            </Collapse>
-            
-        </Paper>
-    );
+            {/* TK Patienten */}
+            {tkPatients.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    bgcolor: 'rgba(76, 175, 80, 0.04)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'success.main' }}>
+                    <PhoneIcon color="success" />
+                    <Typography variant="h6" sx={{ ml: 1 }}>
+                      Telefonkontakte ({tkPatients.length})
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {tkPatients.map((patient) => {
+                      const patientAppointments = areaAppointments.filter(
+                        (app) => app.patient_id === patient.id && app.visit_type === 'TK'
+                      );
+                      return (
+                        <TourPatientCard
+                          key={patient.id}
+                          patient={patient}
+                          appointments={patientAppointments}
+                          visitType="TK"
+                          compact={true}
+                          selectedDay={selectedDay}
+                          area={area}
+                        />
+                      );
+                    })}
+                  </Box>
+                </Paper>
+              </Box>
+            )}
+          </>
+        ) : (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Keine Termine geplant.
+          </Alert>
+        )}
+      </Collapse>
+    </Paper>
+  );
 };
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
-    monday: 'Montag',
-    tuesday: 'Dienstag',
-    wednesday: 'Mittwoch',
-    thursday: 'Donnerstag',
-    friday: 'Freitag',
-    saturday: 'Samstag',
-    sunday: 'Sonntag',
+  monday: 'Montag',
+  tuesday: 'Dienstag',
+  wednesday: 'Mittwoch',
+  thursday: 'Donnerstag',
+  friday: 'Freitag',
+  saturday: 'Samstag',
+  sunday: 'Sonntag',
 };
 
 export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay }) => {
-    const { holidayName } = useNrwpHolidayForTourDay(selectedDay);
-    const isCalendarWeekend = selectedDay === 'saturday' || selectedDay === 'sunday';
+  const { holidayName } = useNrwpHolidayForTourDay(selectedDay);
+  const isCalendarWeekend = selectedDay === 'saturday' || selectedDay === 'sunday';
 
-    const { data: routes = [], isLoading: loadingRoutes, error: routesError } = useRoutes({ 
-        weekday: selectedDay,
-        tour_area_day: true
-    });
-    const { data: appointments = [], isLoading: loadingAppointments, error: appointmentsError } = useAppointmentsByWeekday(selectedDay);
-    const { data: patients = [], isLoading: loadingPatients, error: patientsError } = usePatients();
-    const { data: employees = [], isLoading: loadingEmployees, error: employeesError } = useEmployees();
-    const { currentArea } = useAreaStore();
-    const appointmentManagement = useAppointmentManagement({
-        selectedDay
-    });
+  const {
+    data: routes = [],
+    isLoading: loadingRoutes,
+    error: routesError,
+  } = useRoutes({
+    weekday: selectedDay,
+    tour_area_day: true,
+  });
+  const {
+    data: appointments = [],
+    isLoading: loadingAppointments,
+    error: appointmentsError,
+  } = useAppointmentsByWeekday(selectedDay);
+  const { data: patients = [], isLoading: loadingPatients, error: patientsError } = usePatients();
+  const {
+    data: employees = [],
+    isLoading: loadingEmployees,
+    error: employeesError,
+  } = useEmployees();
+  const { currentArea } = useAreaStore();
+  const appointmentManagement = useAppointmentManagement({
+    selectedDay,
+  });
 
-    // Custom hooks for business logic
-    const areaManagement = useAreaManagement({
-        routes,
-        appointments,
-        selectedDay,
-        currentArea: currentArea || undefined,
-        useTourAreaLayout: true,
-    });
+  // Custom hooks for business logic
+  const areaManagement = useAreaManagement({
+    routes,
+    appointments,
+    selectedDay,
+    currentArea: currentArea || undefined,
+    useTourAreaLayout: true,
+  });
 
-    const filteredRoutes = areaManagement.getFilteredRoutes();
-    const tourRoutesByArea = areaManagement.getTourRoutesByArea();
-    const tourAreasToShow = areaManagement.getTourAreas();
+  const filteredRoutes = areaManagement.getFilteredRoutes();
+  const tourRoutesByArea = areaManagement.getTourRoutesByArea();
+  const tourAreasToShow = areaManagement.getTourAreas();
 
-    const unassignedAppointments = useMemo(() => {
-        const filteredAppointments = appointments.filter((app) => 
-            app.weekday === selectedDay &&
-            (app.area as string) === 'Nicht zugewiesen' &&
-            !app.employee_id
-        );
-
-        return filteredAppointments.map((appointment) => ({
-            appointment,
-            patient: patients.find((patient) => patient.id === appointment.patient_id)
-        }));
-    }, [appointments, patients, selectedDay]);
-
-    if (loadingRoutes || loadingAppointments || loadingPatients || loadingEmployees) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', pt: 4 }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    if (routesError || appointmentsError || patientsError) {
-        return (
-            <Alert severity="error" sx={{ my: 2 }}>
-                {routesError?.message || appointmentsError?.message || patientsError?.message || 'Fehler beim Laden der Touren'}
-            </Alert>
-        );
-    }
-
-    const toursTitle = !isCalendarWeekend
-        ? 'Feiertags-Touren'
-        : 'Wochenend-Touren';
-
-    // Keine AW-Flächenrouten / keine offenen Zuweisungen
-    if (filteredRoutes.length === 0 && unassignedAppointments.length === 0) {
-        const dayPart = WEEKDAY_LABELS[selectedDay];
-        const feiertagPart = holidayName ? ` (Feiertag: ${holidayName})` : '';
-        return (
-            <Alert severity="info" sx={{ my: 2 }}>
-                Keine Touren gefunden für {dayPart}
-                {feiertagPart}.
-            </Alert>
-        );
-    }
-
-    return (
-        <Box>
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                    <WeekendIcon sx={{ color: 'warning.main' }} />
-                    {toursTitle}
-                </Typography>
-                {holidayName ? (
-                    <Typography variant="body2" sx={{ mt: 0.5, color: 'warning.dark', fontWeight: 500 }}>
-                        Feiertag: {holidayName}
-                    </Typography>
-                ) : null}
-            </Box>
-
-            <UnassignedWeekendAppointments
-                appointments={unassignedAppointments}
-                onAssignArea={appointmentManagement.assignTourArea}
-                isAssigning={appointmentManagement.isAssigningTourArea}
-            />
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                {tourAreasToShow.map((area) => {
-                    const areaRoutes = tourRoutesByArea.get(area);
-                    
-                    // Only show areas that have routes
-                    if (!areaRoutes || areaRoutes.length === 0) {
-                        return null;
-                    }
-
-                    return (
-                        <WeekendTourContainer
-                            key={area}
-                            area={area as TourArea}
-                            routes={filteredRoutes}
-                            appointments={appointments}
-                            patients={patients}
-                            employees={employees}
-                            selectedDay={selectedDay}
-                        />
-                    );
-                })}
-            </Box>
-        </Box>
+  const unassignedAppointments = useMemo(() => {
+    const filteredAppointments = appointments.filter(
+      (app) =>
+        app.weekday === selectedDay &&
+        (app.area as string) === 'Nicht zugewiesen' &&
+        !app.employee_id
     );
+
+    return filteredAppointments.map((appointment) => ({
+      appointment,
+      patient: patients.find((patient) => patient.id === appointment.patient_id),
+    }));
+  }, [appointments, patients, selectedDay]);
+
+  if (loadingRoutes || loadingAppointments || loadingPatients || loadingEmployees) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (routesError || appointmentsError || patientsError) {
+    return (
+      <Alert severity="error" sx={{ my: 2 }}>
+        {routesError?.message ||
+          appointmentsError?.message ||
+          patientsError?.message ||
+          'Fehler beim Laden der Touren'}
+      </Alert>
+    );
+  }
+
+  const toursTitle = !isCalendarWeekend ? 'Feiertags-Touren' : 'Wochenend-Touren';
+
+  // Keine AW-Flächenrouten / keine offenen Zuweisungen
+  if (filteredRoutes.length === 0 && unassignedAppointments.length === 0) {
+    const dayPart = WEEKDAY_LABELS[selectedDay];
+    const feiertagPart = holidayName ? ` (Feiertag: ${holidayName})` : '';
+    return (
+      <Alert severity="info" sx={{ my: 2 }}>
+        Keine Touren gefunden für {dayPart}
+        {feiertagPart}.
+      </Alert>
+    );
+  }
+
+  return (
+    <Box>
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h6"
+          component="h3"
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+        >
+          <WeekendIcon sx={{ color: 'warning.main' }} />
+          {toursTitle}
+        </Typography>
+        {holidayName ? (
+          <Typography variant="body2" sx={{ mt: 0.5, color: 'warning.dark', fontWeight: 500 }}>
+            Feiertag: {holidayName}
+          </Typography>
+        ) : null}
+      </Box>
+
+      <UnassignedWeekendAppointments
+        appointments={unassignedAppointments}
+        onAssignArea={appointmentManagement.assignTourArea}
+        isAssigning={appointmentManagement.isAssigningTourArea}
+      />
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        {tourAreasToShow.map((area) => {
+          const areaRoutes = tourRoutesByArea.get(area);
+
+          // Only show areas that have routes
+          if (!areaRoutes || areaRoutes.length === 0) {
+            return null;
+          }
+
+          return (
+            <WeekendTourContainer
+              key={area}
+              area={area as TourArea}
+              routes={filteredRoutes}
+              appointments={appointments}
+              patients={patients}
+              employees={employees}
+              selectedDay={selectedDay}
+            />
+          );
+        })}
+      </Box>
+    </Box>
+  );
 };

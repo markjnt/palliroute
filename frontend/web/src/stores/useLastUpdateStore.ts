@@ -40,10 +40,13 @@ export const useLastUpdateStore = create<LastUpdateState>()(
         if (state?.lastEmployeeImportTime && typeof state.lastEmployeeImportTime === 'string') {
           state.lastEmployeeImportTime = new Date(state.lastEmployeeImportTime);
         }
-        if (state?.lastPflegeheimeImportTime && typeof state.lastPflegeheimeImportTime === 'string') {
+        if (
+          state?.lastPflegeheimeImportTime &&
+          typeof state.lastPflegeheimeImportTime === 'string'
+        ) {
           state.lastPflegeheimeImportTime = new Date(state.lastPflegeheimeImportTime);
         }
       },
     }
   )
-); 
+);

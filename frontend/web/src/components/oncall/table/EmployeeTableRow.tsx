@@ -11,17 +11,22 @@ interface EmployeeTableRowProps {
   assignments: Assignment[];
   employeeCapacities?: EmployeeCapacity[];
   onCellClick: (date: Date) => void;
-  onMoveAssignment: (assignmentId: number, targetEmployeeId: number, sourceDate: string, targetDate: string) => Promise<void>;
+  onMoveAssignment: (
+    assignmentId: number,
+    targetEmployeeId: number,
+    sourceDate: string,
+    targetDate: string
+  ) => Promise<void>;
   weekendLayoutForDate?: (date: Date) => boolean;
 }
 
 // Kurzbezeichnungen für Kapazitätstypen in der Tabelle (Wochentag nur RB, Ärzte ebenfalls nur RB)
 const CAPACITY_TYPE_ABBR: Record<string, string> = {
-  'RB_NURSING_WEEKDAY': 'RB',
-  'RB_NURSING_WEEKEND': 'RB-WE',
-  'RB_DOCTORS_WEEKDAY': 'RB',
-  'RB_DOCTORS_WEEKEND': 'RB-WE',
-  'AW_NURSING': 'AW',
+  RB_NURSING_WEEKDAY: 'RB',
+  RB_NURSING_WEEKEND: 'RB-WE',
+  RB_DOCTORS_WEEKDAY: 'RB',
+  RB_DOCTORS_WEEKEND: 'RB-WE',
+  AW_NURSING: 'AW',
 };
 
 export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
@@ -35,27 +40,29 @@ export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
 }) => {
   const getFunctionInfo = (functionName: string) => {
     const functionMap: Record<string, { name: string; color: string }> = {
-      'Arzt': {
+      Arzt: {
         name: 'Arzt',
         color: employeeTypeColors['Arzt'] || employeeTypeColors['default'],
       },
-      'Honorararzt': {
+      Honorararzt: {
         name: 'Honorararzt',
         color: employeeTypeColors['Honorararzt'] || employeeTypeColors['default'],
       },
-      'Pflegekraft': {
+      Pflegekraft: {
         name: 'Pflegekraft',
         color: employeeTypeColors['default'],
       },
-      'PDL': {
+      PDL: {
         name: 'PDL',
         color: employeeTypeColors['default'],
       },
     };
-    return functionMap[functionName] || {
-      name: functionName,
-      color: employeeTypeColors['default'],
-    };
+    return (
+      functionMap[functionName] || {
+        name: functionName,
+        color: employeeTypeColors['default'],
+      }
+    );
   };
 
   const functionInfo = getFunctionInfo(employee.function);
@@ -192,12 +199,12 @@ export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
                   height: isMonthView ? 16 : 18,
                   fontWeight: 600,
                   '& .MuiChip-label': {
-                  px: 0.5,
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                },
+                    px: 0.5,
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  },
                 }}
               />
             );
@@ -240,4 +247,3 @@ export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
     </Box>
   );
 };
-

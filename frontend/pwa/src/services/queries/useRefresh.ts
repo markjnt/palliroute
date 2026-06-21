@@ -20,7 +20,7 @@ export const useRefresh = () => {
     queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
     queryClient.invalidateQueries({ queryKey: routeKeys.all });
     queryClient.invalidateQueries({ queryKey: calendarWeekKeys.all });
-    
+
     // Update last update time
     setLastUpdateTime(new Date());
   };

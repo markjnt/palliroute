@@ -11,8 +11,10 @@ export const employeePlanningKeys = {
   all: ['employee-planning'] as const,
   lists: () => [...employeePlanningKeys.all, 'list'] as const,
   list: (calendarWeek?: number) => [...employeePlanningKeys.lists(), { calendarWeek }] as const,
-  byEmployee: (employeeId: number, calendarWeek?: number) => [...employeePlanningKeys.all, 'employee', employeeId, { calendarWeek }] as const,
-  conflicts: (employeeId: number, weekday: string, calendarWeek?: number) => [...employeePlanningKeys.all, 'conflicts', employeeId, weekday, { calendarWeek }] as const,
+  byEmployee: (employeeId: number, calendarWeek?: number) =>
+    [...employeePlanningKeys.all, 'employee', employeeId, { calendarWeek }] as const,
+  conflicts: (employeeId: number, weekday: string, calendarWeek?: number) =>
+    [...employeePlanningKeys.all, 'conflicts', employeeId, weekday, { calendarWeek }] as const,
 };
 
 /** Einheitliche Liste aus GET /employee-planning (reiner Array oder { data, warning } bei Sync-Warnung). */
@@ -39,7 +41,7 @@ export const useEmployeePlanning = () => {
   const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
   const { setNotification, setLoading, resetLoading } = useNotificationStore();
   const currentWeek = selectedPlanningWeek || getCurrentPlanningWeek();
-  
+
   return useQuery({
     queryKey: employeePlanningKeys.list(currentWeek),
     queryFn: async () => {
@@ -56,14 +58,17 @@ export const useEmployeePlanning = () => {
   });
 };
 
-
 // Hook to update replacement
 export const useUpdateReplacement = () => {
   const queryClient = useQueryClient();
   const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
-  
+
   return useMutation({
-    mutationFn: ({ employeeId, weekday, replacementId }: {
+    mutationFn: ({
+      employeeId,
+      weekday,
+      replacementId,
+    }: {
       employeeId: number;
       weekday: string;
       replacementId?: number;
@@ -84,6 +89,3 @@ export const useUpdateReplacement = () => {
     },
   });
 };
-
- 
-

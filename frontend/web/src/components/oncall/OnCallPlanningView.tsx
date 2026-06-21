@@ -1,9 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Box, CircularProgress, Snackbar, Alert, Button } from '@mui/material';
-import {
-  CompareArrows as CompareArrowsIcon,
-  BarChart as BarChartIcon,
-} from '@mui/icons-material';
+import { CompareArrows as CompareArrowsIcon, BarChart as BarChartIcon } from '@mui/icons-material';
 import { useOnCallPlanningStore } from '../../stores/useOnCallPlanningStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import {
@@ -20,8 +17,19 @@ import {
   useAplanoCompare,
 } from '../../services/queries/useScheduling';
 import { useEmployees } from '../../services/queries/useEmployees';
-import { Assignment, DutyType, OnCallArea, Employee, ShiftDefinition, AssignmentSource } from '../../types/models';
-import { AssignmentsQueryParams, CreateAssignmentData, schedulingApi } from '../../services/api/scheduling';
+import {
+  Assignment,
+  DutyType,
+  OnCallArea,
+  Employee,
+  ShiftDefinition,
+  AssignmentSource,
+} from '../../types/models';
+import {
+  AssignmentsQueryParams,
+  CreateAssignmentData,
+  schedulingApi,
+} from '../../services/api/scheduling';
 import { CalendarHeader } from './calendar/CalendarHeader';
 import { CalendarGrid } from './calendar/CalendarGrid';
 import { AssignmentDialog } from './dialogs/AssignmentDialog';
@@ -30,7 +38,12 @@ import { AutoPlanningDialog } from './dialogs/AutoPlanningDialog';
 import { UnplannedShiftsDialog } from './dialogs/UnplannedShiftsDialog';
 import { AplanoCompareDialog } from './dialogs/AplanoCompareDialog';
 import { EmployeeTable } from './table/EmployeeTable';
-import { formatDate, formatMonthYear, getCalendarDays, getWeekDays } from '../../utils/oncall/dateUtils';
+import {
+  formatDate,
+  formatMonthYear,
+  getCalendarDays,
+  getWeekDays,
+} from '../../utils/oncall/dateUtils';
 import { findShiftDefinition, shiftDefinitionToDutyType } from '../../utils/oncall/shiftMapping';
 import type { AutoPlanningSettings } from './dialogs/AutoPlanningDialog';
 
@@ -38,7 +51,9 @@ export const OnCallPlanningView: React.FC = () => {
   const { viewMode, displayType, currentDate } = useOnCallPlanningStore();
   const { notification, closeNotification, setNotification } = useNotificationStore();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedDuty, setSelectedDuty] = useState<{ type: DutyType; area?: OnCallArea } | null>(null);
+  const [selectedDuty, setSelectedDuty] = useState<{ type: DutyType; area?: OnCallArea } | null>(
+    null
+  );
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [capacityDialogOpen, setCapacityDialogOpen] = useState(false);
   const [autoPlanningDialogOpen, setAutoPlanningDialogOpen] = useState(false);
@@ -71,22 +86,24 @@ export const OnCallPlanningView: React.FC = () => {
 
   // Fetch shift definitions (needed for mapping)
   const { data: shiftDefinitions = [], isLoading: shiftDefinitionsLoading } = useShiftDefinitions();
-  
+
   // Fetch data
   const { data: assignments = [], isLoading: assignmentsLoading } = useAssignments(queryParams);
   const { data: employees = [], isLoading: employeesLoading } = useEmployees();
-  
+
   // Fetch employee capacities (month parameter is optional, used for calculating assigned/remaining)
   const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   const { data: employeeCapacities = [] } = useEmployeeCapacities({ month: monthString });
-  const { data: unplannedShifts = [], isLoading: isLoadingUnplanned } = useUnplannedShiftInstances({ month: monthString });
+  const { data: unplannedShifts = [], isLoading: isLoadingUnplanned } = useUnplannedShiftInstances({
+    month: monthString,
+  });
   const {
     data: aplanoCompareData,
     isLoading: isLoadingAplanoCompare,
     isFetching: isFetchingAplanoCompare,
     refetch: refetchAplanoCompare,
   } = useAplanoCompare(aplanoCompareOpen ? monthString : null);
-  
+
   const createAssignment = useCreateAssignment();
   const updateAssignment = useUpdateAssignment();
   const deleteAssignment = useDeleteAssignment();
@@ -99,10 +116,10 @@ export const OnCallPlanningView: React.FC = () => {
     const map = new Map<string, Assignment>();
     assignments.forEach((assignment) => {
       if (!assignment.shift_definition || !assignment.shift_instance) return;
-      
+
       const dutyTypeMapping = shiftDefinitionToDutyType(assignment.shift_definition);
       if (!dutyTypeMapping) return;
-      
+
       const key = `${assignment.shift_instance.date}_${dutyTypeMapping.dutyType}_${dutyTypeMapping.area || ''}`;
       map.set(key, assignment);
     });
@@ -134,14 +151,11 @@ export const OnCallPlanningView: React.FC = () => {
   );
 
   // Handle duty click
-  const handleDutyClick = useCallback(
-    (date: Date, duty: { type: DutyType; area?: OnCallArea }) => {
-      setSelectedDate(date);
-      setSelectedDuty(duty);
-      setAssignmentDialogOpen(true);
-    },
-    []
-  );
+  const handleDutyClick = useCallback((date: Date, duty: { type: DutyType; area?: OnCallArea }) => {
+    setSelectedDate(date);
+    setSelectedDuty(duty);
+    setAssignmentDialogOpen(true);
+  }, []);
 
   // Handle employee selection
   const handleEmployeeChange = useCallback(
@@ -165,12 +179,16 @@ export const OnCallPlanningView: React.FC = () => {
           });
         } else {
           // Create new - find shift definition first
-          const shiftDef = findShiftDefinition(shiftDefinitions, selectedDuty.type, selectedDuty.area || 'Nord');
+          const shiftDef = findShiftDefinition(
+            shiftDefinitions,
+            selectedDuty.type,
+            selectedDuty.area || 'Nord'
+          );
           if (!shiftDef) {
             setNotification('Schicht-Definition nicht gefunden', 'error');
             return;
           }
-          
+
           // Use type assertion for union type (second option)
           await createAssignment.mutateAsync({
             shift_definition_id: shiftDef.id,
@@ -185,7 +203,16 @@ export const OnCallPlanningView: React.FC = () => {
       setSelectedDate(null);
       setSelectedDuty(null);
     },
-    [selectedDate, selectedDuty, getAssignment, createAssignment, updateAssignment, deleteAssignment, shiftDefinitions, setNotification]
+    [
+      selectedDate,
+      selectedDuty,
+      getAssignment,
+      createAssignment,
+      updateAssignment,
+      deleteAssignment,
+      shiftDefinitions,
+      setNotification,
+    ]
   );
 
   const handleDialogClose = useCallback(() => {
@@ -194,80 +221,84 @@ export const OnCallPlanningView: React.FC = () => {
     setSelectedDuty(null);
   }, []);
 
-  const handleAutoPlanningStart = useCallback(async (settings: AutoPlanningSettings, timeAccountFile?: File | null) => {
-    try {
-      // Optional: Upload Stundenkonto Excel first (writes time_account + stand date)
-      if (timeAccountFile) {
-        await schedulingApi.uploadTimeAccounts(timeAccountFile);
+  const handleAutoPlanningStart = useCallback(
+    async (settings: AutoPlanningSettings, timeAccountFile?: File | null) => {
+      try {
+        // Optional: Upload Stundenkonto Excel first (writes time_account + stand date)
+        if (timeAccountFile) {
+          await schedulingApi.uploadTimeAccounts(timeAccountFile);
+        }
+
+        // Always use the entire month of currentDate, regardless of view mode
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        const startDate = formatDate(firstDayOfMonth);
+        const endDate = formatDate(lastDayOfMonth);
+        const monthParam = `${year}-${String(month + 1).padStart(2, '0')}`;
+        // Vormonat für W2/W3 (Wochenend-Rotation, Tag/Nacht-Wechsel)
+        const prevMonth = month === 0 ? 11 : month - 1;
+        const prevYear = month === 0 ? year - 1 : year;
+        const prevMonthParam = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
+
+        // Zuerst Shift-Instanzen für Vormonat und Planungsmonat erzeugen (falls noch nicht vorhanden)
+        await generateShiftInstances.mutateAsync({ month: prevMonthParam });
+        await generateShiftInstances.mutateAsync({ month: monthParam });
+
+        const result = await autoPlan.mutateAsync({
+          start_date: startDate,
+          end_date: endDate,
+          existing_assignments_handling: settings.existingAssignmentsHandling,
+          allow_overplanning: settings.allowOverplanning,
+          include_aplano: settings.includeAplano,
+        });
+
+        // Backend returns 200 with solver_status/error for business errors (e.g. Aplano unavailable)
+        const data = result as {
+          solver_status?: string;
+          error?: string;
+          message?: string;
+          infeasibility_summary?: string[];
+        };
+        if (data.solver_status === 'ERROR' && data.error === 'APLANO_UNAVAILABLE') {
+          setNotification(data.message ?? 'Aplano ist nicht verfügbar.', 'error');
+          return;
+        }
+        if (data.solver_status === 'ERROR') {
+          setNotification(data.message ?? 'Fehler bei der automatischen Planung', 'error');
+          return;
+        }
+        if (data.solver_status === 'INFEASIBLE') {
+          const lines = data.infeasibility_summary?.length
+            ? [data.message ?? 'Keine zulässige Lösung.', '', ...data.infeasibility_summary]
+            : [data.message ?? 'Keine zulässige Lösung (Solver: INFEASIBLE).'];
+          setNotification(lines.join('\n'), 'error');
+          return;
+        }
+        if (data.solver_status === 'SKIPPED') {
+          setNotification(data.message ?? 'Automatische Planung übersprungen', 'error');
+          return;
+        }
+
+        // Show success notification
+        setNotification('Automatische Planung erfolgreich abgeschlossen', 'success');
+
+        // Close dialog only after successful completion
+        setAutoPlanningDialogOpen(false);
+      } catch (error: any) {
+        console.error('Failed to start auto planning:', error);
+
+        // Show error notification (network/server errors)
+        const errorMessage =
+          error?.response?.data?.error || error?.message || 'Fehler bei der automatischen Planung';
+        setNotification(errorMessage, 'error');
+
+        // Dialog stays open on error so user can retry
       }
-
-      // Always use the entire month of currentDate, regardless of view mode
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const firstDayOfMonth = new Date(year, month, 1);
-      const lastDayOfMonth = new Date(year, month + 1, 0);
-      const startDate = formatDate(firstDayOfMonth);
-      const endDate = formatDate(lastDayOfMonth);
-      const monthParam = `${year}-${String(month + 1).padStart(2, '0')}`;
-      // Vormonat für W2/W3 (Wochenend-Rotation, Tag/Nacht-Wechsel)
-      const prevMonth = month === 0 ? 11 : month - 1;
-      const prevYear = month === 0 ? year - 1 : year;
-      const prevMonthParam = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
-
-      // Zuerst Shift-Instanzen für Vormonat und Planungsmonat erzeugen (falls noch nicht vorhanden)
-      await generateShiftInstances.mutateAsync({ month: prevMonthParam });
-      await generateShiftInstances.mutateAsync({ month: monthParam });
-
-      const result = await autoPlan.mutateAsync({
-        start_date: startDate,
-        end_date: endDate,
-        existing_assignments_handling: settings.existingAssignmentsHandling,
-        allow_overplanning: settings.allowOverplanning,
-        include_aplano: settings.includeAplano,
-      });
-
-      // Backend returns 200 with solver_status/error for business errors (e.g. Aplano unavailable)
-      const data = result as {
-        solver_status?: string;
-        error?: string;
-        message?: string;
-        infeasibility_summary?: string[];
-      };
-      if (data.solver_status === 'ERROR' && data.error === 'APLANO_UNAVAILABLE') {
-        setNotification(data.message ?? 'Aplano ist nicht verfügbar.', 'error');
-        return;
-      }
-      if (data.solver_status === 'ERROR') {
-        setNotification(data.message ?? 'Fehler bei der automatischen Planung', 'error');
-        return;
-      }
-      if (data.solver_status === 'INFEASIBLE') {
-        const lines = data.infeasibility_summary?.length
-          ? [data.message ?? 'Keine zulässige Lösung.', '', ...data.infeasibility_summary]
-          : [data.message ?? 'Keine zulässige Lösung (Solver: INFEASIBLE).'];
-        setNotification(lines.join('\n'), 'error');
-        return;
-      }
-      if (data.solver_status === 'SKIPPED') {
-        setNotification(data.message ?? 'Automatische Planung übersprungen', 'error');
-        return;
-      }
-
-      // Show success notification
-      setNotification('Automatische Planung erfolgreich abgeschlossen', 'success');
-
-      // Close dialog only after successful completion
-      setAutoPlanningDialogOpen(false);
-    } catch (error: any) {
-      console.error('Failed to start auto planning:', error);
-
-      // Show error notification (network/server errors)
-      const errorMessage = error?.response?.data?.error || error?.message || 'Fehler bei der automatischen Planung';
-      setNotification(errorMessage, 'error');
-
-      // Dialog stays open on error so user can retry
-    }
-  }, [currentDate, autoPlan, generateShiftInstances, setNotification]);
+    },
+    [currentDate, autoPlan, generateShiftInstances, setNotification]
+  );
 
   // Reset planning for a date range
   const handleResetPlanning = useCallback(async () => {
@@ -279,40 +310,36 @@ export const OnCallPlanningView: React.FC = () => {
       const lastDayOfMonth = new Date(year, month + 1, 0);
       const startDate = formatDate(firstDayOfMonth);
       const endDate = formatDate(lastDayOfMonth);
-      
+
       await resetPlanning.mutateAsync({
         start_date: startDate,
         end_date: endDate,
       });
-      
+
       // Show success notification
       setNotification('Planung erfolgreich zurückgesetzt', 'success');
-      
+
       // Close dialog after successful reset
       setAutoPlanningDialogOpen(false);
     } catch (error: any) {
       console.error('Failed to reset planning:', error);
-      
+
       // Show error notification
-      const errorMessage = error?.response?.data?.error || error?.message || 'Fehler beim Zurücksetzen der Planung';
+      const errorMessage =
+        error?.response?.data?.error || error?.message || 'Fehler beim Zurücksetzen der Planung';
       setNotification(errorMessage, 'error');
     }
   }, [currentDate, resetPlanning, setNotification]);
 
   // Wrapper functions for table view
   const handleCreateAssignment = useCallback(
-    async (data: {
-      employee_id: number;
-      date: string;
-      duty_type: DutyType;
-      area?: OnCallArea;
-    }) => {
+    async (data: { employee_id: number; date: string; duty_type: DutyType; area?: OnCallArea }) => {
       const shiftDef = findShiftDefinition(shiftDefinitions, data.duty_type, data.area || 'Nord');
       if (!shiftDef) {
         setNotification('Schicht-Definition nicht gefunden', 'error');
         return;
       }
-      
+
       // Use type assertion for union type (second option)
       await createAssignment.mutateAsync({
         shift_definition_id: shiftDef.id,
@@ -325,10 +352,7 @@ export const OnCallPlanningView: React.FC = () => {
   );
 
   const handleUpdateAssignment = useCallback(
-    async (data: {
-      id: number;
-      assignmentData: { employee_id: number };
-    }) => {
+    async (data: { id: number; assignmentData: { employee_id: number } }) => {
       await updateAssignment.mutateAsync({
         id: data.id,
         data: { employee_id: data.assignmentData.employee_id },
@@ -359,9 +383,10 @@ export const OnCallPlanningView: React.FC = () => {
     );
   }
 
-  const currentAssignment = selectedDate && selectedDuty
-    ? getAssignment(selectedDate, selectedDuty.type, selectedDuty.area)
-    : undefined;
+  const currentAssignment =
+    selectedDate && selectedDuty
+      ? getAssignment(selectedDate, selectedDuty.type, selectedDuty.area)
+      : undefined;
 
   const availableEmployees = selectedDuty
     ? getAvailableEmployees(selectedDuty.type, selectedDuty.area)
@@ -550,8 +575,8 @@ export const OnCallPlanningView: React.FC = () => {
           onClose={closeNotification}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert 
-            onClose={closeNotification} 
+          <Alert
+            onClose={closeNotification}
             severity={notification.severity}
             variant="filled"
             sx={{ width: '100%', whiteSpace: 'pre-line' }}

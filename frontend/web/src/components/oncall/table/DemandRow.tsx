@@ -29,16 +29,18 @@ export const DemandRow: React.FC<DemandRowProps> = ({
 }) => {
   const isSticky = stickyTop !== undefined;
   // Check if a duty is assigned for a specific date
-  const isDutyAssigned = useCallback((date: Date, dutyType: DutyType, area?: OnCallArea): boolean => {
-    const dateStr = formatDate(date);
-    return assignments.some((a) => {
-      if (!a.shift_instance || !a.shift_definition) return false;
-      if (a.shift_instance.date !== dateStr) return false;
-      const dutyMapping = shiftDefinitionToDutyType(a.shift_definition);
-      return dutyMapping?.dutyType === dutyType && dutyMapping?.area === area;
-    });
-  }, [assignments]);
-
+  const isDutyAssigned = useCallback(
+    (date: Date, dutyType: DutyType, area?: OnCallArea): boolean => {
+      const dateStr = formatDate(date);
+      return assignments.some((a) => {
+        if (!a.shift_instance || !a.shift_definition) return false;
+        if (a.shift_instance.date !== dateStr) return false;
+        const dutyMapping = shiftDefinitionToDutyType(a.shift_definition);
+        return dutyMapping?.dutyType === dutyType && dutyMapping?.area === area;
+      });
+    },
+    [assignments]
+  );
 
   return (
     <Box
@@ -90,11 +92,11 @@ export const DemandRow: React.FC<DemandRowProps> = ({
       {dates.map((date, idx) => {
         const isWeekendDay = weekendLayoutForDate(date);
         const availableDuties = isWeekendDay ? WEEKEND_DUTIES : WEEKDAY_DUTIES;
-        
+
         // Separate AW and RB duties for weekend
         let awDuties: typeof availableDuties = [];
         let rbDuties: typeof availableDuties = [];
-        
+
         if (isWeekendDay) {
           awDuties = availableDuties.filter((duty) => duty.type.includes('aw_nursing'));
           rbDuties = availableDuties.filter((duty) => !duty.type.includes('aw_nursing'));
@@ -102,11 +104,11 @@ export const DemandRow: React.FC<DemandRowProps> = ({
           rbDuties = availableDuties;
         }
 
-        const renderDutyChip = (duty: typeof availableDuties[0]) => {
+        const renderDutyChip = (duty: (typeof availableDuties)[0]) => {
           const isAssigned = isDutyAssigned(date, duty.type, duty.area);
           const statusColor = isAssigned ? '#4caf50' : '#f44336'; // Grün wenn zugewiesen, Rot wenn nicht
           const chipColor = getDutyColor(duty.type, duty.area, isAssigned);
-          
+
           return (
             <Tooltip
               key={`${duty.type}_${duty.area || ''}`}
@@ -164,7 +166,7 @@ export const DemandRow: React.FC<DemandRowProps> = ({
             </Tooltip>
           );
         };
-        
+
         return (
           <Box
             key={date.toISOString()}
@@ -213,4 +215,3 @@ export const DemandRow: React.FC<DemandRowProps> = ({
     </Box>
   );
 };
-

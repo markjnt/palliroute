@@ -1,8 +1,6 @@
 import React from 'react';
 import { Box, Button, Typography, Chip } from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+import { Refresh as RefreshIcon } from '@mui/icons-material';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
 import { useRefresh } from '../../services/queries/useRefresh';
 
@@ -13,10 +11,10 @@ export const FloatingRefreshButton: React.FC = () => {
   // Format last update time for display
   const formatLastUpdateTime = (time: Date | null): { date: string; time: string } => {
     if (!time) return { date: 'Noch nicht', time: 'aktualisiert' };
-    
+
     return {
       date: time.toLocaleDateString('de-DE'),
-      time: time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+      time: time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
     };
   };
 
@@ -48,21 +46,27 @@ export const FloatingRefreshButton: React.FC = () => {
           border: '1px solid rgba(255, 255, 255, 0.2)',
           '&:hover': {
             bgcolor: 'rgba(25, 118, 210, 0.9)',
-          }
+          },
         }}
       >
         <RefreshIcon sx={{ fontSize: 18 }} />
       </Button>
-      
+
       {/* Time chip - absolutely positioned below button */}
       {lastUpdateTime && (
         <Chip
           label={
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.2 }}>
-              <Typography variant="caption" sx={{ fontSize: '0.6rem', fontWeight: 500, lineHeight: 1 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontSize: '0.6rem', fontWeight: 500, lineHeight: 1 }}
+              >
                 {timeInfo.date}
               </Typography>
-              <Typography variant="caption" sx={{ fontSize: '0.6rem', fontWeight: 500, lineHeight: 1 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontSize: '0.6rem', fontWeight: 500, lineHeight: 1 }}
+              >
                 {timeInfo.time}
               </Typography>
             </Box>
@@ -81,7 +85,7 @@ export const FloatingRefreshButton: React.FC = () => {
             py: 0.5,
             '& .MuiChip-label': {
               p: 0.5,
-            }
+            },
           }}
         />
       )}

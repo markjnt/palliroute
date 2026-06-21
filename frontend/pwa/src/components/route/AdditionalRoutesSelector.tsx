@@ -1,14 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Divider,
-} from '@mui/material';
-import {
-  Close as CloseIcon,
-  Add as AddIcon,
-} from '@mui/icons-material';
+import { Box, Typography, Chip, Divider } from '@mui/material';
+import { Close as CloseIcon, Add as AddIcon } from '@mui/icons-material';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { useRoutes } from '../../services/queries/useRoutes';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
@@ -38,7 +30,7 @@ export const AdditionalRoutesSelector: React.FC<AdditionalRoutesSelectorProps> =
     weekday: selectedWeekday as Weekday,
     ...(selectedTourArea ? { tour_area_day: isAreaTourDay } : {}),
   });
-  
+
   // State for area filter - only one can be active at a time
   const [selectedAreaFilter, setSelectedAreaFilter] = useState<'nord' | 'sud' | 'alle'>('alle');
 
@@ -52,64 +44,67 @@ export const AdditionalRoutesSelector: React.FC<AdditionalRoutesSelectorProps> =
     if (selectedTourArea) {
       const tourAreaLabels = ['Nord', 'Mitte', 'Süd'];
       return tourAreaLabels
-        .filter(area => area !== selectedTourArea)
-        .map(area => ({
+        .filter((area) => area !== selectedTourArea)
+        .map((area) => ({
           id: area as any,
           first_name: `AW ${area}`,
           last_name: 'Bereich',
-          function: 'AW Tour'
+          function: 'AW Tour',
         }));
     } else {
       // For employees, show other employees with routes
-      const filteredEmployees = employees.filter(emp => 
-        emp.id !== selectedUserId && // Exclude logged-in user
-        routes.some(route => route.employee_id === emp.id)
+      const filteredEmployees = employees.filter(
+        (emp) =>
+          emp.id !== selectedUserId && // Exclude logged-in user
+          routes.some((route) => route.employee_id === emp.id)
       );
 
       // Sort by employee function first, then alphabetically by first name, then last name
       const employeeFunctionOrder = {
-        'Pflegekraft': 1,
-        'PDL': 2,
-        'Arzt': 3,
-        'Honorararzt': 4
+        Pflegekraft: 1,
+        PDL: 2,
+        Arzt: 3,
+        Honorararzt: 4,
       };
 
       const sortedEmployees = filteredEmployees.sort((a, b) => {
         // First sort by employee function
-        const functionA = employeeFunctionOrder[a.function as keyof typeof employeeFunctionOrder] || 999;
-        const functionB = employeeFunctionOrder[b.function as keyof typeof employeeFunctionOrder] || 999;
-        
+        const functionA =
+          employeeFunctionOrder[a.function as keyof typeof employeeFunctionOrder] || 999;
+        const functionB =
+          employeeFunctionOrder[b.function as keyof typeof employeeFunctionOrder] || 999;
+
         if (functionA !== functionB) {
           return functionA - functionB;
         }
-        
+
         // Then sort alphabetically by first name
         const firstNameA = a.first_name.toLowerCase();
         const firstNameB = b.first_name.toLowerCase();
-        
+
         if (firstNameA !== firstNameB) {
           return firstNameA.localeCompare(firstNameB);
         }
-        
+
         // Finally sort by last name
         const lastNameA = a.last_name.toLowerCase();
         const lastNameB = b.last_name.toLowerCase();
-        
+
         return lastNameA.localeCompare(lastNameB);
       });
-      
+
       // Apply area filter based on selected filter
-      return sortedEmployees.filter(emp => {
+      return sortedEmployees.filter((emp) => {
         if (!emp.area) return true; // Show employees without area
         if (selectedAreaFilter === 'alle') return true; // Show all when 'alle' is selected
-        
+
         const isNord = emp.area.includes('Nord');
         const isSud = emp.area.includes('Süd');
-        
+
         // Show if area matches selected filter
         if (selectedAreaFilter === 'nord' && isNord) return true;
         if (selectedAreaFilter === 'sud' && isSud) return true;
-        
+
         return false;
       });
     }
@@ -118,11 +113,11 @@ export const AdditionalRoutesSelector: React.FC<AdditionalRoutesSelectorProps> =
   // Get German weekday name
   const getGermanWeekday = (weekday: string): string => {
     const weekdayMap: Record<string, string> = {
-      'monday': 'Montag',
-      'tuesday': 'Dienstag',
-      'wednesday': 'Mittwoch',
-      'thursday': 'Donnerstag',
-      'friday': 'Freitag'
+      monday: 'Montag',
+      tuesday: 'Dienstag',
+      wednesday: 'Mittwoch',
+      thursday: 'Donnerstag',
+      friday: 'Freitag',
     };
     return weekdayMap[weekday] || weekday;
   };
@@ -134,7 +129,7 @@ export const AdditionalRoutesSelector: React.FC<AdditionalRoutesSelectorProps> =
     if (anySelected) {
       onDeselectAll();
     } else {
-      const employeeIds = employeesWithRoutes.map(emp => emp.id!);
+      const employeeIds = employeesWithRoutes.map((emp) => emp.id!);
       onSelectAll(employeeIds);
     }
   };
@@ -262,31 +257,35 @@ export const AdditionalRoutesSelector: React.FC<AdditionalRoutesSelectorProps> =
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
           {employeesWithRoutes.map((employee) => {
             const isSelected = selectedEmployeeIds.includes(employee.id as any);
-            
+
             // Get color based on tour area or employee
             const getTourAreaColor = (area: string) => {
               switch (area) {
-                case 'Nord': return '#1976d2'; // Blue
-                case 'Mitte': return '#7b1fa2'; // Purple
-                case 'Süd': return '#388e3c'; // Green
-                default: return '#ff9800'; // Orange fallback
+                case 'Nord':
+                  return '#1976d2'; // Blue
+                case 'Mitte':
+                  return '#7b1fa2'; // Purple
+                case 'Süd':
+                  return '#388e3c'; // Green
+                default:
+                  return '#ff9800'; // Orange fallback
               }
             };
-            
-            const routeColor = selectedTourArea 
+
+            const routeColor = selectedTourArea
               ? getTourAreaColor(employee.id as string)
               : getColorForTour(employee.id as any);
-            
-            const fullName = selectedTourArea 
+
+            const fullName = selectedTourArea
               ? employee.first_name
               : `${employee.first_name} ${employee.last_name}`;
-            
+
             return (
               <Chip
                 key={employee.id}
                 label={fullName}
                 onClick={() => onEmployeeToggle(employee.id as any)}
-                variant={isSelected ? "filled" : "outlined"}
+                variant={isSelected ? 'filled' : 'outlined'}
                 sx={{
                   bgcolor: isSelected ? routeColor : 'transparent',
                   color: isSelected ? 'white' : 'inherit',

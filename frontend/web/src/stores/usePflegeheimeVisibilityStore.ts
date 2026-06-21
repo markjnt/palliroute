@@ -12,7 +12,8 @@ export const usePflegeheimeVisibilityStore = create<PflegeheimeVisibilityState>(
     (set) => ({
       showPflegeheimeOnMap: false,
       setShowPflegeheimeOnMap: (show) => set({ showPflegeheimeOnMap: show }),
-      toggleShowPflegeheimeOnMap: () => set((s) => ({ showPflegeheimeOnMap: !s.showPflegeheimeOnMap })),
+      toggleShowPflegeheimeOnMap: () =>
+        set((s) => ({ showPflegeheimeOnMap: !s.showPflegeheimeOnMap })),
     }),
     {
       name: 'pflegeheime-visibility-storage',

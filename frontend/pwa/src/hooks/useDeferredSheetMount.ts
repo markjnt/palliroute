@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-/** Mount sheet after open — avoids StrictMode + react-modal-sheet stale motion state. */
+/** Mount sheet after open; unmount after close animation completes. */
 export function useDeferredSheetMount(isOpen: boolean) {
   const [shouldRender, setShouldRender] = useState(false);
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
 
   useEffect(() => {
     if (!isOpen) {
-      setShouldRender(false);
       return;
     }
 
@@ -14,5 +15,11 @@ export function useDeferredSheetMount(isOpen: boolean) {
     return () => cancelAnimationFrame(frame);
   }, [isOpen]);
 
-  return shouldRender;
+  const onCloseEnd = useCallback(() => {
+    if (!isOpenRef.current) {
+      setShouldRender(false);
+    }
+  }, []);
+
+  return { shouldRender, onCloseEnd };
 }

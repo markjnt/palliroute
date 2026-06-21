@@ -6,11 +6,12 @@ import logging
 import re
 from calendar import monthrange
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
+
+from config import Config
 
 from app import db
 from app.models.employee import Employee
-from config import Config
 
 from .aplano_sync import (
     aplano_user_display_name,
@@ -21,13 +22,13 @@ from .aplano_sync import (
 )
 
 # Wortgrenzen: vermeidet z. B. „aw“ in „raw“, „tag“ in „Tagesklinik“ (substring)
-_RE_APLANO_AW = re.compile(r'\baw\b', re.I)
-_RE_APLANO_RB = re.compile(r'\brb\b', re.I)
-_RE_APLANO_DAY = re.compile(r'\b(tag|tagschicht|day)\b', re.I)
-_RE_APLANO_NIGHT = re.compile(r'\b(nacht|nightschicht|night)\b', re.I)
+_RE_APLANO_AW = re.compile(r"\baw\b", re.I)
+_RE_APLANO_RB = re.compile(r"\brb\b", re.I)
+_RE_APLANO_DAY = re.compile(r"\b(tag|tagschicht|day)\b", re.I)
+_RE_APLANO_NIGHT = re.compile(r"\b(nacht|nightschicht|night)\b", re.I)
 from .auto_planning import (
-    load_planning_context,
     build_model,
+    load_planning_context,
     run_solver,
     write_assignments,
 )
@@ -38,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 class AplanoUnavailableError(Exception):
     """Raised when Aplano absences cannot be fetched (API error, not configured, etc.)."""
+
     pass
 
 
@@ -48,7 +50,7 @@ class AutoPlanningService:
 
     def __init__(
         self,
-        existing_assignments_handling: str = 'respect',
+        existing_assignments_handling: str = "respect",
         allow_overplanning: bool = False,
         include_aplano: bool = False,
         time_limit_seconds: float = 30.0,
@@ -72,7 +74,7 @@ class AutoPlanningService:
         self.penalty_distance_per_km = penalty_distance_per_km
         self.bonus_friday_weekend_rb_coupling = bonus_friday_weekend_rb_coupling
 
-    def _build_absent_dates(self, start_date: date) -> Set[Tuple[int, date]]:
+    def _build_absent_dates(self, start_date: date) -> set[tuple[int, date]]:
         """
         Fetch Aplano absences for planning month hard exclusions.
 
@@ -80,7 +82,7 @@ class AutoPlanningService:
         Sunday for H6/H7 weekend coupling. We must include that Sunday in absence markers too,
         otherwise solver variables are created for absent employees on that day.
         """
-        absent_dates: Set[Tuple[int, date]] = set()
+        absent_dates: set[tuple[int, date]] = set()
         year, month_num = start_date.year, start_date.month
         ctx_start = date(year, month_num, 1)
         _, last_day = monthrange(year, month_num)
@@ -88,7 +90,7 @@ class AutoPlanningService:
         load_end = ctx_end + timedelta(days=1) if ctx_end.weekday() == 5 else ctx_end
 
         try:
-            raw_absences: List[Dict[str, Any]] = []
+            raw_absences: list[dict[str, Any]] = []
             raw_absences.extend(fetch_aplano_absences_for_month(ctx_start))
             # Sunday after month-end Saturday lives in next month -> load that month as well.
             if load_end > ctx_end:
@@ -98,21 +100,21 @@ class AutoPlanningService:
                     next_month_start = date(year, month_num + 1, 1)
                 raw_absences.extend(fetch_aplano_absences_for_month(next_month_start))
         except Exception as e:
-            logger.warning('Failed to fetch Aplano absences: %s', e)
+            logger.warning("Failed to fetch Aplano absences: %s", e)
             raise AplanoUnavailableError(str(e)) from e
 
         employees = list(Employee.query.all())
         for absence in raw_absences:
-            if absence.get('status') != 'active':
+            if absence.get("status") != "active":
                 continue
-            user_name = aplano_user_display_name(absence.get('user'))
-            start_str = absence.get('startDate', '')
-            end_str = absence.get('endDate', '')
+            user_name = aplano_user_display_name(absence.get("user"))
+            start_str = absence.get("startDate", "")
+            end_str = absence.get("endDate", "")
             if not user_name or not start_str or not end_str:
                 continue
             try:
-                start_d = datetime.strptime(start_str, '%Y-%m-%d').date()
-                end_d = datetime.strptime(end_str, '%Y-%m-%d').date()
+                start_d = datetime.strptime(start_str, "%Y-%m-%d").date()
+                end_d = datetime.strptime(end_str, "%Y-%m-%d").date()
             except ValueError:
                 continue
             eff_start = max(start_d, ctx_start)
@@ -128,91 +130,97 @@ class AutoPlanningService:
                 current = date.fromordinal(current.toordinal() + 1)
 
         logger.info(
-            'Aplano absences (planning month + coupling Sunday if needed): %s (employee,date) marks in %s..%s',
-            len(absent_dates), ctx_start, load_end,
+            "Aplano absences (planning month + coupling Sunday if needed): %s (employee,date) marks in %s..%s",
+            len(absent_dates),
+            ctx_start,
+            load_end,
         )
 
         return absent_dates
 
     @staticmethod
-    def _extract_area_from_workspace(work_space: str) -> Optional[str]:
-        ws = (work_space or '').lower()
-        if 'nord' in ws:
-            return 'Nord'
-        if 'süd' in ws or 'sued' in ws:
-            return 'Süd'
-        if 'mitte' in ws:
-            return 'Mitte'
+    def _extract_area_from_workspace(work_space: str) -> str | None:
+        ws = (work_space or "").lower()
+        if "nord" in ws:
+            return "Nord"
+        if "süd" in ws or "sued" in ws:
+            return "Süd"
+        if "mitte" in ws:
+            return "Mitte"
         return None
 
     @staticmethod
     def _is_doctor_workspace(ws: str) -> bool:
-        text = (ws or '').lower()
+        text = (ws or "").lower()
         # Handle umlauts and common spellings (Ärzte / Aerzte / Arzt / Doctor)
-        return any(token in text for token in ('ärzt', 'aerzt', 'arzt', 'doctor', 'doc'))
+        return any(token in text for token in ("ärzt", "aerzt", "arzt", "doctor", "doc"))
 
     def _map_aplano_shift_to_solver_slots(
-        self, shift: Dict[str, Any]
-    ) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+        self, shift: dict[str, Any]
+    ) -> tuple[list[dict[str, Any]], str | None]:
         """
         Map one Aplano shift to solver-like slot descriptors.
         Returns (slots, None) on success, or ([], reason_code) if skipped / unmapped.
         """
-        user_name = aplano_user_display_name(shift.get('user'))
-        date_str = shift.get('date')
+        user_name = aplano_user_display_name(shift.get("user"))
+        date_str = shift.get("date")
         work_space = aplano_workspace_label(
-            shift.get('workSpace') or shift.get('name') or shift.get('title')
+            shift.get("workSpace") or shift.get("name") or shift.get("title")
         )
         ws = work_space.lower()
         if not user_name:
-            return [], 'missing_user'
+            return [], "missing_user"
         if not date_str:
-            return [], 'missing_date'
+            return [], "missing_date"
         if not work_space:
-            return [], 'missing_workspace'
+            return [], "missing_workspace"
 
         try:
-            shift_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            shift_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except ValueError:
-            return [], 'bad_date'
+            return [], "bad_date"
 
         area = self._extract_area_from_workspace(work_space)
 
         if _RE_APLANO_AW.search(ws):
-            return [{
-                'date': shift_date,
-                'category': 'AW',
-                'role': 'NURSING',
-                'time_of_day': 'NONE',
-                'area': area,
-            }], None
+            return [
+                {
+                    "date": shift_date,
+                    "category": "AW",
+                    "role": "NURSING",
+                    "time_of_day": "NONE",
+                    "area": area,
+                }
+            ], None
 
         if not _RE_APLANO_RB.search(ws):
-            return [], 'not_aw_or_rb'
+            return [], "not_aw_or_rb"
 
-        role = 'DOCTOR' if self._is_doctor_workspace(ws) else 'NURSING'
+        role = "DOCTOR" if self._is_doctor_workspace(ws) else "NURSING"
         is_weekend = shift_date.weekday() >= 5
-        category = 'RB_WEEKEND' if is_weekend else 'RB_WEEKDAY'
+        category = "RB_WEEKEND" if is_weekend else "RB_WEEKDAY"
 
-        if role == 'NURSING' and is_weekend:
+        if role == "NURSING" and is_weekend:
             if _RE_APLANO_NIGHT.search(ws):
-                time_of_day = 'NIGHT'
+                time_of_day = "NIGHT"
             elif _RE_APLANO_DAY.search(ws):
-                time_of_day = 'DAY'
+                time_of_day = "DAY"
             else:
-                return [], 'weekend_rb_need_tag_or_nacht'
+                return [], "weekend_rb_need_tag_or_nacht"
         else:
-            time_of_day = 'NONE'
+            time_of_day = "NONE"
 
-        return [{
-            'date': shift_date,
-            'category': category,
-            'role': role,
-            'time_of_day': time_of_day,
-            'area': area,
-        }], None
+        return [
+            {
+                "date": shift_date,
+                "category": category,
+                "role": role,
+                "time_of_day": time_of_day,
+                "area": area,
+            }
+        ], None
 
-    def _build_prev_month_external_assignments(self, start_date: date) -> List[Dict[str, Any]]:
+    def _build_prev_month_external_assignments(self, start_date: date) -> list[dict[str, Any]]:
         """
         Build fixed historical assignments from Aplano shifts for previous month.
         """
@@ -226,16 +234,16 @@ class AutoPlanningService:
         try:
             raw_shifts = fetch_aplano_shifts_for_month(prev_month_start)
         except Exception as e:
-            logger.warning('Failed to fetch Aplano shifts for previous month: %s', e)
+            logger.warning("Failed to fetch Aplano shifts for previous month: %s", e)
             raise AplanoUnavailableError(str(e)) from e
 
         employees = list(Employee.query.all())
-        out: List[Dict[str, Any]] = []
-        skip_reasons: Dict[str, int] = {}
-        unmatched_names: Set[str] = set()
+        out: list[dict[str, Any]] = []
+        skip_reasons: dict[str, int] = {}
+        unmatched_names: set[str] = set()
 
         for shift in raw_shifts:
-            user_name = aplano_user_display_name(shift.get('user'))
+            user_name = aplano_user_display_name(shift.get("user"))
             mapped_slots, skip = self._map_aplano_shift_to_solver_slots(shift)
             if skip:
                 skip_reasons[skip] = skip_reasons.get(skip, 0) + 1
@@ -244,95 +252,98 @@ class AutoPlanningService:
             emp = match_employee_by_name(user_name, employees)
             if emp is None:
                 unmatched_names.add(user_name)
-                skip_reasons['unmatched_employee'] = skip_reasons.get('unmatched_employee', 0) + 1
+                skip_reasons["unmatched_employee"] = skip_reasons.get("unmatched_employee", 0) + 1
                 continue
             for mapped in mapped_slots:
-                mapped['employee_id'] = emp.id
+                mapped["employee_id"] = emp.id
                 out.append(mapped)
 
         logger.info(
-            'Aplano Vormonat-Schichten: %s API-Zeilen -> %s Solver-Slots; '
-            'skip=%s; Namen ohne MA-Match=%s%s',
+            "Aplano Vormonat-Schichten: %s API-Zeilen -> %s Solver-Slots; "
+            "skip=%s; Namen ohne MA-Match=%s%s",
             len(raw_shifts),
             len(out),
             dict(skip_reasons) if skip_reasons else {},
             len(unmatched_names),
-            f' ({", ".join(sorted(unmatched_names)[:15])}{"…" if len(unmatched_names) > 15 else ""})'
-            if unmatched_names else '',
+            f" ({', '.join(sorted(unmatched_names)[:15])}{'…' if len(unmatched_names) > 15 else ''})"
+            if unmatched_names
+            else "",
         )
         return out
 
-    def plan(self, start_date: date, end_date: date) -> Dict[str, Any]:
+    def plan(self, start_date: date, end_date: date) -> dict[str, Any]:
         """
         Run CP-SAT planning for the given date range (planning month derived from start_date).
         """
-        absent_dates: Set[Tuple[int, date]] = set()
-        external_fixed_assignments: List[Dict[str, Any]] = []
+        absent_dates: set[tuple[int, date]] = set()
+        external_fixed_assignments: list[dict[str, Any]] = []
         if self.include_aplano:
             try:
                 absent_dates = self._build_absent_dates(start_date)
                 external_fixed_assignments = self._build_prev_month_external_assignments(start_date)
             except AplanoUnavailableError as e:
                 result = {
-                    'message': 'Aplano ist nicht verfügbar.',
-                    'assignments_created': 0,
-                    'total_planned': 0,
-                    'solver_status': 'ERROR',
-                    'objective_value': None,
-                    'runtime_seconds': None,
-                    'error': 'APLANO_UNAVAILABLE',
+                    "message": "Aplano ist nicht verfügbar.",
+                    "assignments_created": 0,
+                    "total_planned": 0,
+                    "solver_status": "ERROR",
+                    "objective_value": None,
+                    "runtime_seconds": None,
+                    "error": "APLANO_UNAVAILABLE",
                 }
-                logger.warning('Auto-planning aborted (Aplano unavailable): %s', e)
+                logger.warning("Auto-planning aborted (Aplano unavailable): %s", e)
                 return result
 
         try:
-            logger.info('Loading planning context...')
+            logger.info("Loading planning context...")
             ctx = load_planning_context(
                 start_date=start_date,
                 end_date=end_date,
                 existing_assignments_handling=self.existing_assignments_handling,
                 absent_dates=absent_dates if absent_dates else None,
-                external_fixed_assignments=external_fixed_assignments if external_fixed_assignments else None,
+                external_fixed_assignments=external_fixed_assignments
+                if external_fixed_assignments
+                else None,
             )
         except Exception as e:
-            logger.exception('Failed to load planning context')
+            logger.exception("Failed to load planning context")
             result = {
-                'message': f'Failed to load planning data: {str(e)}',
-                'assignments_created': 0,
-                'total_planned': 0,
-                'solver_status': 'ERROR',
-                'objective_value': None,
-                'runtime_seconds': None,
-                'error': str(e),
+                "message": f"Failed to load planning data: {str(e)}",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": "ERROR",
+                "objective_value": None,
+                "runtime_seconds": None,
+                "error": str(e),
             }
-            logger.warning('Auto-planning aborted: %s', result.get('message'))
+            logger.warning("Auto-planning aborted: %s", result.get("message"))
             return result
 
         if not ctx.employees:
             result = {
-                'message': 'No planable employees (NURSING/DOCTOR) found',
-                'assignments_created': 0,
-                'total_planned': 0,
-                'solver_status': 'SKIPPED',
-                'objective_value': None,
-                'runtime_seconds': None,
+                "message": "No planable employees (NURSING/DOCTOR) found",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": "SKIPPED",
+                "objective_value": None,
+                "runtime_seconds": None,
             }
-            logger.warning('Auto-planning skipped: %s', result['message'])
+            logger.warning("Auto-planning skipped: %s", result["message"])
             return result
         if not ctx.shifts:
             result = {
-                'message': 'No shift instances in date range; generate shift instances first (POST /shift-instances/generate)',
-                'assignments_created': 0,
-                'total_planned': 0,
-                'solver_status': 'SKIPPED',
-                'objective_value': None,
-                'runtime_seconds': None,
+                "message": "No shift instances in date range; generate shift instances first (POST /shift-instances/generate)",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": "SKIPPED",
+                "objective_value": None,
+                "runtime_seconds": None,
             }
-            logger.warning('Auto-planning skipped: %s', result['message'])
+            logger.warning("Auto-planning skipped: %s", result["message"])
             return result
 
         try:
-            logger.info('Building CP-SAT model...')
+            logger.info("Building CP-SAT model...")
             planning_model = build_model(
                 ctx=ctx,
                 allow_overplanning=self.allow_overplanning,
@@ -345,44 +356,45 @@ class AutoPlanningService:
                 bonus_friday_weekend_rb_coupling=self.bonus_friday_weekend_rb_coupling,
             )
         except Exception as e:
-            logger.exception('Failed to build CP-SAT model')
+            logger.exception("Failed to build CP-SAT model")
             result = {
-                'message': f'Failed to build model: {str(e)}',
-                'assignments_created': 0,
-                'total_planned': 0,
-                'solver_status': 'ERROR',
-                'objective_value': None,
-                'runtime_seconds': None,
-                'error': str(e),
+                "message": f"Failed to build model: {str(e)}",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": "ERROR",
+                "objective_value": None,
+                "runtime_seconds": None,
+                "error": str(e),
             }
-            logger.warning('Auto-planning aborted: %s', result.get('message'))
+            logger.warning("Auto-planning aborted: %s", result.get("message"))
             return result
 
         import time
+
         t0 = time.perf_counter()
         try:
-            logger.info('Running solver...')
+            logger.info("Running solver...")
             status_name, objective_value, assignments = run_solver(
                 planning_model,
                 time_limit_seconds=self.time_limit_seconds,
             )
         except Exception as e:
-            logger.exception('Solver failed')
+            logger.exception("Solver failed")
             result = {
-                'message': f'Solver failed: {str(e)}',
-                'assignments_created': 0,
-                'total_planned': 0,
-                'solver_status': 'ERROR',
-                'objective_value': None,
-                'runtime_seconds': time.perf_counter() - t0,
-                'error': str(e),
+                "message": f"Solver failed: {str(e)}",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": "ERROR",
+                "objective_value": None,
+                "runtime_seconds": time.perf_counter() - t0,
+                "error": str(e),
             }
-            logger.warning('Auto-planning aborted: %s', result.get('message'))
+            logger.warning("Auto-planning aborted: %s", result.get("message"))
             return result
         runtime_seconds = time.perf_counter() - t0
 
-        if status_name == 'INFEASIBLE':
-            verbose_hints = bool(getattr(Config, 'AUTO_PLAN_VERBOSE_INFEASIBLE', False))
+        if status_name == "INFEASIBLE":
+            verbose_hints = bool(getattr(Config, "AUTO_PLAN_VERBOSE_INFEASIBLE", False))
             hints = None
             if verbose_hints:
                 hints = collect_infeasibility_hints(
@@ -391,77 +403,80 @@ class AutoPlanningService:
                     allow_overplanning=self.allow_overplanning,
                 )
             result = {
-                'message': 'No feasible solution found; constraints may be too strict or data inconsistent',
-                'assignments_created': 0,
-                'total_planned': 0,
-                'solver_status': status_name,
-                'objective_value': None,
-                'runtime_seconds': round(runtime_seconds, 2),
-                'error': 'INFEASIBLE',
+                "message": "No feasible solution found; constraints may be too strict or data inconsistent",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": status_name,
+                "objective_value": None,
+                "runtime_seconds": round(runtime_seconds, 2),
+                "error": "INFEASIBLE",
             }
             if verbose_hints:
-                result['infeasibility_hints'] = hints
-                result['infeasibility_summary'] = hints.get('human_readable', [])
-            logger.warning('Auto-planning: %s', result['message'])
+                result["infeasibility_hints"] = hints
+                result["infeasibility_summary"] = hints.get("human_readable", [])
+            logger.warning("Auto-planning: %s", result["message"])
             if verbose_hints:
-                for line in hints.get('human_readable', []):
-                    logger.warning('INFEASIBLE hint: %s', line)
-                if hints.get('fixed_conflict_same_shift'):
+                for line in hints.get("human_readable", []):
+                    logger.warning("INFEASIBLE hint: %s", line)
+                if hints.get("fixed_conflict_same_shift"):
                     logger.warning(
-                        'INFEASIBLE fixed_conflict_same_shift (structured): %s',
-                        hints['fixed_conflict_same_shift'],
+                        "INFEASIBLE fixed_conflict_same_shift (structured): %s",
+                        hints["fixed_conflict_same_shift"],
                     )
-                logger.warning('INFEASIBLE diagnostics summary: %s', hints.get('summary'))
+                logger.warning("INFEASIBLE diagnostics summary: %s", hints.get("summary"))
             if self.include_aplano:
                 ad = ctx.absent_dates
                 pm0, pm1 = ctx.start_date, ctx.end_date
                 n_pm = sum(1 for (_, d) in ad if pm0 <= d <= pm1)
                 emps_pm = {eid for (eid, d) in ad if pm0 <= d <= pm1}
                 logger.warning(
-                    'Aplano INFEASIBLE: %s Abwesenheits-Markierungen im Planungsmonat, '
-                    '%s betroffene MA-IDs, %s gesamt im Horizont',
-                    n_pm, len(emps_pm), len(ad),
+                    "Aplano INFEASIBLE: %s Abwesenheits-Markierungen im Planungsmonat, "
+                    "%s betroffene MA-IDs, %s gesamt im Horizont",
+                    n_pm,
+                    len(emps_pm),
+                    len(ad),
                 )
             return result
-        if status_name not in ('OPTIMAL', 'FEASIBLE'):
+        if status_name not in ("OPTIMAL", "FEASIBLE"):
             result = {
-                'message': f'Solver returned status: {status_name}',
-                'assignments_created': 0,
-                'total_planned': 0,
-                'solver_status': status_name,
-                'objective_value': objective_value,
-                'runtime_seconds': round(runtime_seconds, 2),
+                "message": f"Solver returned status: {status_name}",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": status_name,
+                "objective_value": objective_value,
+                "runtime_seconds": round(runtime_seconds, 2),
             }
-            logger.warning('Auto-planning: %s', result['message'])
+            logger.warning("Auto-planning: %s", result["message"])
             return result
 
         # Nur den ausgewählten Planungsmonat in die DB schreiben (Vormonat nur zur Bewertung genutzt)
         planning_month_shift_ids = {
-            s.id for s in ctx.shifts
-            if ctx.start_date <= s.date <= ctx.end_date
+            s.id for s in ctx.shifts if ctx.start_date <= s.date <= ctx.end_date
         }
         assignments_planning_month = [
-            (eid, sid) for (eid, sid) in assignments
-            if sid in planning_month_shift_ids
+            (eid, sid) for (eid, sid) in assignments if sid in planning_month_shift_ids
         ]
         logger.info(
-            'Solver: %s assignments total, %s shifts in planning month, %s assignments to write',
-            len(assignments), len(planning_month_shift_ids), len(assignments_planning_month),
+            "Solver: %s assignments total, %s shifts in planning month, %s assignments to write",
+            len(assignments),
+            len(planning_month_shift_ids),
+            len(assignments_planning_month),
         )
         if len(assignments_planning_month) == 0 and len(assignments) > 0:
             logger.warning(
-                'No assignments in planning month (all %s are in previous month?). '
-                'Ensure shift instances exist for the selected month (POST /shift-instances/generate).',
+                "No assignments in planning month (all %s are in previous month?). "
+                "Ensure shift instances exist for the selected month (POST /shift-instances/generate).",
                 len(assignments),
             )
         if len(planning_month_shift_ids) == 0:
             logger.warning(
-                'No shift instances in planning month (%s to %s). Generate them first.',
-                ctx.start_date, ctx.end_date,
+                "No shift instances in planning month (%s to %s). Generate them first.",
+                ctx.start_date,
+                ctx.end_date,
             )
 
         try:
-            logger.info('Writing assignments to database...')
+            logger.info("Writing assignments to database...")
             assignments_created = write_assignments(
                 assignments=assignments_planning_month,
                 start_date=ctx.start_date,
@@ -469,25 +484,25 @@ class AutoPlanningService:
                 existing_assignments_handling=self.existing_assignments_handling,
             )
         except Exception as e:
-            logger.exception('Failed to write assignments')
+            logger.exception("Failed to write assignments")
             db.session.rollback()
             result = {
-                'message': f'Assignments solved but failed to save: {str(e)}',
-                'assignments_created': 0,
-                'total_planned': len(assignments_planning_month),
-                'solver_status': status_name,
-                'objective_value': objective_value,
-                'runtime_seconds': round(runtime_seconds, 2),
-                'error': str(e),
+                "message": f"Assignments solved but failed to save: {str(e)}",
+                "assignments_created": 0,
+                "total_planned": len(assignments_planning_month),
+                "solver_status": status_name,
+                "objective_value": objective_value,
+                "runtime_seconds": round(runtime_seconds, 2),
+                "error": str(e),
             }
-            logger.warning('Auto-planning aborted: %s', result.get('message'))
+            logger.warning("Auto-planning aborted: %s", result.get("message"))
             return result
 
         return {
-            'message': 'Planning completed successfully',
-            'assignments_created': assignments_created,
-            'total_planned': len(assignments_planning_month),
-            'solver_status': status_name,
-            'objective_value': objective_value,
-            'runtime_seconds': round(runtime_seconds, 2),
+            "message": "Planning completed successfully",
+            "assignments_created": assignments_created,
+            "total_planned": len(assignments_planning_month),
+            "solver_status": status_name,
+            "objective_value": objective_value,
+            "runtime_seconds": round(runtime_seconds, 2),
         }

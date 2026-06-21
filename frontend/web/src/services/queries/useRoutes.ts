@@ -11,7 +11,7 @@ export const routeKeys = {
   details: () => [...routeKeys.all, 'detail'] as const,
   detail: (id: number) => [...routeKeys.details(), id] as const,
   byDay: () => [...routeKeys.all, 'byDay'] as const,
-  forDay: (date: string, employeeId?: number) => 
+  forDay: (date: string, employeeId?: number) =>
     [...routeKeys.byDay(), date, { employeeId }] as const,
 };
 
@@ -25,13 +25,16 @@ export const useRoutes = (params?: {
   calendar_week?: number;
 }) => {
   const { selectedCalendarWeek } = useCalendarWeekStore();
-  
+
   // Automatisch selectedCalendarWeek verwenden, außer es wird explizit überschrieben
   const finalParams = {
     ...params,
-    calendar_week: params?.calendar_week !== undefined ? params.calendar_week : selectedCalendarWeek || undefined
+    calendar_week:
+      params?.calendar_week !== undefined
+        ? params.calendar_week
+        : selectedCalendarWeek || undefined,
   };
-  
+
   return useQuery({
     queryKey: routeKeys.list(finalParams),
     queryFn: () => routesApi.getRoutes(finalParams),
@@ -60,15 +63,27 @@ export const useRoutesForDay = (date: string, employeeId?: number) => {
 export const useOptimizeRoutes = () => {
   const queryClient = useQueryClient();
   const { selectedCalendarWeek } = useCalendarWeekStore();
-  
+
   return useMutation({
-    mutationFn: ({ weekday, employeeId, calendarWeek }: { weekday: string; employeeId: number; calendarWeek?: number }) => 
-      routesApi.optimizeRoutes(weekday, employeeId, calendarWeek || selectedCalendarWeek || undefined),
+    mutationFn: ({
+      weekday,
+      employeeId,
+      calendarWeek,
+    }: {
+      weekday: string;
+      employeeId: number;
+      calendarWeek?: number;
+    }) =>
+      routesApi.optimizeRoutes(
+        weekday,
+        employeeId,
+        calendarWeek || selectedCalendarWeek || undefined
+      ),
     onSuccess: () => {
       // Invalidate all route queries as they might be affected
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: routeKeys.byDay(),
-        exact: false 
+        exact: false,
       });
       queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
     },
@@ -78,15 +93,27 @@ export const useOptimizeRoutes = () => {
 export const useOptimizeTourAreaRoutes = () => {
   const queryClient = useQueryClient();
   const { selectedCalendarWeek } = useCalendarWeekStore();
-  
+
   return useMutation({
-    mutationFn: ({ weekday, area, calendarWeek }: { weekday: string; area: string; calendarWeek?: number }) => 
-      routesApi.optimizeTourAreaRoutes(weekday, area, calendarWeek || selectedCalendarWeek || undefined),
+    mutationFn: ({
+      weekday,
+      area,
+      calendarWeek,
+    }: {
+      weekday: string;
+      area: string;
+      calendarWeek?: number;
+    }) =>
+      routesApi.optimizeTourAreaRoutes(
+        weekday,
+        area,
+        calendarWeek || selectedCalendarWeek || undefined
+      ),
     onSuccess: () => {
       // Invalidate all route queries as they might be affected
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: routeKeys.byDay(),
-        exact: false 
+        exact: false,
       });
       queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
     },
@@ -96,27 +123,27 @@ export const useOptimizeTourAreaRoutes = () => {
 // Hook to reorder an appointment up or down in a route
 export const useReorderAppointment = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ 
-      routeId, 
-      appointmentId, 
-      direction 
-    }: { 
-      routeId: number; 
-      appointmentId: number; 
-      direction: 'up' | 'down' 
+    mutationFn: ({
+      routeId,
+      appointmentId,
+      direction,
+    }: {
+      routeId: number;
+      appointmentId: number;
+      direction: 'up' | 'down';
     }) => routesApi.reorderAppointment(routeId, appointmentId, direction),
     onSuccess: (updatedRoute) => {
       // Invalidate the specific route
-      queryClient.invalidateQueries({ 
-        queryKey: routeKeys.detail(updatedRoute.id)
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.detail(updatedRoute.id),
       });
-      
+
       // Also invalidate any lists that might contain this route
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: routeKeys.lists(),
-        exact: false 
+        exact: false,
       });
     },
   });

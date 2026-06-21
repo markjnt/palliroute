@@ -8,14 +8,14 @@ import {
   Card,
   CardContent,
   Divider,
-  Stack
+  Stack,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
   WarningAmber as WarningIcon,
   Home as HomeIcon,
   Phone as PhoneIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { Appointment, Patient } from '../../../types/models';
 
@@ -53,25 +53,25 @@ const getVisitStyles = (visitType?: Appointment['visit_type']) => {
       return {
         background: 'rgba(25, 118, 210, 0.08)',
         border: alpha('#1976d2', 0.35),
-        chipBg: '#1976d2'
+        chipBg: '#1976d2',
       };
     case 'NA':
       return {
         background: 'rgba(244, 67, 54, 0.08)',
         border: alpha('#f44336', 0.35),
-        chipBg: '#f44336'
+        chipBg: '#f44336',
       };
     case 'TK':
       return {
         background: 'rgba(76, 175, 80, 0.08)',
         border: alpha('#4caf50', 0.35),
-        chipBg: '#4caf50'
+        chipBg: '#4caf50',
       };
     default:
       return {
         background: alpha('#9e9e9e', 0.08),
         border: alpha('#9e9e9e', 0.35),
-        chipBg: '#9e9e9e'
+        chipBg: '#9e9e9e',
       };
   }
 };
@@ -79,7 +79,7 @@ const getVisitStyles = (visitType?: Appointment['visit_type']) => {
 export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmentsProps> = ({
   appointments,
   onAssignArea,
-  isAssigning
+  isAssigning,
 }) => {
   if (appointments.length === 0) {
     return null;
@@ -92,7 +92,7 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
         mb: 3,
         p: 2,
         borderLeft: (theme) => `4px solid ${theme.palette.warning.main}`,
-        backgroundColor: (theme) => `${theme.palette.warning.light}20`
+        backgroundColor: (theme) => `${theme.palette.warning.light}20`,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -117,18 +117,16 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
                 borderRadius: 2,
                 borderColor: visitStyles.border,
                 borderWidth: 1,
-                boxShadow: 'none'
+                boxShadow: 'none',
               }}
             >
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Stack spacing={1.5}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        variant="h6"
-                        fontWeight={700}
-                        sx={{ lineHeight: 1.2 }}
-                      >
+                      <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
                         {displayName || 'Unbekannter Patient'}
                       </Typography>
                       <Chip
@@ -137,7 +135,7 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
                         sx={{
                           bgcolor: visitStyles.chipBg,
                           color: '#fff',
-                          fontWeight: 600
+                          fontWeight: 600,
                         }}
                       />
                     </Box>
@@ -172,7 +170,15 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
 
                   <Divider />
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      flexWrap: 'wrap',
+                      gap: 1,
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                       <Typography variant="body2" color="text.secondary">
                         Bereich zuweisen:
@@ -191,8 +197,8 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
                                   cursor: isAssigning ? 'not-allowed' : 'pointer',
                                   opacity: isAssigning ? 0.6 : 1,
                                   '&:hover': {
-                                    opacity: isAssigning ? 0.6 : 0.85
-                                  }
+                                    opacity: isAssigning ? 0.6 : 0.85,
+                                  },
                                 }}
                               />
                             </span>
@@ -210,5 +216,3 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
     </Paper>
   );
 };
-
-

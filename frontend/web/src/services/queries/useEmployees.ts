@@ -38,18 +38,18 @@ export const useEmployee = (id: number) => {
 // Hook to create an employee
 export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (employeeData: EmployeeFormData) => employeesApi.create(employeeData),
     onSuccess: (newEmployee) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
-      
+
       // Optionally update the cache directly
-      queryClient.setQueryData(
-        employeeKeys.lists(),
-        (oldEmployees: Employee[] = []) => [...oldEmployees, newEmployee]
-      );
+      queryClient.setQueryData(employeeKeys.lists(), (oldEmployees: Employee[] = []) => [
+        ...oldEmployees,
+        newEmployee,
+      ]);
     },
   });
 };
@@ -57,20 +57,22 @@ export const useCreateEmployee = () => {
 // Hook to update an employee
 export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, employeeData }: { id: number; employeeData: Partial<EmployeeFormData> }) => 
+    mutationFn: ({ id, employeeData }: { id: number; employeeData: Partial<EmployeeFormData> }) =>
       employeesApi.update(id, employeeData),
     onSuccess: (updatedEmployee) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: employeeKeys.detail(updatedEmployee.id as number) });
-      
+      queryClient.invalidateQueries({
+        queryKey: employeeKeys.detail(updatedEmployee.id as number),
+      });
+
       // Optionally update the cache directly
-      queryClient.setQueryData(
-        employeeKeys.lists(),
-        (oldEmployees: Employee[] = []) => 
-          oldEmployees.map(employee => (employee.id === updatedEmployee.id ? updatedEmployee : employee))
+      queryClient.setQueryData(employeeKeys.lists(), (oldEmployees: Employee[] = []) =>
+        oldEmployees.map((employee) =>
+          employee.id === updatedEmployee.id ? updatedEmployee : employee
+        )
       );
     },
   });
@@ -79,33 +81,30 @@ export const useUpdateEmployee = () => {
 // Hook to delete an employee
 export const useDeleteEmployee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: number) => employeesApi.delete(id),
     onSuccess: (_, id) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
-      
+
       // Remove from cache
       queryClient.removeQueries({ queryKey: employeeKeys.detail(id) });
-      
+
       // Optionally update the list cache directly
-      queryClient.setQueryData(
-        employeeKeys.lists(),
-        (oldEmployees: Employee[] = []) => oldEmployees.filter(employee => employee.id !== id)
+      queryClient.setQueryData(employeeKeys.lists(), (oldEmployees: Employee[] = []) =>
+        oldEmployees.filter((employee) => employee.id !== id)
       );
     },
   });
 };
-
-
 
 // Hook to import employees from Excel
 export const useImportEmployees = () => {
   const queryClient = useQueryClient();
   const { setLastEmployeeImportTime } = useLastUpdateStore();
   const { setAvailableCalendarWeeks } = useCalendarWeekStore();
-  
+
   return useMutation({
     mutationFn: () => employeesApi.import(),
     onSuccess: async () => {
@@ -115,7 +114,7 @@ export const useImportEmployees = () => {
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
       queryClient.invalidateQueries({ queryKey: employeePlanningKeys.all });
-      
+
       // Update last import time in store
       setLastEmployeeImportTime(new Date());
 
@@ -130,4 +129,4 @@ export const useImportEmployees = () => {
       }
     },
   });
-}; 
+};

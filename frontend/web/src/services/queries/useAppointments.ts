@@ -28,10 +28,11 @@ export const useAppointments = () => {
 // Hook zum Laden von Terminen für einen bestimmten Wochentag
 export const useAppointmentsByWeekday = (weekday: Weekday, overrideCalendarWeek?: number) => {
   const { selectedCalendarWeek } = useCalendarWeekStore();
-  
+
   // Verwende override oder den ausgewählten Wert aus dem Store
-  const calendarWeek = overrideCalendarWeek !== undefined ? overrideCalendarWeek : selectedCalendarWeek;
-  
+  const calendarWeek =
+    overrideCalendarWeek !== undefined ? overrideCalendarWeek : selectedCalendarWeek;
+
   return useQuery({
     queryKey: [...appointmentKeys.byWeekday(weekday), { calendarWeek }],
     queryFn: () => appointmentsApi.getByWeekday(weekday, calendarWeek || undefined),
@@ -60,35 +61,56 @@ export const useAppointment = (id: number) => {
 // Hook zum Verschieben eines einzelnen Termins
 export const useMoveAppointment = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ appointmentId, sourceEmployeeId, targetEmployeeId, sourceArea, targetArea, calendarWeek, respectReplacement }: { 
-      appointmentId: number; 
-      sourceEmployeeId?: number; 
-      targetEmployeeId?: number; 
+    mutationFn: ({
+      appointmentId,
+      sourceEmployeeId,
+      targetEmployeeId,
+      sourceArea,
+      targetArea,
+      calendarWeek,
+      respectReplacement,
+    }: {
+      appointmentId: number;
+      sourceEmployeeId?: number;
+      targetEmployeeId?: number;
       sourceArea?: string;
       targetArea?: string;
       calendarWeek?: number;
       respectReplacement?: boolean;
-    }) => appointmentsApi.moveAppointment(appointmentId, sourceEmployeeId, targetEmployeeId, sourceArea, targetArea, calendarWeek, respectReplacement),
+    }) =>
+      appointmentsApi.moveAppointment(
+        appointmentId,
+        sourceEmployeeId,
+        targetEmployeeId,
+        sourceArea,
+        targetArea,
+        calendarWeek,
+        respectReplacement
+      ),
     onSuccess: () => {
       // Invalidate all appointment queries to refetch data
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
       queryClient.invalidateQueries({ queryKey: employeePlanningKeys.all });
-    }
+    },
   });
 };
 
 // Hook zum Prüfen der Vertretung
 export const useCheckReplacement = () => {
   return useMutation({
-    mutationFn: ({ targetEmployeeId, weekday, calendarWeek }: {
+    mutationFn: ({
+      targetEmployeeId,
+      weekday,
+      calendarWeek,
+    }: {
       targetEmployeeId: number;
       weekday: string;
       calendarWeek?: number;
-    }) => appointmentsApi.checkReplacement(targetEmployeeId, weekday, calendarWeek)
+    }) => appointmentsApi.checkReplacement(targetEmployeeId, weekday, calendarWeek),
   });
 };
 
@@ -96,14 +118,17 @@ export const useAssignTourArea = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ appointmentId, targetArea }: { appointmentId: number; targetArea: 'Nord' | 'Mitte' | 'Süd' }) =>
-      appointmentsApi.assignTourArea(appointmentId, targetArea),
+    mutationFn: ({
+      appointmentId,
+      targetArea,
+    }: {
+      appointmentId: number;
+      targetArea: 'Nord' | 'Mitte' | 'Süd';
+    }) => appointmentsApi.assignTourArea(appointmentId, targetArea),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
-    }
+    },
   });
 };
-
-

@@ -26,11 +26,11 @@ interface TourAreaSelectorProps {
   onToggleExpanded: () => void;
 }
 
-const TourAreaSelector: React.FC<TourAreaSelectorProps> = ({ 
-  selectedArea, 
+const TourAreaSelector: React.FC<TourAreaSelectorProps> = ({
+  selectedArea,
   onAreaSelect,
   isExpanded,
-  onToggleExpanded
+  onToggleExpanded,
 }) => {
   const tourAreaOptions = [
     { id: 'Nord', label: 'AW Nord', color: '#ff9800', chipColor: '#1976d2' },
@@ -39,16 +39,20 @@ const TourAreaSelector: React.FC<TourAreaSelectorProps> = ({
   ];
 
   const getAreaColor = (area: string) => {
-    const areaConfig = tourAreaOptions.find(a => a.id === area);
+    const areaConfig = tourAreaOptions.find((a) => a.id === area);
     return areaConfig?.color || '#ff9800';
   };
 
   const getInitials = (area: string) => {
     switch (area) {
-      case 'Nord': return 'N';
-      case 'Mitte': return 'M';
-      case 'Süd': return 'S';
-      default: return area.charAt(0).toUpperCase();
+      case 'Nord':
+        return 'N';
+      case 'Mitte':
+        return 'M';
+      case 'Süd':
+        return 'S';
+      default:
+        return area.charAt(0).toUpperCase();
     }
   };
 
@@ -75,7 +79,10 @@ const TourAreaSelector: React.FC<TourAreaSelectorProps> = ({
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <TourAreaIcon sx={{ color: '#ff9800', mr: 1, fontSize: '1.2rem' }} />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1d1d1f', fontSize: '0.95rem' }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, color: '#1d1d1f', fontSize: '0.95rem' }}
+          >
             AW-Touren
           </Typography>
           {selectedArea && (
@@ -96,7 +103,11 @@ const TourAreaSelector: React.FC<TourAreaSelectorProps> = ({
             />
           )}
         </Box>
-        {isExpanded ? <ExpandLessIcon sx={{ fontSize: '1.2rem' }} /> : <ExpandMoreIcon sx={{ fontSize: '1.2rem' }} />}
+        {isExpanded ? (
+          <ExpandLessIcon sx={{ fontSize: '1.2rem' }} />
+        ) : (
+          <ExpandMoreIcon sx={{ fontSize: '1.2rem' }} />
+        )}
       </Button>
 
       {/* Collapsible content */}
@@ -113,10 +124,14 @@ const TourAreaSelector: React.FC<TourAreaSelectorProps> = ({
                 sx={{
                   cursor: 'pointer',
                   borderRadius: 2,
-                  border: selectedArea === area.id ? '2px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.08)',
-                  background: selectedArea === area.id 
-                    ? 'linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)'
-                    : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+                  border:
+                    selectedArea === area.id
+                      ? '2px solid #007AFF'
+                      : '1px solid rgba(0, 0, 0, 0.08)',
+                  background:
+                    selectedArea === area.id
+                      ? 'linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)'
+                      : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
                     transform: 'translateY(-2px)',
