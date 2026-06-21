@@ -106,14 +106,17 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: docker/backend.Dockerfile
+          failure-threshold: error
       - name: Lint frontend web Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: docker/frontend_web.Dockerfile
+          failure-threshold: error
       - name: Lint frontend PWA Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: docker/frontend_pwa.Dockerfile
+          failure-threshold: error
       - uses: docker/setup-buildx-action@v3
       - name: Verify backend API image
         uses: docker/build-push-action@v6
