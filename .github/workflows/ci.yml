@@ -82,7 +82,9 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: |
-          if find . -path '*/__tests__/*' -name '*.test.*' -o -path '*/__tests__/*' -name '*.spec.*' | grep -q .; then
+          if find . \( -path ./node_modules -o -path ./dist \) -prune -o \
+            \( -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' \) \
+            -print | grep -q .; then
             npm test
           else
             echo "::notice::No unit tests yet — skipping vitest"
