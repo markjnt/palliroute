@@ -73,7 +73,6 @@ jobs:
           context: .
           file: ${{ matrix.file }}
           target: ${{ matrix.target }}
-          platforms: linux/amd64
           push: false
           load: true
           tags: |
@@ -81,8 +80,8 @@ jobs:
             ${{ matrix.image }}:latest
           cache-from: type=registry,ref=${{ matrix.cache }}
           cache-to: type=registry,ref=${{ matrix.cache }},mode=max
-          provenance: mode=max
-          sbom: true
+          provenance: false
+          sbom: false
 
       - name: Build image (default target)
         if: matrix.target == ''
@@ -90,7 +89,6 @@ jobs:
         with:
           context: .
           file: ${{ matrix.file }}
-          platforms: linux/amd64
           push: false
           load: true
           tags: |
@@ -98,8 +96,8 @@ jobs:
             ${{ matrix.image }}:latest
           cache-from: type=registry,ref=${{ matrix.cache }}
           cache-to: type=registry,ref=${{ matrix.cache }},mode=max
-          provenance: mode=max
-          sbom: true
+          provenance: false
+          sbom: false
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
@@ -112,8 +110,8 @@ jobs:
           exit-code: 1
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: ${{ hashFiles('trivy-results.sarif') != '' }}
         with:
           sarif_file: trivy-results.sarif
           category: trivy-${{ matrix.name }}

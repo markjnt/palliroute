@@ -129,6 +129,8 @@ jobs:
           tags: palliroute-backend-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
       - name: Verify backend scheduler image
         uses: docker/build-push-action@v6
         with:
@@ -140,6 +142,8 @@ jobs:
           tags: palliroute-backend-scheduler:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
       - name: Verify frontend web image
         uses: docker/build-push-action@v6
         with:
@@ -150,6 +154,8 @@ jobs:
           tags: palliroute-frontend-web:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
       - name: Verify frontend PWA image
         uses: docker/build-push-action@v6
         with:
@@ -160,6 +166,8 @@ jobs:
           tags: palliroute-frontend-pwa:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
 
   security-ci:
     runs-on: ubuntu-latest
