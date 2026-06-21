@@ -18,7 +18,8 @@ describe('shiftMapping', () => {
       role: 'NURSING' as const,
       area: 'Mitte' as const,
       time_of_day: 'NIGHT' as const,
-      name: 'RB Pflege WE Nacht Mitte',
+      is_weekday: false,
+      is_weekend: true,
     };
 
     expect(shiftDefinitionToDutyType(shiftDef)).toEqual({
