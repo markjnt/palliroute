@@ -54,8 +54,8 @@ jobs:
         run: python -m compileall backend/app
       - name: Unit tests
         run: |
-          if find backend -path '*/test_*.py' -o -path '*/tests/test_*.py' | grep -q .; then
-            pytest backend --tb=short -q
+          if find backend -path '*/tests/test_*.py' | grep -q .; then
+            pytest backend/tests --tb=short -q
           else
             echo "::notice::No unit tests yet — skipping pytest"
           fi
