@@ -99,41 +99,41 @@ jobs:
           provenance: false
           sbom: false
 
+      # One image scan; SARIF, table gate, and SBOM are derived via `trivy convert`.
+      # ignore-unfixed: true — CVEs without an available patch are excluded from the gate.
+      # We accept that trade-off so deploys are not blocked by issues we cannot remediate yet.
       - name: Scan image with Trivy
-        id: trivy-scan
         uses: aquasecurity/trivy-action@v0.36.0
-        continue-on-error: true
         with:
           version: v0.71.2
           scan-type: image
           image-ref: ${{ matrix.image }}:${{ env.IMAGE_TAG }}
-          format: sarif
-          output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          exit-code: 1
+          format: json
+          output: trivy-results.json
+          ignore-unfixed: true
+          scanners: vuln
+          list-all-pkgs: true
+          exit-code: 0
+
+      - name: Generate reports and gate on findings
+        run: |
+          trivy convert --format sarif --severity CRITICAL,HIGH \
+            --output trivy-results.sarif trivy-results.json
+          trivy convert --format spdx-json \
+            --output "sbom-${{ matrix.name }}.spdx.json" trivy-results.json
+          trivy convert --format table --severity CRITICAL,HIGH --scanners vuln \
+            --exit-code 1 trivy-results.json
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v4
-        if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
+        if: ${{ !cancelled() && hashFiles('trivy-results.sarif') != '' }}
         with:
           sarif_file: trivy-results.sarif
           category: trivy-${{ matrix.name }}
 
-      - name: Fail if vulnerabilities found
-        if: steps.trivy-scan.outcome == 'failure'
-        run: exit 1
-
-      - name: Generate SBOM
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: image
-          image-ref: ${{ matrix.image }}:${{ env.IMAGE_TAG }}
-          format: spdx-json
-          output: sbom-${{ matrix.name }}.spdx.json
-          skip-setup-trivy: true
-
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: sbom-${{ matrix.name }}
           path: sbom-${{ matrix.name }}.spdx.json
