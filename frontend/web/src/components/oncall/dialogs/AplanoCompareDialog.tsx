@@ -33,6 +33,7 @@ import { getDutyColor } from '../../../utils/oncall/colorUtils';
 import { DutyType, OnCallArea } from '../../../types/models';
 
 type StatusFilter = 'all' | 'equal' | 'missing_in_aplano' | 'different';
+type GroupFilter = 'all' | 'pflege_n' | 'pflege_s' | 'arzt';
 
 interface AplanoCompareDialogProps {
   open: boolean;
@@ -158,6 +159,13 @@ function humanizeReason(reason?: string | null): string | null {
   return labels[reason] ?? reason;
 }
 
+function matchesGroupFilter(row: AplanoCompareEntry, groupFilter: GroupFilter): boolean {
+  if (groupFilter === 'all') return true;
+  if (groupFilter === 'pflege_n') return row.role === 'NURSING' && row.area === 'Nord';
+  if (groupFilter === 'pflege_s') return row.role === 'NURSING' && row.area === 'Süd';
+  return row.role === 'DOCTOR';
+}
+
 export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
   open,
   onClose,
@@ -167,13 +175,36 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
   isRefreshing = false,
   onRefresh,
 }) => {
-  const [filter, setFilter] = useState<StatusFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [groupFilter, setGroupFilter] = useState<GroupFilter>('all');
 
   const rows = compareData?.details ?? [];
+
+  const groupFilteredRows = useMemo(
+    () => rows.filter((row) => matchesGroupFilter(row, groupFilter)),
+    [rows, groupFilter]
+  );
+
+  const filteredSummary = useMemo(
+    () => ({
+      equal_count: groupFilteredRows.filter((row) => row.status === 'equal').length,
+      missing_in_aplano_count: groupFilteredRows.filter(
+        (row) => row.status === 'missing_in_aplano'
+      ).length,
+      different_count: groupFilteredRows.filter((row) => row.status === 'different').length,
+      total: groupFilteredRows.length,
+    }),
+    [groupFilteredRows]
+  );
+
   const filteredRows = useMemo(() => {
-    if (filter === 'all') return rows;
-    return rows.filter((row) => row.status === filter);
-  }, [rows, filter]);
+    if (statusFilter === 'all') return groupFilteredRows;
+    return groupFilteredRows.filter((row) => row.status === statusFilter);
+  }, [groupFilteredRows, statusFilter]);
+
+  const handleStatusCardClick = (status: Exclude<StatusFilter, 'all'>) => {
+    setStatusFilter((prev) => (prev === status ? 'all' : status));
+  };
   const groupedRows = useMemo(() => {
     const map = new Map<string, AplanoCompareEntry[]>();
     filteredRows
@@ -186,8 +217,70 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
     return Array.from(map.entries());
   }, [filteredRows]);
 
-  const summary = compareData?.summary;
   const hasError = compareData?.error === 'APLANO_UNAVAILABLE';
+
+  const filterBarSx = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 1.5,
+    flexWrap: 'wrap' as const,
+  };
+
+  const groupToggleSx = {
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 2.5,
+    p: 0.5,
+    border: '1px solid',
+    borderColor: 'divider',
+    '& .MuiToggleButton-root': {
+      border: 'none',
+      borderRadius: 2,
+      px: 1.5,
+      py: 0.75,
+      textTransform: 'none',
+      fontWeight: 600,
+      fontSize: '0.8125rem',
+      color: 'text.secondary',
+      lineHeight: 1.2,
+      '&.Mui-selected': {
+        backgroundColor: 'background.paper',
+        color: 'primary.main',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        '&:hover': {
+          backgroundColor: 'background.paper',
+        },
+      },
+      '&:hover': {
+        backgroundColor: 'rgba(0,0,0,0.04)',
+      },
+    },
+  };
+
+  const summaryCardSx = (
+    status: Exclude<StatusFilter, 'all'>,
+    borderColor: string,
+    activeBg: string
+  ) => ({
+    borderRadius: 2.5,
+    borderColor,
+    backgroundColor: 'background.paper',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    ...(statusFilter === status
+      ? {
+          borderWidth: 2,
+          backgroundColor: activeBg,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        }
+      : {
+          '&:hover': {
+            borderColor,
+            backgroundColor: activeBg,
+          },
+        }),
+  });
 
   return (
     <Dialog
@@ -256,25 +349,56 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
         ) : hasError ? (
           <Alert severity="error">Aplano ist momentan nicht verfügbar.</Alert>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5, pt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 0.5, pt: 1 }}>
+            {/* Bereichsfilter – ganz oben */}
+            <Box sx={filterBarSx}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                >
+                  Bereich
+                </Typography>
+                <ToggleButtonGroup
+                  size="small"
+                  exclusive
+                  value={groupFilter}
+                  onChange={(_, next: GroupFilter | null) => next && setGroupFilter(next)}
+                  sx={groupToggleSx}
+                >
+                  <ToggleButton value="all">Alle</ToggleButton>
+                  <ToggleButton value="pflege_n">Pflege N</ToggleButton>
+                  <ToggleButton value="pflege_s">Pflege S</ToggleButton>
+                  <ToggleButton value="arzt">Arzt</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
+                onClick={onRefresh}
+                disabled={!onRefresh || isRefreshing}
+                sx={{ flexShrink: 0, borderRadius: 2 }}
+              >
+                Aktualisieren
+              </Button>
+            </Box>
+
+            {/* Status-Zähler – klickbar als Filter, Zahlen nach Bereichsfilter */}
             <Box
               sx={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                 gap: 1,
-                mb: 1,
               }}
             >
               <Card
                 variant="outlined"
-                sx={{
-                  borderRadius: 2.5,
-                  borderColor: 'success.light',
-                  backgroundColor: 'background.paper',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                }}
+                onClick={() => handleStatusCardClick('equal')}
+                sx={summaryCardSx('equal', 'success.light', 'rgba(76,175,80,0.08)')}
               >
-                <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
                   <Box
                     sx={{
                       display: 'flex',
@@ -284,27 +408,23 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                      <CheckCircleOutlineIcon color="success" sx={{ fontSize: 16 }} />
+                      <CheckCircleOutlineIcon color="success" sx={{ fontSize: 18 }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                         Gleich
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', lineHeight: 1 }}>
-                      {summary?.equal_count ?? 0}
+                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                      {filteredSummary.equal_count}
                     </Typography>
                   </Box>
                 </CardContent>
               </Card>
               <Card
                 variant="outlined"
-                sx={{
-                  borderRadius: 2.5,
-                  borderColor: 'warning.light',
-                  backgroundColor: 'background.paper',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                }}
+                onClick={() => handleStatusCardClick('missing_in_aplano')}
+                sx={summaryCardSx('missing_in_aplano', 'warning.light', 'rgba(255,167,38,0.12)')}
               >
-                <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
                   <Box
                     sx={{
                       display: 'flex',
@@ -314,27 +434,23 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                      <WarningAmberIcon color="warning" sx={{ fontSize: 16 }} />
+                      <WarningAmberIcon color="warning" sx={{ fontSize: 18 }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                         Fehlt in Aplano
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', lineHeight: 1 }}>
-                      {summary?.missing_in_aplano_count ?? 0}
+                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                      {filteredSummary.missing_in_aplano_count}
                     </Typography>
                   </Box>
                 </CardContent>
               </Card>
               <Card
                 variant="outlined"
-                sx={{
-                  borderRadius: 2.5,
-                  borderColor: 'error.light',
-                  backgroundColor: 'background.paper',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                }}
+                onClick={() => handleStatusCardClick('different')}
+                sx={summaryCardSx('different', 'error.light', 'rgba(239,83,80,0.1)')}
               >
-                <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
                   <Box
                     sx={{
                       display: 'flex',
@@ -344,57 +460,29 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                      <ErrorOutlineIcon color="error" sx={{ fontSize: 16 }} />
+                      <ErrorOutlineIcon color="error" sx={{ fontSize: 18 }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                         Abweichend
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', lineHeight: 1 }}>
-                      {summary?.different_count ?? 0}
+                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                      {filteredSummary.different_count}
                     </Typography>
                   </Box>
                 </CardContent>
               </Card>
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <ToggleButtonGroup
-                size="small"
-                exclusive
-                value={filter}
-                onChange={(_, next) => next && setFilter(next)}
-                sx={{
-                  backgroundColor: 'rgba(0,0,0,0.03)',
-                  borderRadius: 2.5,
-                  p: 0.5,
-                  '& .MuiToggleButton-root': {
-                    border: 'none',
-                    borderRadius: 2,
-                    px: 1.25,
-                    py: 0.75,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                  },
-                }}
-              >
-                <ToggleButton value="all">Alle</ToggleButton>
-                <ToggleButton value="equal">Gleich</ToggleButton>
-                <ToggleButton value="missing_in_aplano">Fehlt in Aplano</ToggleButton>
-                <ToggleButton value="different">Abweichend</ToggleButton>
-              </ToggleButtonGroup>
-
-              <Box sx={{ ml: 'auto' }}>
-                <Button
+            {statusFilter !== 'all' && (
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Chip
+                  label={`Filter: ${statusLabel[statusFilter]} · ${filteredRows.length} von ${filteredSummary.total}`}
                   size="small"
-                  variant="outlined"
-                  startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
-                  onClick={onRefresh}
-                  disabled={!onRefresh || isRefreshing}
-                >
-                  Aktualisieren
-                </Button>
+                  onDelete={() => setStatusFilter('all')}
+                  sx={{ fontWeight: 600 }}
+                />
               </Box>
-            </Box>
+            )}
 
             <Box
               sx={{
