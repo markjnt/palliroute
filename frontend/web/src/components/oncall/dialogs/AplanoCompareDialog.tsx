@@ -188,9 +188,8 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
   const filteredSummary = useMemo(
     () => ({
       equal_count: groupFilteredRows.filter((row) => row.status === 'equal').length,
-      missing_in_aplano_count: groupFilteredRows.filter(
-        (row) => row.status === 'missing_in_aplano'
-      ).length,
+      missing_in_aplano_count: groupFilteredRows.filter((row) => row.status === 'missing_in_aplano')
+        .length,
       different_count: groupFilteredRows.filter((row) => row.status === 'different').length,
       total: groupFilteredRows.length,
     }),
@@ -264,8 +263,6 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
   ) => ({
     borderRadius: 2.5,
     borderColor,
-    backgroundColor: 'background.paper',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
     ...(statusFilter === status
@@ -275,6 +272,8 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         }
       : {
+          backgroundColor: 'background.paper',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
           '&:hover': {
             borderColor,
             backgroundColor: activeBg,
