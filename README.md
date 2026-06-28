@@ -70,51 +70,6 @@ docker compose up -d
 docker compose down
 ```
 
-## CI/CD
-
-GitHub Actions prüft jeden Push und Pull Request auf `main`. Nach erfolgreicher CI auf `main` startet automatisch das Deployment.
-
-| Workflow | Trigger | Inhalt |
-|----------|---------|--------|
-| **CI** | PR + Push `main` | Ruff, ESLint, Prettier, Typecheck, Build, Audits, Docker-Verify, Gitleaks |
-| **CodeQL** | PR + Push `main` | Statische Code-Analyse (Python + TypeScript) |
-| **CD** | CI erfolgreich auf `main` | Image-Build, Trivy Image-Scan, SBOM, Push, Deploy (Self-Hosted) |
-
-**Lokal ausführen:**
-
-```bash
-# Backend
-pip install ruff pytest pip-audit
-ruff check backend && ruff format --check backend
-
-# Frontend
-cd frontend
-npm ci
-npm run lint && npm run format:check && npm run typecheck && npm run build
-```
-
-**GitHub-Einrichtung nach dem Merge:**
-
-1. Repository Secrets: `DOCKER_USERNAME`, `DOCKER_PASSWORD`
-2. Self-Hosted Runner online (Label für Deploy-Job)
-3. Branch Protection für `main`: Required status checks **CI** (alle Jobs) — optional
-4. **CodeQL aktivieren** (siehe unten)
-
-GitHub Environments sind **nicht** erforderlich; Deploy läuft direkt auf dem Self-Hosted Runner.
-
-### CodeQL aktivieren
-
-Der Workflow [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml) ist bereits im Repo. So schaltest du die Auswertung ein:
-
-1. **Repository → Settings → Code security and analysis**
-2. Unter **Code scanning** → **Set up** bzw. **Enable** (GitHub erkennt oft automatisch den Workflow)
-3. Alternativ: **Actions** → Workflow **CodeQL** → **Run workflow** (manueller erster Lauf)
-4. Ergebnisse: **Security** → **Code scanning alerts**
-
-**Hinweis:** Bei **öffentlichen** Repos ist CodeQL kostenlos. Bei **privaten** Repos brauchst du [GitHub Advanced Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security) (Lizenz/Organisation) — der Workflow läuft trotzdem, SARIF-Upload kann ohne GHAS eingeschränkt sein.
-
-Dependabot erstellt wöchentlich Update-PRs für npm, pip und GitHub Actions.
-
 ## Lizenz
 
 Dieses Projekt ist urheberrechtlich geschützt. Alle Rechte vorbehalten. Siehe [LICENSE](LICENSE) für Details.
