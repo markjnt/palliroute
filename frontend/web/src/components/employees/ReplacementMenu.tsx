@@ -334,6 +334,7 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
       )}
       {unavailableEmployeesList.map((emp) => {
         const patientCount = patientCountByEmployee.get(emp.id || 0) || 0;
+        const isEmpty = patientCount === 0;
         const status = getEmployeeStatus(emp.id || 0);
         const planningEntry = (planningData ?? []).find(
           (entry: EmployeePlanningData) =>
@@ -343,11 +344,16 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
         return (
           <MenuItem
             key={emp.id}
-            disabled
+            onClick={() => {
+              onSelectReplacement(emp.id || 0);
+              onClose();
+            }}
             sx={{
               py: 1,
               ml: 1,
-              opacity: 0.6,
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
             }}
           >
             <ListItemText>
@@ -394,7 +400,20 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                     },
                   }}
                 />
-                {patientCount > 0 && (
+                {isEmpty && (
+                  <Chip
+                    label="Leer"
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      height: 20,
+                      fontSize: '0.7rem',
+                      borderColor: 'warning.main',
+                      color: 'warning.main',
+                    }}
+                  />
+                )}
+                {!isEmpty && (
                   <Typography
                     variant="caption"
                     sx={{
