@@ -411,6 +411,10 @@ def sync_employee_planning(calendar_week: int) -> bool:
         # Nach Mitarbeiter-ID (gleiche Logik wie match_employee_by_name — konsistent zur Übersicht)
         shifts_by_eid: dict[int, dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
         for shift in shifts:
+            # Self-stamped entries (no planned shift) must not count as availability
+            if shift.get("isDynamicClocked"):
+                continue
+
             user_name = aplano_user_display_name(shift.get("user"))
             shift_date = shift.get("date", "")
             ws_label = aplano_workspace_label(shift.get("workSpace"))
@@ -501,6 +505,7 @@ def sync_employee_planning(calendar_week: int) -> bool:
                         available_shift = None
                         custom_text = None
                         is_weekend = weekday in ["saturday", "sunday"]
+                        is_doctor = (employee.function or "") in ("Arzt", "Honorararzt")
 
                         for shift_info in shifts_for_date:
                             # Skip if shift has RB (absent)
@@ -508,6 +513,12 @@ def sync_employee_planning(calendar_week: int) -> bool:
                                 continue
 
                             work_space_value = shift_info.get("work_space", "")
+
+                            # Doctors: any non-RB shift counts as available (no tour label)
+                            if is_doctor:
+                                available_shift = shift_info
+                                custom_text = None
+                                break
 
                             # Check for valid tour/AW based on weekday
                             if is_weekend:
