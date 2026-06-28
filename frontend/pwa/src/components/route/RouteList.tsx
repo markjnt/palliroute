@@ -34,7 +34,9 @@ interface RouteStop {
   info?: string;
   isCompleted: boolean;
   responsibleEmployeeName?: string; // For tour_employee appointments: shows "Zuständig: [Name]"
+  responsibleEmployeeId?: number;
   tourEmployeeName?: string; // For responsible employee: shows "Ursprungstour: [Name]"
+  tourEmployeeId?: number;
   isTourEmployeeAppointment?: boolean; // Mark tour_employee appointments for styling
   originEmployeeName?: string; // For replacement appointments: shows "Ursprünglich (Vertretung): [Name]"
   otherResponsibleEmployees?: Array<{
@@ -44,7 +46,7 @@ interface RouteStop {
 }
 
 export const RouteList: React.FC = () => {
-  const { selectedUserId, selectedTourArea } = useUserStore();
+  const { selectedUserId, selectedTourArea, setSelectedUser, setSelectedTourArea } = useUserStore();
   const { selectedWeekday } = useWeekdayStore();
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
   const { isStopCompleted, toggleStop, setCurrentWeekday, clearAllCompletedStops } =
@@ -60,6 +62,29 @@ export const RouteList: React.FC = () => {
     ...(selectedTourArea ? { tour_area_day: isAreaTourDay } : {}),
   });
   const reorderMutation = useReorderAppointment();
+
+  const switchToEmployee = (employeeId?: number) => {
+    if (!employeeId || employeeId === selectedUserId) return;
+    setSelectedUser(employeeId);
+    setSelectedTourArea(null);
+  };
+
+  const employeeLinkSx = {
+    color: '#007AFF',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    borderRadius: 1,
+    px: 0.5,
+    py: 0.25,
+    transition: 'background-color 0.2s ease',
+    '&:hover': {
+      bgcolor: 'rgba(0, 122, 255, 0.1)',
+    },
+    '&:active': {
+      bgcolor: 'rgba(0, 122, 255, 0.2)',
+    },
+  };
 
   // Get German weekday name
   const getGermanWeekday = (weekday: string): string => {
@@ -212,9 +237,11 @@ export const RouteList: React.FC = () => {
               responsibleEmployeeName: responsibleEmployee
                 ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
                 : undefined,
+              responsibleEmployeeId: responsibleEmployee?.id,
               tourEmployeeName: tourEmployee
                 ? `${tourEmployee.first_name} ${tourEmployee.last_name}`
                 : undefined,
+              tourEmployeeId: tourEmployee?.id,
               originEmployeeName: originEmployee
                 ? `${originEmployee.first_name} ${originEmployee.last_name}`
                 : undefined,
@@ -350,6 +377,7 @@ export const RouteList: React.FC = () => {
         responsibleEmployeeName: responsibleEmployee
           ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
           : undefined,
+        responsibleEmployeeId: responsibleEmployee?.id,
         isTourEmployeeAppointment: true, // Mark as tour employee appointment
         originEmployeeName: originEmployee
           ? `${originEmployee.first_name} ${originEmployee.last_name}`
@@ -446,7 +474,9 @@ export const RouteList: React.FC = () => {
       info?: string;
       isCompleted: boolean;
       responsibleEmployeeName?: string;
+      responsibleEmployeeId?: number;
       tourEmployeeName?: string;
+      tourEmployeeId?: number;
       isTourEmployeeAppointment: boolean;
       originEmployeeName?: string;
       otherResponsibleEmployees?: Array<{ employee: (typeof employees)[0]; appointmentId: number }>;
@@ -517,6 +547,7 @@ export const RouteList: React.FC = () => {
           tourEmployeeName: tourEmployee
             ? `${tourEmployee.first_name} ${tourEmployee.last_name}`
             : undefined,
+          tourEmployeeId: tourEmployee?.id,
           isTourEmployeeAppointment: false,
           originEmployeeName: originEmployee
             ? `${originEmployee.first_name} ${originEmployee.last_name}`
@@ -584,6 +615,7 @@ export const RouteList: React.FC = () => {
           responsibleEmployeeName: responsibleEmployee
             ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
             : undefined,
+          responsibleEmployeeId: responsibleEmployee?.id,
           tourEmployeeName: undefined,
           isTourEmployeeAppointment: true,
           originEmployeeName: originEmployee
@@ -869,11 +901,8 @@ export const RouteList: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                           <Typography
                             variant="caption"
-                            sx={{
-                              color: '#007AFF',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                            }}
+                            onClick={() => switchToEmployee(tkApp.responsibleEmployeeId)}
+                            sx={employeeLinkSx}
                           >
                             Zuständig: {tkApp.responsibleEmployeeName}
                           </Typography>
@@ -885,11 +914,8 @@ export const RouteList: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                           <Typography
                             variant="caption"
-                            sx={{
-                              color: '#007AFF',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                            }}
+                            onClick={() => switchToEmployee(tkApp.tourEmployeeId)}
+                            sx={employeeLinkSx}
                           >
                             Ursprungstour: {tkApp.tourEmployeeName}
                           </Typography>

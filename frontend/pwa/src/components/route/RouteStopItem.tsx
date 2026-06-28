@@ -13,6 +13,7 @@ import { useDrag, useDrop } from 'react-dnd';
 import { getColorForVisitType } from '../../utils/mapUtils';
 import { useDragStore } from '../../stores/useDragStore';
 import { useRouteCompletionStore, useCompletedStops } from '../../stores/useRouteCompletionStore';
+import { useUserStore } from '../../stores/useUserStore';
 
 // Drag and drop types
 const ItemTypes = {
@@ -38,7 +39,9 @@ interface RouteStop {
   info?: string;
   isCompleted: boolean;
   responsibleEmployeeName?: string; // For tour_employee appointments: shows "Zuständig: [Name]"
+  responsibleEmployeeId?: number;
   tourEmployeeName?: string; // For responsible employee: shows "Ursprungstour: [Name]"
+  tourEmployeeId?: number;
   isTourEmployeeAppointment?: boolean; // Mark tour_employee appointments for styling
   originEmployeeName?: string; // For replacement appointments: shows "Ursprünglich (Vertretung): [Name]"
   otherResponsibleEmployees?: Array<{
@@ -62,6 +65,30 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
 }) => {
   const { setIsDragging } = useDragStore();
   const completedStops = useCompletedStops();
+  const { selectedUserId, setSelectedUser, setSelectedTourArea } = useUserStore();
+
+  const switchToEmployee = (employeeId?: number) => {
+    if (!employeeId || employeeId === selectedUserId) return;
+    setSelectedUser(employeeId);
+    setSelectedTourArea(null);
+  };
+
+  const employeeLinkSx = {
+    color: '#007AFF',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    borderRadius: 1,
+    px: 0.5,
+    py: 0.25,
+    transition: 'background-color 0.2s ease',
+    '&:hover': {
+      bgcolor: 'rgba(0, 122, 255, 0.1)',
+    },
+    '&:active': {
+      bgcolor: 'rgba(0, 122, 255, 0.2)',
+    },
+  };
 
   const isCompleted = completedStops.has(stop.id);
 
@@ -225,11 +252,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
                 variant="caption"
-                sx={{
-                  color: '#007AFF',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                }}
+                onClick={() => switchToEmployee(stop.responsibleEmployeeId)}
+                sx={employeeLinkSx}
               >
                 Zuständig: {stop.responsibleEmployeeName}
               </Typography>
@@ -241,11 +265,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
                 variant="caption"
-                sx={{
-                  color: '#007AFF',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                }}
+                onClick={() => switchToEmployee(stop.tourEmployeeId)}
+                sx={employeeLinkSx}
               >
                 Ursprungstour: {stop.tourEmployeeName}
               </Typography>
@@ -275,11 +296,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
                 <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                   <Typography
                     variant="caption"
-                    sx={{
-                      color: '#007AFF',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                    }}
+                    onClick={() => switchToEmployee(item.employee.id)}
+                    sx={employeeLinkSx}
                   >
                     Gemeinsam mit: {item.employee.first_name} {item.employee.last_name}
                   </Typography>
