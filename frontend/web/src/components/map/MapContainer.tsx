@@ -24,7 +24,6 @@ import {
   Menu as MenuIcon,
   ChangeCircle as ChangeCircleIcon,
   PictureAsPdf as PictureAsPdfIcon,
-  OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
@@ -472,7 +471,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         position: 'relative',
       }}
     >
-      {/* Karten-Menü: Bereich, RB/AW, PDF — links oben */}
+      {/* Karten-Menü: Bereich, PDF — links oben; RB/AW direkt daneben */}
       <Box
         sx={{
           position: 'absolute',
@@ -482,6 +481,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           height: MAP_HEADER_TOOLBAR_PX,
           display: 'flex',
           alignItems: 'center',
+          gap: 1,
         }}
       >
         <Button
@@ -494,6 +494,30 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           sx={mapToolbarIconButtonSx}
         >
           <MenuIcon fontSize="small" sx={{ color: 'primary.main' }} />
+        </Button>
+        <Button
+          variant="outlined"
+          color="primary"
+          size="small"
+          startIcon={<EventIcon sx={{ color: 'primary.main', fontSize: 20 }} />}
+          onClick={() => navigate('/rbawplan')}
+          aria-label="RB/AW Planung"
+          sx={{
+            height: MAP_HEADER_TOOLBAR_PX,
+            minHeight: MAP_HEADER_TOOLBAR_PX,
+            maxHeight: MAP_HEADER_TOOLBAR_PX,
+            py: 0,
+            px: 1.25,
+            boxSizing: 'border-box',
+            ...mapFloatingControlSx,
+            color: 'primary.main',
+            fontWeight: 600,
+            textTransform: 'none',
+            justifyContent: 'center',
+            '& .MuiButton-startIcon': { mr: 0.75 },
+          }}
+        >
+          RB/AW Planung
         </Button>
         <Menu
           anchorEl={mapMenuAnchor}
@@ -576,34 +600,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                 }
                 primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                 secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
-              />
-            </MenuItem>
-            <Divider component="li" sx={{ my: 0.75, borderColor: 'divider', listStyle: 'none' }} />
-            <MenuItem
-              onClick={() => {
-                setMapMenuAnchor(null);
-                navigate('/rbawplan');
-              }}
-              sx={{
-                borderRadius: 2,
-                minHeight: 40,
-                py: 1,
-                px: 1.25,
-                gap: 1,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 36, color: 'primary.main' }}>
-                <EventIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText
-                primary="RB/AW Planung"
-                secondary="Wechsel zur Planungsansicht"
-                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
-              />
-              <OpenInNewIcon
-                fontSize="small"
-                sx={{ color: 'text.secondary', ml: 0.5, flexShrink: 0 }}
               />
             </MenuItem>
           </MenuList>
