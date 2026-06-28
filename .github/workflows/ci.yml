@@ -103,17 +103,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Lint Dockerfiles
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: docker/backend.Dockerfile
           failure-threshold: error
       - name: Lint frontend web Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: docker/frontend_web.Dockerfile
           failure-threshold: error
       - name: Lint frontend PWA Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: docker/frontend_pwa.Dockerfile
           failure-threshold: error
