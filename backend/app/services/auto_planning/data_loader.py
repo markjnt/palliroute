@@ -296,9 +296,7 @@ def load_planning_context(
 
     # Per-run inclusion filter: only employees explicitly marked included
     if employee_preferences is not None:
-        included_ids = {
-            eid for eid, pref in employee_preferences.items() if pref.included
-        }
+        included_ids = {eid for eid, pref in employee_preferences.items() if pref.included}
         filtered = [e for e in planable if e.id in included_ids]
         planable = []
         employee_id_to_idx = {}

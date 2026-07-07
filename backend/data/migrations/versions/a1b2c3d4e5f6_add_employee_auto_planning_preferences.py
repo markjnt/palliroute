@@ -22,7 +22,9 @@ def upgrade():
         sa.Column("employee_id", sa.Integer(), nullable=False),
         sa.Column("rb_even_weeks", sa.Boolean(), nullable=False, server_default=sa.true()),
         sa.Column("rb_odd_weeks", sa.Boolean(), nullable=False, server_default=sa.true()),
-        sa.Column("duty_preference", sa.String(length=20), nullable=False, server_default="neutral"),
+        sa.Column(
+            "duty_preference", sa.String(length=20), nullable=False, server_default="neutral"
+        ),
         sa.Column("aw_rhythm", sa.String(length=20), nullable=False, server_default="regular"),
         sa.ForeignKeyConstraint(["employee_id"], ["employees.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

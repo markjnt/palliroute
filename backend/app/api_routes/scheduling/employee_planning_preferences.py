@@ -37,9 +37,7 @@ def upsert_employee_planning_preferences():
         if not isinstance(data, list):
             return jsonify({"error": "Expected a JSON array of preferences"}), 400
 
-        existing = {
-            p.employee_id: p for p in EmployeeAutoPlanningPreference.query.all()
-        }
+        existing = {p.employee_id: p for p in EmployeeAutoPlanningPreference.query.all()}
         updated = 0
         created = 0
 
