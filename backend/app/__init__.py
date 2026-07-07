@@ -13,6 +13,12 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+        raise RuntimeError(
+            "DATABASE_URL is required. Set a PostgreSQL connection string, e.g. "
+            "postgresql://palliroute:password@localhost:5432/palliroute"
+        )
+
     # Enable CORS
     CORS(
         app,

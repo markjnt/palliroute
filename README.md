@@ -4,7 +4,7 @@ PalliRoute ist ein Projekt zur automatischen Optimierung von Fahrtrouten im Gesu
 
 ## Installation und Start
 
-Die Konfiguration erfolgt **ausschließlich über die Datei `.env`**. Die Datei `docker-compose.yml` wird nicht angepasst.
+Die Konfiguration erfolgt **ausschließlich über die Datei `.env`**.
 
 ### 1. Umgebung konfigurieren
 
@@ -31,6 +31,7 @@ Bearbeiten Sie die Datei **`.env`** (im gleichen Ordner wie `docker-compose.yml`
 | **AUTO_IMPORT_TIMES** | Importzeiten im Format HH:MM, kommasepariert (z. B. `08:00,12:30,16:00`). |
 | **EXCEL_IMPORT_PATH** | Pfad zum Ordner mit **Mitarbeiterliste** und **Pflegeheime** (absolut oder relativ zum Projektroot). |
 | **EXPORT_PALLIDOC_PATH** | Pfad zum PalliDoc-Export-Ordner (absolut oder relativ zum Projektroot). |
+| **POSTGRES_PASSWORD** | PostgreSQL-Passwort für den Docker-Service `postgres`. |
 
 **Ordnerstruktur für den Import:**
 

@@ -30,6 +30,28 @@ services:
     labels:
       - "traefik.enable=true"
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: palliroute-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-palliroute}
+      POSTGRES_USER: ${POSTGRES_USER:-palliroute}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-palliroute} -d ${POSTGRES_DB:-palliroute}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - app-network
+
   backend-api:
     image: markjnt/palliroute-backend-api
     container_name: palliroute-backend-api
@@ -40,6 +62,7 @@ services:
       - ${EXPORT_PALLIDOC_PATH}:/backend/data/excel_import/Export_PalliDoc
     environment:
       - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-palliroute}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-palliroute}
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS}
       - APLANO_API_KEY=${APLANO_API_KEY}
@@ -48,6 +71,9 @@ services:
     expose:
       - "9000"
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -108,3 +134,6 @@ networks:
   traefik-public:
     external: true
     name: traefik-public
+
+volumes:
+  postgres-data:

@@ -2,10 +2,23 @@ import os
 
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
 basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Local dev: backend/.env — Docker/Server: root .env via container env
+load_dotenv(os.path.join(basedir, ".env"))
+
+
+def _normalize_database_url(url: str) -> str:
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
+def _database_uri_from_env() -> str | None:
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        return None
+    return _normalize_database_url(url)
 
 
 class Config:
@@ -15,11 +28,13 @@ class Config:
     # Database configuration
     # Using os.path.join ensures path separators are correct for the current OS
     data_dir = os.path.join(basedir, "data")
-    # Create data directory if it doesn't exist
     os.makedirs(data_dir, exist_ok=True)
-    db_path = os.path.join(data_dir, "palliroute.db")
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{db_path}"
+    SQLALCHEMY_DATABASE_URI = _database_uri_from_env()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
     # Google Maps configuration
     GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
