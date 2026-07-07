@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 // Typ für gültige Wochentage
 export type Weekday =
@@ -11,6 +11,33 @@ export type Weekday =
   | 'saturday'
   | 'sunday';
 
+const WEEKDAYS: Weekday[] = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+];
+
+export function getCurrentBusinessWeekday(): Weekday {
+  const currentDay = WEEKDAYS[new Date().getDay()];
+  const isBusinessDay =
+    currentDay === 'monday' ||
+    currentDay === 'tuesday' ||
+    currentDay === 'wednesday' ||
+    currentDay === 'thursday' ||
+    currentDay === 'friday';
+  return isBusinessDay && currentDay ? currentDay : 'monday';
+}
+
+export function getCurrentAreaWeekday(): Weekday {
+  const currentDay = WEEKDAYS[new Date().getDay()];
+  const isAreaDay = currentDay === 'saturday' || currentDay === 'sunday';
+  return isAreaDay && currentDay ? currentDay : 'saturday';
+}
+
 interface WeekdayState {
   // State
   selectedWeekday: Weekday;
@@ -18,6 +45,7 @@ interface WeekdayState {
   // Actions
   setSelectedWeekday: (day: Weekday) => void;
   resetToCurrentDay: () => void;
+  resetToCurrentAreaDay: () => void;
 }
 
 export const useWeekdayStore = create<WeekdayState>()(
@@ -29,27 +57,16 @@ export const useWeekdayStore = create<WeekdayState>()(
       // Actions
       setSelectedWeekday: (day) => set({ selectedWeekday: day }),
       resetToCurrentDay: () => {
-        const days: Weekday[] = [
-          'sunday',
-          'monday',
-          'tuesday',
-          'wednesday',
-          'thursday',
-          'friday',
-          'saturday',
-        ];
-        const currentDay = days[new Date().getDay()];
-        const isBusinessDay =
-          currentDay === 'monday' ||
-          currentDay === 'tuesday' ||
-          currentDay === 'wednesday' ||
-          currentDay === 'thursday' ||
-          currentDay === 'friday';
-        set({ selectedWeekday: isBusinessDay && currentDay ? currentDay : 'monday' });
+        set({ selectedWeekday: getCurrentBusinessWeekday() });
+      },
+      resetToCurrentAreaDay: () => {
+        set({ selectedWeekday: getCurrentAreaWeekday() });
       },
     }),
     {
-      name: 'pwa-weekday-storage', // Name des localStorage-Eintrags
+      name: 'pwa-weekday-storage',
+      // Nur für die laufende Session – bei kaltem App-Start ist der Speicher leer
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
