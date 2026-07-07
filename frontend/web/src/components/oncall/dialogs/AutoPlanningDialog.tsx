@@ -102,11 +102,7 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
 
   useEffect(() => {
     if (!open || employees.length === 0 || savedPrefsLoading) return;
-    const defaults = createDefaultEmployeePreferences(
-      employees,
-      employeeCapacities,
-      savedPrefs
-    );
+    const defaults = createDefaultEmployeePreferences(employees, employeeCapacities, savedPrefs);
     setEmployeePrefsMap(defaults);
     setValidationError(null);
   }, [open, employees, employeeCapacities, savedPrefs, savedPrefsLoading]);

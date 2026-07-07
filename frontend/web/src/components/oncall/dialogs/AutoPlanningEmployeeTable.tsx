@@ -64,13 +64,15 @@ export const createDefaultEmployeePreferences = (
 export const toStoredPreferences = (
   prefs: Record<number, EmployeePlanningPreference>
 ): StoredEmployeePlanningPreference[] =>
-  Object.values(prefs).map(({ employee_id, rb_even_weeks, rb_odd_weeks, duty_preference, aw_rhythm }) => ({
-    employee_id,
-    rb_even_weeks,
-    rb_odd_weeks,
-    duty_preference,
-    aw_rhythm,
-  }));
+  Object.values(prefs).map(
+    ({ employee_id, rb_even_weeks, rb_odd_weeks, duty_preference, aw_rhythm }) => ({
+      employee_id,
+      rb_even_weeks,
+      rb_odd_weeks,
+      duty_preference,
+      aw_rhythm,
+    })
+  );
 
 interface AutoPlanningEmployeeTableProps {
   employees: Employee[];
@@ -209,16 +211,28 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
               <TableCell sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 160 }}>
                 Mitarbeiter
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
+              >
                 RB gerade
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
+              >
                 RB ungerade
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 180 }}>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 180 }}
+              >
                 Bevorzugt
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 110 }}>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 110 }}
+              >
                 AW-Rhythmus
               </TableCell>
             </TableRow>
@@ -246,13 +260,13 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                       <Checkbox
                         size="small"
                         checked={pref.included}
-                        onChange={(e) =>
-                          updatePreference(empId, { included: e.target.checked })
-                        }
+                        onChange={(e) => updatePreference(empId, { included: e.target.checked })}
                       />
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}
+                      >
                         <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
                           {employee.last_name}, {employee.first_name}
                         </Typography>
@@ -356,7 +370,11 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                               })
                             }
                           />
-                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontSize: '0.65rem' }}
+                          >
                             {pref.aw_rhythm === 'regular' ? 'Regelmäßig' : 'Unregelmäßig'}
                           </Typography>
                         </Box>
