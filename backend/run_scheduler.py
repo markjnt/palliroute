@@ -135,9 +135,7 @@ class SimpleScheduler:
             # Make API call to backend-api
             api_base_url = config.BACKEND_API_URL
 
-            response = requests.post(
-                f"{api_base_url}/api/patients/import?sync=true", timeout=600
-            )
+            response = requests.post(f"{api_base_url}/api/patients/import?sync=true", timeout=600)
             if response.status_code == 200:
                 print("INFO: Import completed successfully via API")
 
