@@ -4,13 +4,58 @@ from datetime import UTC, datetime
 from flask import Blueprint, current_app, jsonify, request
 
 from app import db
-from app.models.appointment import Appointment
 from app.models.patient import Patient
-from app.models.route import Route
 from app.models.system_info import SystemInfo
 from app.services.excel_import_service import ExcelImportService
+from app.services.import_job import get_patient_import_status, try_start_patient_import
 
 patients_bp = Blueprint("patients", __name__)
+
+
+def _find_newest_patient_import_file() -> str:
+    directory_path = current_app.config.get("PATIENTS_IMPORT_PATH")
+    if not directory_path:
+        raise ValueError("PATIENTS_IMPORT_PATH not configured")
+    if not os.path.exists(directory_path):
+        raise ValueError(f"Directory not found: {directory_path}")
+    if not os.path.isdir(directory_path):
+        raise ValueError(f"Path is not a directory: {directory_path}")
+
+    excel_files = []
+    for file in os.listdir(directory_path):
+        if file.endswith((".xlsx", ".xls")):
+            file_path = os.path.join(directory_path, file)
+            excel_files.append((file_path, os.path.getmtime(file_path)))
+
+    if not excel_files:
+        raise ValueError(f"No Excel files found in directory: {directory_path}")
+
+    return max(excel_files, key=lambda x: x[1])[0]
+
+
+def _build_import_response(result: dict) -> tuple[dict, int]:
+    patients = result["patients"]
+    appointments = result["appointments"]
+    routes = result.get("routes", [])
+    calendar_weeks = sorted({p.calendar_week for p in patients if p.calendar_week is not None})
+    calendar_week = patients[0].calendar_week if patients else None
+    current_time = datetime.now(UTC).astimezone().isoformat()
+    SystemInfo.set_value("last_patient_import_time", current_time)
+    calendar_weeks_str = ", ".join(map(str, calendar_weeks)) if calendar_weeks else "None"
+
+    return {
+        "message": (
+            f"Erfolgreich {len(patients)} Patienten, {len(appointments)} Termine "
+            f"und {len(routes)} Touren importiert"
+        ),
+        "patient_count": len(patients),
+        "appointment_count": len(appointments),
+        "route_count": len(routes),
+        "calendar_week": calendar_week,
+        "calendar_weeks": calendar_weeks,
+        "calendar_weeks_str": calendar_weeks_str,
+        "last_import_time": current_time,
+    }, 200
 
 
 @patients_bp.route("/calendar-weeks", methods=["GET"])
@@ -57,103 +102,37 @@ def get_patient(id):
     return jsonify(patient.to_dict()), 200
 
 
+@patients_bp.route("/import/status", methods=["GET"])
+def patient_import_status():
+    """Poll background patient import job status."""
+    return jsonify(get_patient_import_status()), 200
+
+
 @patients_bp.route("/import", methods=["POST"])
 def import_patients():
     """
     Import patients and appointments from an Excel file.
-    This endpoint will:
-    1. Delete all existing patients and appointments
-    2. Import new patients from the Excel file
-    3. Create new appointments based on the imported data
+    Default: async (202). Use ?sync=true to block until finished (scheduler).
     """
-    # Get directory path from config
-    directory_path = current_app.config.get("PATIENTS_IMPORT_PATH")
-
-    if not directory_path:
-        return jsonify({"error": "PATIENTS_IMPORT_PATH not configured"}), 400
-
-    # Validate directory path
-    if not os.path.exists(directory_path):
-        return jsonify({"error": f"Directory not found: {directory_path}"}), 400
-
-    if not os.path.isdir(directory_path):
-        return jsonify({"error": f"Path is not a directory: {directory_path}"}), 400
-
-    # Find the newest Excel file in the directory
-    excel_files = []
-    for file in os.listdir(directory_path):
-        if file.endswith((".xlsx", ".xls")):
-            file_path = os.path.join(directory_path, file)
-            excel_files.append((file_path, os.path.getmtime(file_path)))
-
-    if not excel_files:
-        return jsonify({"error": f"No Excel files found in directory: {directory_path}"}), 400
-
-    # Get the newest file
-    newest_file = max(excel_files, key=lambda x: x[1])[0]
+    sync = request.args.get("sync", "").lower() in ("1", "true", "yes")
 
     try:
-        # Clear the database first
-        print("Clearing existing data...")
-        appointment_count = Appointment.query.count()
-        patient_count = Patient.query.count()
-        route_count = Route.query.count()
+        newest_file = _find_newest_patient_import_file()
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
-        # Löschen in der richtigen Reihenfolge (wegen Fremdschlüsselbeziehungen)
-        Route.query.delete()
-        Appointment.query.delete()
-        Patient.query.delete()
+    if sync:
+        try:
+            print(f"Starting synchronous import from file: {newest_file}")
+            result = ExcelImportService.import_patients(newest_file)
+            body, status = _build_import_response(result)
+            return jsonify(body), status
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error during import: {e}")
+            return jsonify({"error": str(e)}), 400
 
-        db.session.commit()
-        print(
-            f"Deleted {route_count} routes, {appointment_count} appointments and {patient_count} patients"
-        )
+    if not try_start_patient_import(current_app._get_current_object(), newest_file):
+        return jsonify({"error": "Import läuft bereits", "status": "running"}), 409
 
-        # Import the new data
-        print(f"Starting import from file: {newest_file}")
-        result = ExcelImportService.import_patients(newest_file)
-        patients = result["patients"]
-        appointments = result["appointments"]
-
-        # Get all calendar weeks
-        calendar_weeks = list(
-            set([p.calendar_week for p in patients if p.calendar_week is not None])
-        )
-        calendar_weeks.sort()
-        calendar_week = (
-            patients[0].calendar_week if patients else None
-        )  # Keep for backward compatibility
-
-        # Get the number of created routes (from the result dictionary)
-        routes = result.get("routes", [])
-
-        # Update last import time (use local timezone with timezone info)
-
-        current_time = datetime.now(UTC).astimezone().isoformat()
-        SystemInfo.set_value("last_patient_import_time", current_time)
-
-        # Prepare the response
-        calendar_weeks_str = ", ".join(map(str, calendar_weeks)) if calendar_weeks else "None"
-        return jsonify(
-            {
-                "message": f"Erfolgreich {len(patients)} Patienten, {len(appointments)} Termine und {len(routes)} Touren importiert",
-                "patient_count": len(patients),
-                "appointment_count": len(appointments),
-                "route_count": len(routes),
-                "deleted_count": {
-                    "patients": patient_count,
-                    "appointments": appointment_count,
-                    "routes": route_count,
-                },
-                "calendar_week": calendar_week,  # Keep for backward compatibility
-                "calendar_weeks": calendar_weeks,  # New field with all calendar weeks
-                "calendar_weeks_str": calendar_weeks_str,  # Formatted string for display
-                "last_import_time": current_time,
-            }
-        ), 200
-
-    except Exception as e:
-        db.session.rollback()
-        error_message = str(e)
-        print(f"Error during import: {error_message}")
-        return jsonify({"error": error_message}), 400
+    return jsonify({"message": "Import gestartet", "status": "running"}), 202

@@ -15,6 +15,7 @@ from ..models.patient import Patient
 from ..models.pflegeheim import Pflegeheim
 from ..models.route import Route
 from ..models.scheduling import Assignment, EmployeeCapacity, ShiftDefinition, ShiftInstance
+from ..models.system_info import SystemInfo
 from .holiday_service import (
     date_for_iso_week_and_weekday,
     default_planning_year,
@@ -24,8 +25,62 @@ from .route_optimizer import RouteOptimizer
 
 
 class ExcelImportService:
+    GEOCODE_CACHE_KEY = "geocode_address_cache"
     # Class-level cache for geocoding to avoid redundant API calls
     _geocode_cache: dict[str, tuple[float, float]] = {}
+
+    @staticmethod
+    def _address_cache_key(street: str, zip_code: str, city: str) -> str:
+        return f"{street}, {zip_code} {city}, Germany".lower().strip()
+
+    @staticmethod
+    def prepare_import() -> None:
+        """Load geocode cache from DB and SystemInfo before patient data is deleted."""
+        ExcelImportService._load_persistent_geocode_cache()
+        ExcelImportService._hydrate_geocode_cache_from_db()
+
+    @staticmethod
+    def _load_persistent_geocode_cache() -> None:
+        raw = SystemInfo.get_value(ExcelImportService.GEOCODE_CACHE_KEY)
+        if not raw:
+            return
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return
+        if not isinstance(data, dict):
+            return
+        for key, coords in data.items():
+            if not isinstance(coords, dict):
+                continue
+            lat, lng = coords.get("lat"), coords.get("lng")
+            if lat is not None and lng is not None:
+                ExcelImportService._geocode_cache[key] = (float(lat), float(lng))
+
+    @staticmethod
+    def _persist_geocode_cache() -> None:
+        payload = {
+            key: {"lat": lat, "lng": lng}
+            for key, (lat, lng) in ExcelImportService._geocode_cache.items()
+            if lat is not None and lng is not None
+        }
+        SystemInfo.set_value(ExcelImportService.GEOCODE_CACHE_KEY, json.dumps(payload))
+
+    @staticmethod
+    def _hydrate_geocode_cache_from_db() -> None:
+        for model in (Patient, Employee, Pflegeheim):
+            rows = model.query.filter(model.latitude.isnot(None), model.longitude.isnot(None)).all()
+            for row in rows:
+                key = ExcelImportService._address_cache_key(row.street, row.zip_code, row.city)
+                ExcelImportService._geocode_cache[key] = (row.latitude, row.longitude)
+
+    @staticmethod
+    def _geocode_max_workers() -> int:
+        return int(os.environ.get("IMPORT_GEOCODE_MAX_WORKERS", "20"))
+
+    @staticmethod
+    def _route_optimize_max_workers() -> int:
+        return int(os.environ.get("IMPORT_ROUTE_OPTIMIZE_MAX_WORKERS", "4"))
 
     @staticmethod
     def geocode_address(street: str, zip_code: str, city: str) -> tuple[float | None, float | None]:
@@ -35,7 +90,7 @@ class ExcelImportService:
         """
         # Format the address
         address = f"{street}, {zip_code} {city}, Germany"
-        cache_key = address.lower().strip()
+        cache_key = ExcelImportService._address_cache_key(street, zip_code, city)
 
         try:
             # Check if address is already in cache
@@ -76,7 +131,7 @@ class ExcelImportService:
             return None, None
 
     @staticmethod
-    def batch_geocode_addresses(address_tuples, max_workers=10):
+    def batch_geocode_addresses(address_tuples, max_workers=None):
         """
         Geocode multiple addresses in parallel using ThreadPoolExecutor.
         address_tuples: List of (street, zip_code, city)
@@ -84,24 +139,47 @@ class ExcelImportService:
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
-        results = {}
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_address = {
-                executor.submit(ExcelImportService.geocode_address, street, zip_code, city): (
-                    street,
-                    zip_code,
-                    city,
-                )
-                for (street, zip_code, city) in address_tuples
-            }
-            for future in as_completed(future_to_address):
-                address = future_to_address[future]
-                try:
-                    latlng = future.result()
-                    results[address] = latlng
-                except Exception as exc:
-                    print(f"  Error in geocoding for {address}: {exc}")
-                    results[address] = (None, None)
+        if max_workers is None:
+            max_workers = ExcelImportService._geocode_max_workers()
+
+        unique_tuples = list(set(address_tuples))
+        results: dict[tuple[str, str, str], tuple[float | None, float | None]] = {}
+        to_fetch: list[tuple[str, str, str]] = []
+
+        for address in unique_tuples:
+            street, zip_code, city = address
+            cache_key = ExcelImportService._address_cache_key(street, zip_code, city)
+            cached = ExcelImportService._geocode_cache.get(cache_key)
+            if cached is not None and cached[0] is not None and cached[1] is not None:
+                results[address] = cached
+            else:
+                to_fetch.append(address)
+
+        if to_fetch:
+            print(
+                f"  Geocoding {len(to_fetch)} addresses "
+                f"({len(unique_tuples) - len(to_fetch)} from cache)..."
+            )
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_address = {
+                    executor.submit(ExcelImportService.geocode_address, street, zip_code, city): (
+                        street,
+                        zip_code,
+                        city,
+                    )
+                    for (street, zip_code, city) in to_fetch
+                }
+                for future in as_completed(future_to_address):
+                    address = future_to_address[future]
+                    try:
+                        results[address] = future.result()
+                    except Exception as exc:
+                        print(f"  Error in geocoding for {address}: {exc}")
+                        results[address] = (None, None)
+            ExcelImportService._persist_geocode_cache()
+        else:
+            print(f"  Geocoding: all {len(unique_tuples)} addresses served from cache")
+
         return results
 
     @staticmethod
@@ -248,6 +326,7 @@ class ExcelImportService:
         Patient data is NOT deleted during employee import.
         """
         try:
+            ExcelImportService.prepare_import()
             df = pd.read_excel(file_path)
             required_columns = [
                 "Vorname",
@@ -537,6 +616,7 @@ class ExcelImportService:
         Match by name: add new, update existing, remove those not in Excel.
         """
         try:
+            ExcelImportService.prepare_import()
             df = pd.read_excel(file_path)
             required_columns = ["Name", "Straße", "Ort", "PLZ"]
             if not all(col in df.columns for col in required_columns):
@@ -664,6 +744,9 @@ class ExcelImportService:
         # 3. Create routes for this sheet's appointments
         print(f"  Step 3: Creating routes for sheet {sheet_name}...")
         routes = ExcelImportService._create_routes_from_sheet(appointments, employees)
+
+        db.session.commit()
+        print(f"  Committed sheet {sheet_name} (patients, appointments, routes)")
 
         return {"patients": patients, "appointments": appointments, "routes": routes}
 
@@ -914,7 +997,7 @@ class ExcelImportService:
         # Save patients to get IDs
         print(f"    Saving {len(patients)} patients from sheet {sheet_name}...")
         db.session.add_all(patients)
-        db.session.commit()
+        db.session.flush()
         print(f"    Saved {len(patients)} patients successfully")
 
         return patients
@@ -1260,7 +1343,7 @@ class ExcelImportService:
         # Save appointments
         print(f"    Saving {len(appointments)} appointments from sheet {sheet_name}...")
         db.session.add_all(appointments)
-        db.session.commit()
+        db.session.flush()
         print(f"    Saved {len(appointments)} appointments successfully")
 
         return appointments
@@ -1342,7 +1425,6 @@ class ExcelImportService:
         if routes:
             print(f"    Saving {len(routes)} routes...")
             db.session.add_all(routes)
-            db.session.commit()
             print(f"    Saved {len(routes)} routes successfully")
 
         return routes
@@ -1443,52 +1525,73 @@ class ExcelImportService:
         return empty_routes
 
     @staticmethod
+    def _optimize_route_task(spec: tuple, app) -> bool:
+        """Worker for parallel route optimization (own app context + DB session)."""
+        weekday, employee_id, area, calendar_week = spec
+        with app.app_context():
+            try:
+                optimizer = RouteOptimizer()
+                if employee_id is not None:
+                    optimizer.optimize_route(
+                        weekday, employee_id=employee_id, calendar_week=calendar_week
+                    )
+                else:
+                    optimizer.optimize_route(weekday, area=area, calendar_week=calendar_week)
+                return True
+            except Exception as e:
+                if employee_id is not None:
+                    print(
+                        f"    Failed to optimize route for employee {employee_id} "
+                        f"on {weekday} (KW {calendar_week}): {e}"
+                    )
+                else:
+                    print(
+                        f"    Failed to optimize AW tour-area route for {area} "
+                        f"on {weekday} (KW {calendar_week}): {e}"
+                    )
+                return False
+
+    @staticmethod
     def _plan_all_routes(routes: list[Route]):
         """
-        Optimize and plan all routes using the route optimizer
+        Optimize and plan all routes using the route optimizer (parallel where configured).
         """
-        route_optimizer = RouteOptimizer()
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        from flask import current_app
+
+        app = current_app._get_current_object()
+        max_workers = ExcelImportService._route_optimize_max_workers()
+
+        specs: list[tuple] = []
+        for route in routes:
+            if route.employee_id is not None:
+                specs.append((route.weekday, route.employee_id, None, route.calendar_week))
+            elif route.area:
+                specs.append((route.weekday, None, route.area, route.calendar_week))
+
+        if not specs:
+            print("Route optimization complete: no routes to optimize")
+            return
+
         planned_routes = 0
         failed_routes = 0
+        print(f"    Optimizing {len(specs)} routes (max_workers={max_workers})...")
 
-        # Optimize ALL routes (including empty ones) for ALL calendar weeks
-        weekday_routes = [r for r in routes if r.employee_id is not None]
-        for route in weekday_routes:
-            try:
-                route_status = "with appointments" if route.get_route_order() else "empty"
-                print(
-                    f"    Optimizing route for employee {route.employee_id} on {route.weekday} (KW {route.calendar_week}) - {route_status}"
-                )
-                route_optimizer.optimize_route(
-                    route.weekday, route.employee_id, calendar_week=route.calendar_week
-                )
-                planned_routes += 1
-            except Exception as e:
-                print(
-                    f"    Failed to optimize route for employee {route.employee_id} on {route.weekday} (KW {route.calendar_week}): {str(e)}"
-                )
-                failed_routes += 1
-
-        # AW-Flächenrouten (ohne employee_id)
-        aw_tour_routes = [r for r in routes if r.employee_id is None]
-        for route in aw_tour_routes:
-            try:
-                route_status = "with appointments" if route.get_route_order() else "empty"
-                print(
-                    f"    Optimizing AW tour-area route for {route.area} on {route.weekday} (KW {route.calendar_week}) - {route_status}"
-                )
-                route_optimizer.optimize_route(
-                    route.weekday, area=route.area, calendar_week=route.calendar_week
-                )
-                planned_routes += 1
-            except Exception as e:
-                print(
-                    f"    Failed to optimize AW tour-area route for {route.area} on {route.weekday} (KW {route.calendar_week}): {str(e)}"
-                )
-                failed_routes += 1
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(ExcelImportService._optimize_route_task, spec, app)
+                for spec in specs
+            ]
+            for future in as_completed(futures):
+                if future.result():
+                    planned_routes += 1
+                else:
+                    failed_routes += 1
 
         print(
-            f"Route optimization complete: {planned_routes} routes optimized successfully, {failed_routes} routes failed"
+            f"Route optimization complete: {planned_routes} routes optimized successfully, "
+            f"{failed_routes} routes failed"
         )
 
     @staticmethod
@@ -1608,6 +1711,9 @@ class ExcelImportService:
         5. Alle Routen planen
         """
         try:
+            # Step 0: Geocode cache (before patient delete)
+            ExcelImportService.prepare_import()
+
             # Step 1: Delete existing patient data (keep employees and their planning)
             print("Step 1: Deleting existing patient data...")
             ExcelImportService.delete_patient_data()

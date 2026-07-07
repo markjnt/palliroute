@@ -30,11 +30,33 @@ export const patientsApi = {
     }
   },
 
-  // Import patients from Excel file
+  // Import patients from Excel file (async with status polling)
   async import(): Promise<PatientImportResponse> {
     try {
-      const response = await api.post('/patients/import');
-      return response.data;
+      const start = await api.post('/patients/import');
+      if (start.status === 200) {
+        return start.data;
+      }
+      if (start.status !== 202) {
+        throw new Error(start.data?.error || 'Import konnte nicht gestartet werden');
+      }
+
+      const pollIntervalMs = 2000;
+      const maxWaitMs = 15 * 60 * 1000;
+      const deadline = Date.now() + maxWaitMs;
+
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+        const statusRes = await api.get('/patients/import/status');
+        const status = statusRes.data?.status;
+        if (status === 'completed' && statusRes.data?.result) {
+          return statusRes.data.result;
+        }
+        if (status === 'failed') {
+          throw new Error(statusRes.data?.error || 'Import fehlgeschlagen');
+        }
+      }
+      throw new Error('Import-Timeout: Der Import dauert länger als erwartet');
     } catch (error) {
       console.error('Failed to import patients from Excel:', error);
       throw error;
