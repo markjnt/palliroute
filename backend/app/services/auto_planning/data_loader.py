@@ -42,6 +42,52 @@ def _get_calendar_week(d: date) -> int:
 
 
 @dataclass
+class EmployeePlanningPreference:
+    """Per-employee settings for a single auto-planning run."""
+
+    employee_id: int
+    included: bool = True
+    rb_even_weeks: bool = True
+    rb_odd_weeks: bool = True
+    duty_preference: str = "neutral"  # neutral | aw | rb
+    aw_rhythm: str = "regular"  # regular | irregular
+
+
+def parse_employee_preferences(
+    raw: list[dict[str, Any]] | None,
+) -> dict[int, EmployeePlanningPreference] | None:
+    """Parse and validate employee_preferences from API request."""
+    if raw is None:
+        return None
+    out: dict[int, EmployeePlanningPreference] = {}
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        employee_id = item.get("employee_id")
+        if employee_id is None:
+            continue
+        try:
+            eid = int(employee_id)
+        except (TypeError, ValueError):
+            continue
+        duty_pref = str(item.get("duty_preference", "neutral")).lower()
+        if duty_pref not in ("neutral", "aw", "rb"):
+            duty_pref = "neutral"
+        aw_rhythm = str(item.get("aw_rhythm", "regular")).lower()
+        if aw_rhythm not in ("regular", "irregular"):
+            aw_rhythm = "regular"
+        out[eid] = EmployeePlanningPreference(
+            employee_id=eid,
+            included=bool(item.get("included", True)),
+            rb_even_weeks=bool(item.get("rb_even_weeks", True)),
+            rb_odd_weeks=bool(item.get("rb_odd_weeks", True)),
+            duty_preference=duty_pref,
+            aw_rhythm=aw_rhythm,
+        )
+    return out if out else None
+
+
+@dataclass
 class PlanableEmployee:
     """Employee included in the solver with index, role, optional area and optional home coordinates."""
 
@@ -113,6 +159,8 @@ class PlanningContext:
     shift_id_to_idx: dict[int, int] = field(default_factory=dict)
     # (employee_id, date) pairs where employee is absent and must not be assigned
     absent_dates: set[tuple[int, date]] = field(default_factory=set)
+    # Per-run employee preferences (None = include all planable employees with defaults)
+    employee_preferences: dict[int, EmployeePlanningPreference] | None = None
 
 
 def load_planning_context(
@@ -121,6 +169,7 @@ def load_planning_context(
     existing_assignments_handling: str,
     absent_dates: set[tuple[int, date]] | None = None,
     external_fixed_assignments: list[dict[str, Any]] | None = None,
+    employee_preferences: dict[int, EmployeePlanningPreference] | None = None,
 ) -> PlanningContext:
     """
     Load planning context for the given date range.
@@ -245,6 +294,28 @@ def load_planning_context(
             employee_id_to_idx[emp.id] = idx
     capacity_max = {eid: capacity_max[eid] for eid in employees_with_capacity}
 
+    # Per-run inclusion filter: only employees explicitly marked included
+    if employee_preferences is not None:
+        included_ids = {
+            eid for eid, pref in employee_preferences.items() if pref.included
+        }
+        filtered = [e for e in planable if e.id in included_ids]
+        planable = []
+        employee_id_to_idx = {}
+        for idx, e in enumerate(filtered):
+            planable.append(
+                PlanableEmployee(
+                    index=idx,
+                    id=e.id,
+                    role=e.role,
+                    area=e.area,
+                    latitude=e.latitude,
+                    longitude=e.longitude,
+                )
+            )
+            employee_id_to_idx[e.id] = idx
+        capacity_max = {eid: capacity_max[eid] for eid in included_ids if eid in capacity_max}
+
     # Shift id -> index
     shift_id_to_idx = {s.id: s.index for s in shift_infos}
 
@@ -359,5 +430,6 @@ def load_planning_context(
         employee_id_to_idx=employee_id_to_idx,
         shift_id_to_idx=shift_id_to_idx,
         absent_dates=absent_dates if absent_dates is not None else set(),
+        employee_preferences=employee_preferences,
     )
     return ctx

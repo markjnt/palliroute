@@ -53,6 +53,9 @@ export const schedulingKeys = {
     all: ['scheduling', 'aplano-compare'] as const,
     month: (month: string) => [...schedulingKeys.aplanoCompare.all, month] as const,
   },
+  employeePlanningPreferences: {
+    all: ['scheduling', 'employee-planning-preferences'] as const,
+  },
 };
 
 // Shift Definitions hooks
@@ -235,5 +238,25 @@ export const useAplanoCompare = (month: string | null) => {
     refetchInterval: month ? 60_000 : false,
     // Continue polling even when tab/window is not focused.
     refetchIntervalInBackground: true,
+  });
+};
+
+export const useEmployeePlanningPreferences = (enabled = true) => {
+  return useQuery({
+    queryKey: schedulingKeys.employeePlanningPreferences.all,
+    queryFn: () => schedulingApi.getEmployeePlanningPreferences(),
+    enabled,
+  });
+};
+
+export const useUpsertEmployeePlanningPreferences = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: schedulingApi.upsertEmployeePlanningPreferences,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.employeePlanningPreferences.all,
+      });
+    },
   });
 };

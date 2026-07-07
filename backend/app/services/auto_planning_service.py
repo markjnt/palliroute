@@ -32,6 +32,7 @@ from .auto_planning import (
     run_solver,
     write_assignments,
 )
+from .auto_planning.data_loader import parse_employee_preferences
 from .auto_planning.diagnostics import collect_infeasibility_hints
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ class AutoPlanningService:
         existing_assignments_handling: str = "respect",
         allow_overplanning: bool = False,
         include_aplano: bool = False,
+        employee_preferences: list[dict] | None = None,
         time_limit_seconds: float = 30.0,
         penalty_w1: int = 100,
         penalty_w2: int = 400,  # Wochenend-Rotation (AW/RB → frei → …); any + same-type consecutive weekends
@@ -65,6 +67,7 @@ class AutoPlanningService:
         self.existing_assignments_handling = existing_assignments_handling
         self.allow_overplanning = allow_overplanning
         self.include_aplano = include_aplano
+        self.employee_preferences = parse_employee_preferences(employee_preferences)
         self.time_limit_seconds = time_limit_seconds
         self.penalty_w1 = penalty_w1
         self.penalty_w2 = penalty_w2
@@ -304,6 +307,7 @@ class AutoPlanningService:
                 external_fixed_assignments=external_fixed_assignments
                 if external_fixed_assignments
                 else None,
+                employee_preferences=self.employee_preferences,
             )
         except Exception as e:
             logger.exception("Failed to load planning context")
@@ -321,7 +325,7 @@ class AutoPlanningService:
 
         if not ctx.employees:
             result = {
-                "message": "No planable employees (NURSING/DOCTOR) found",
+                "message": "No planable employees selected for planning",
                 "assignments_created": 0,
                 "total_planned": 0,
                 "solver_status": "SKIPPED",

@@ -252,6 +252,7 @@ export const OnCallPlanningView: React.FC = () => {
           existing_assignments_handling: settings.existingAssignmentsHandling,
           allow_overplanning: settings.allowOverplanning,
           include_aplano: settings.includeAplano,
+          employee_preferences: settings.employeePreferences,
         });
 
         // Backend returns 200 with solver_status/error for business errors (e.g. Aplano unavailable)

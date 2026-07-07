@@ -102,12 +102,28 @@ export interface UpdateAssignmentData {
   source?: AssignmentSource;
 }
 
+export type DutyPreference = 'neutral' | 'aw' | 'rb';
+export type AwRhythm = 'regular' | 'irregular';
+
+export interface EmployeePlanningPreference {
+  employee_id: number;
+  included: boolean;
+  rb_even_weeks: boolean;
+  rb_odd_weeks: boolean;
+  duty_preference: DutyPreference;
+  aw_rhythm: AwRhythm;
+}
+
+/** Persisted fields only (no per-run inclusion). */
+export type StoredEmployeePlanningPreference = Omit<EmployeePlanningPreference, 'included'>;
+
 export interface AutoPlanData {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   existing_assignments_handling?: 'overwrite' | 'respect';
   allow_overplanning?: boolean;
   include_aplano?: boolean;
+  employee_preferences?: EmployeePlanningPreference[];
 }
 
 export interface ResetPlanningData {
@@ -278,6 +294,28 @@ export const schedulingApi = {
     formData.append('file', file);
     const response = await api.post('/scheduling/time-accounts-upload', formData);
     return response.data;
+  },
+
+  async getEmployeePlanningPreferences(): Promise<StoredEmployeePlanningPreference[]> {
+    try {
+      const response = await api.get('/scheduling/employee-planning-preferences');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch employee planning preferences:', error);
+      throw error;
+    }
+  },
+
+  async upsertEmployeePlanningPreferences(
+    preferences: StoredEmployeePlanningPreference[]
+  ): Promise<{ message: string; created: number; updated: number }> {
+    try {
+      const response = await api.put('/scheduling/employee-planning-preferences', preferences);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to save employee planning preferences:', error);
+      throw error;
+    }
   },
 
   // Auto Plan

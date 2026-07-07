@@ -23,6 +23,18 @@ import {
 import { AutoAwesome as AutoAwesomeIcon, UploadFile as UploadFileIcon } from '@mui/icons-material';
 import { formatMonthYear } from '../../../utils/oncall/dateUtils';
 import { configApi } from '../../../services/api';
+import { EmployeePlanningPreference } from '../../../services/api/scheduling';
+import { useEmployees } from '../../../services/queries/useEmployees';
+import {
+  useEmployeeCapacities,
+  useEmployeePlanningPreferences,
+  useUpsertEmployeePlanningPreferences,
+} from '../../../services/queries/useScheduling';
+import {
+  AutoPlanningEmployeeTable,
+  createDefaultEmployeePreferences,
+  toStoredPreferences,
+} from './AutoPlanningEmployeeTable';
 
 export interface AutoPlanningSettings {
   // Existing assignments handling
@@ -30,6 +42,7 @@ export interface AutoPlanningSettings {
   // Constraints
   allowOverplanning: boolean;
   includeAplano: boolean; // Include Aplano sync before planning
+  employeePreferences: EmployeePlanningPreference[];
 }
 
 interface AutoPlanningDialogProps {
@@ -63,7 +76,19 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
     existingAssignmentsHandling: 'respect',
     allowOverplanning: false,
     includeAplano: true,
+    employeePreferences: [],
   });
+  const [employeePrefsMap, setEmployeePrefsMap] = useState<
+    Record<number, EmployeePlanningPreference>
+  >({});
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const monthParam = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+  const { data: employees = [] } = useEmployees();
+  const { data: employeeCapacities = [] } = useEmployeeCapacities({ month: monthParam });
+  const { data: savedPrefs = [], isLoading: savedPrefsLoading } =
+    useEmployeePlanningPreferences(open);
+  const savePrefsMutation = useUpsertEmployeePlanningPreferences();
   const [timeAccountFile, setTimeAccountFile] = useState<File | null>(null);
   const [timeAccountAsOf, setTimeAccountAsOf] = useState<string | null>(null);
 
@@ -74,6 +99,17 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
       .then((res) => setTimeAccountAsOf(res.time_account_as_of ?? null))
       .catch(() => setTimeAccountAsOf(null));
   }, [open]);
+
+  useEffect(() => {
+    if (!open || employees.length === 0 || savedPrefsLoading) return;
+    const defaults = createDefaultEmployeePreferences(
+      employees,
+      employeeCapacities,
+      savedPrefs
+    );
+    setEmployeePrefsMap(defaults);
+    setValidationError(null);
+  }, [open, employees, employeeCapacities, savedPrefs, savedPrefsLoading]);
 
   const handleExistingAssignmentsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSettings((prev) => ({
@@ -90,9 +126,26 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
     setSettings((prev) => ({ ...prev, includeAplano: event.target.checked }));
   };
 
-  const handleStart = () => {
-    onStart(settings, timeAccountFile);
-    // Don't close immediately - let parent handle closing after async operation
+  const handleStart = async () => {
+    const includedPrefs = Object.values(employeePrefsMap).filter((p) => p.included);
+    if (includedPrefs.length === 0) {
+      setValidationError('Bitte mindestens einen Mitarbeiter für die Planung auswählen.');
+      return;
+    }
+    setValidationError(null);
+    try {
+      await savePrefsMutation.mutateAsync(toStoredPreferences(employeePrefsMap));
+    } catch {
+      setValidationError('Präferenzen konnten nicht gespeichert werden.');
+      return;
+    }
+    onStart(
+      {
+        ...settings,
+        employeePreferences: Object.values(employeePrefsMap),
+      },
+      timeAccountFile
+    );
   };
 
   const formatStandDate = (iso: string) => {
@@ -108,7 +161,7 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
     <Dialog
       open={open}
       onClose={isLoading ? undefined : onClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       disableEscapeKeyDown={isLoading}
       PaperProps={{
@@ -153,6 +206,37 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
 
       <DialogContent sx={{ px: 4, py: 3, backgroundColor: '#fafafa' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 2.5 }}>
+          {/* Mitarbeiter für Planung */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              backgroundColor: 'white',
+              border: '1px solid',
+              borderColor: 'rgba(0, 0, 0, 0.06)',
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5, fontSize: '0.95rem' }}>
+              Mitarbeiter für Planung
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              Wählen Sie die Mitarbeiter für diesen Lauf. RB/AW-Vorgaben werden dauerhaft
+              gespeichert.
+            </Typography>
+            <AutoPlanningEmployeeTable
+              employees={employees}
+              employeeCapacities={employeeCapacities}
+              preferences={employeePrefsMap}
+              onPreferencesChange={setEmployeePrefsMap}
+            />
+            {validationError && (
+              <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1.5 }}>
+                {validationError}
+              </Typography>
+            )}
+          </Paper>
+
           {/* Bestehende Zuweisungen */}
           <Paper
             elevation={0}
@@ -449,7 +533,7 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
         <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button
             onClick={handleCancel}
-            disabled={isLoading || isResetting}
+            disabled={isLoading || isResetting || savePrefsMutation.isPending}
             sx={{
               textTransform: 'none',
               fontWeight: 500,
@@ -467,7 +551,7 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
           <Button
             onClick={handleStart}
             variant="contained"
-            disabled={isLoading || isResetting}
+            disabled={isLoading || isResetting || savePrefsMutation.isPending}
             startIcon={
               isLoading ? (
                 <CircularProgress size={18} sx={{ color: 'white' }} />
@@ -492,7 +576,7 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
               },
             }}
           >
-            {isLoading ? 'Planung läuft...' : 'Planung starten'}
+            {isLoading || savePrefsMutation.isPending ? 'Planung läuft...' : 'Planung starten'}
           </Button>
         </Box>
       </DialogActions>

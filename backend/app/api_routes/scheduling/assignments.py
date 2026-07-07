@@ -465,11 +465,13 @@ def auto_plan():
         allow_overplanning = data.get("allow_overplanning", False)
         include_aplano = data.get("include_aplano", False)
         time_limit_seconds = data.get("time_limit_seconds")
+        employee_preferences = data.get("employee_preferences")
 
         service = AutoPlanningService(
             existing_assignments_handling=existing_handling,
             allow_overplanning=allow_overplanning,
             include_aplano=include_aplano,
+            employee_preferences=employee_preferences,
         )
         if time_limit_seconds is not None:
             try:

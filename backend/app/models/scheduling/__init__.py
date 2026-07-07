@@ -1,4 +1,5 @@
 from .assignment import Assignment
+from .employee_auto_planning_preference import EmployeeAutoPlanningPreference
 from .employee_capacity import EmployeeCapacity
 from .shift_definition import ShiftDefinition
 from .shift_instance import ShiftInstance

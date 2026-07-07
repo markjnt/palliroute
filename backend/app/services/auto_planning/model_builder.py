@@ -10,7 +10,7 @@ from ortools.sat.python import cp_model
 
 from app.services.route_utils import distance_km_to_area_start
 
-from .data_loader import PlanningContext, ShiftInfo
+from .data_loader import EmployeePlanningPreference, PlanningContext, ShiftInfo
 
 # Capacity type -> (category, role, time_of_day filter: None = any)
 CAPACITY_SHIFT_FILTER = {
@@ -32,6 +32,33 @@ class PlanningModel:
     # list of (e_idx, s_idx) that have a variable (for iteration)
     pairs: list[tuple[int, int]] = field(default_factory=list)
     context: PlanningContext = field(default=None)
+
+
+def _is_even_calendar_week(calendar_week: int) -> bool:
+    return calendar_week % 2 == 0
+
+
+def _rb_week_allowed(pref: EmployeePlanningPreference | None, calendar_week: int) -> bool:
+    """Hard filter: RB shifts only in allowed even/odd ISO weeks."""
+    if pref is None:
+        return True
+    is_even = _is_even_calendar_week(calendar_week)
+    if is_even and not pref.rb_even_weeks:
+        return False
+    if not is_even and not pref.rb_odd_weeks:
+        return False
+    return True
+
+
+def _w2_rhythm_multiplier(pref: EmployeePlanningPreference | None, role: str) -> float:
+    """Scale W2 weekend rotation penalty per employee AW rhythm preference."""
+    if role != "NURSING" or pref is None:
+        return 1.0
+    if pref.aw_rhythm == "regular":
+        return 2.0
+    if pref.aw_rhythm == "irregular":
+        return 0.25
+    return 1.0
 
 
 def _shift_matches_capacity(s: ShiftInfo, cap_type: str) -> bool:
@@ -228,6 +255,8 @@ def build_model(
     penalty_distance_per_km: int = 3,
     penalty_weekend_then_monday_rb: int = 70,
     bonus_friday_weekend_rb_coupling: int = 60,  # Belohnung wenn gleiche Person Fr RB + Wo RB Nacht
+    bonus_duty_preference: int = 80,
+    penalty_duty_preference: int = 120,
 ) -> PlanningModel:
     """
     Build CP-SAT model with variables and all constraints.
@@ -242,9 +271,11 @@ def build_model(
     # --- Variables: x[(e_idx, s_idx)] only for compatible (role match); skip if employee absent on shift date ---
     # 0 Kapazität in einer Kategorie = kein Zugriff auf Schichten dieser Kategorie (gilt auch bei Überplanung)
     absent_dates = getattr(ctx, "absent_dates", set())
+    employee_prefs = getattr(ctx, "employee_preferences", None) or {}
     x: dict[tuple[int, int], cp_model.IntVar] = {}
     for e in employees:
         caps = ctx.capacity_max.get(e.id, {})
+        pref = employee_prefs.get(e.id)
         for s in shifts:
             if e.role != s.role:
                 continue
@@ -253,6 +284,10 @@ def build_model(
             cap_type = _get_capacity_type_for_shift(s)
             if cap_type is not None and caps.get(cap_type, 0) == 0:
                 continue  # 0 heißt 0: MA darf diese Kategorie nicht überplant werden
+            if s.category in ("RB_WEEKDAY", "RB_WEEKEND") and not _rb_week_allowed(
+                pref, s.calendar_week
+            ):
+                continue
             key = (e.index, s.index)
             x[key] = model.NewBoolVar(f"x_{e.index}_{s.index}")
     pairs = list(x.keys())
@@ -374,6 +409,9 @@ def build_model(
     weekend_weeks = sorted(set(s.calendar_week for s in shifts if s.is_weekend))
     consecutive_weekend_pairs = _consecutive_weekend_duty_pairs(shifts)
     for e in employees:
+        pref = employee_prefs.get(e.id)
+        w2_mult = _w2_rhythm_multiplier(pref, e.role)
+        w2_penalty = int(round(penalty_w2 * w2_mult))
         for shifts_prev, shifts_curr in consecutive_weekend_pairs:
             sat_curr = _saturday_of_weekend_shift(shifts[shifts_curr[0]].date)
             # Vormonat-only-Paare überspringen (werden nicht gespeichert); Grenze Apr→Mai bleibt aktiv.
@@ -393,7 +431,7 @@ def build_model(
             model.Add(repeat_weekend <= has_duty_prev)
             model.Add(repeat_weekend <= has_duty_curr)
             model.Add(repeat_weekend >= has_duty_prev + has_duty_curr - 1)
-            objective_terms.append(repeat_weekend * penalty_w2)
+            objective_terms.append(repeat_weekend * w2_penalty)
             aw_prev = [s for s in shifts_prev if shifts[s].category == "AW"]
             aw_curr = [s for s in shifts_curr if shifts[s].category == "AW"]
             rb_prev = [s for s in shifts_prev if shifts[s].category == "RB_WEEKEND"]
@@ -416,7 +454,7 @@ def build_model(
                     model.Add(repeat_aw <= has_aw_prev)
                     model.Add(repeat_aw <= has_aw_curr)
                     model.Add(repeat_aw >= has_aw_prev + has_aw_curr - 1)
-                    objective_terms.append(repeat_aw * penalty_w2)
+                    objective_terms.append(repeat_aw * w2_penalty)
             if rb_prev and rb_curr:
                 vars_rb_prev = [
                     x[(e.index, s)] for (ei, s) in pairs if ei == e.index and s in rb_prev
@@ -435,7 +473,7 @@ def build_model(
                     model.Add(repeat_rb <= has_rb_prev)
                     model.Add(repeat_rb <= has_rb_curr)
                     model.Add(repeat_rb >= has_rb_prev + has_rb_curr - 1)
-                    objective_terms.append(repeat_rb * penalty_w2)
+                    objective_terms.append(repeat_rb * w2_penalty)
 
     # W3: RB nursing weekend Tag/Nacht alternation: penalize same time_of_day two weekends in a row
     rb_nursing_weekends: list[tuple[int, list[int], list[int]]] = []
@@ -575,6 +613,34 @@ def build_model(
             model.Add(both <= has_weekend_night)
             model.Add(both >= has_friday_rb + has_weekend_night - 1)
             objective_terms.append(-bonus_friday_weekend_rb_coupling * both)
+
+    # Duty preference (soft): per-employee AW/RB preference for nursing staff
+    for e in employees:
+        if e.role != "NURSING":
+            continue
+        pref = employee_prefs.get(e.id)
+        if pref is None or pref.duty_preference == "neutral":
+            continue
+        aw_vars = [
+            x[(e.index, s_idx)]
+            for (ei, s_idx) in pairs
+            if ei == e.index and shifts[s_idx].category == "AW"
+        ]
+        rb_vars = [
+            x[(e.index, s_idx)]
+            for (ei, s_idx) in pairs
+            if ei == e.index and shifts[s_idx].category in ("RB_WEEKDAY", "RB_WEEKEND")
+        ]
+        if pref.duty_preference == "aw":
+            for var in aw_vars:
+                objective_terms.append(-bonus_duty_preference * var)
+            for var in rb_vars:
+                objective_terms.append(penalty_duty_preference * var)
+        elif pref.duty_preference == "rb":
+            for var in rb_vars:
+                objective_terms.append(-bonus_duty_preference * var)
+            for var in aw_vars:
+                objective_terms.append(penalty_duty_preference * var)
 
     # Area mismatch (soft): prefer matching employee area to shift area (Nord/Süd only).
     # For shifts with area "Mitte" (e.g. AW Mitte) no preference — any employee (Nord/Süd) is fine.
