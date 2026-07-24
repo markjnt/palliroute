@@ -32,7 +32,7 @@ from .auto_planning import (
     run_solver,
     write_assignments,
 )
-from .auto_planning.data_loader import parse_employee_preferences
+from .auto_planning.data_loader import parse_employee_preferences, parse_plan_scope
 from .auto_planning.diagnostics import collect_infeasibility_hints
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ class AutoPlanningService:
         allow_overplanning: bool = False,
         include_aplano: bool = False,
         employee_preferences: list[dict] | None = None,
+        plan_scope: dict | None = None,
         time_limit_seconds: float = 30.0,
         penalty_w1: int = 100,
         penalty_w2: int = 400,  # Wochenend-Rotation (AW/RB → frei → …); any + same-type consecutive weekends
@@ -68,6 +69,7 @@ class AutoPlanningService:
         self.allow_overplanning = allow_overplanning
         self.include_aplano = include_aplano
         self.employee_preferences = parse_employee_preferences(employee_preferences)
+        self.plan_scope = parse_plan_scope(plan_scope)
         self.time_limit_seconds = time_limit_seconds
         self.penalty_w1 = penalty_w1
         self.penalty_w2 = penalty_w2
@@ -278,6 +280,18 @@ class AutoPlanningService:
         """
         Run CP-SAT planning for the given date range (planning month derived from start_date).
         """
+        if self.plan_scope is not None and self.plan_scope.is_empty():
+            result = {
+                "message": "No duty groups selected for planning",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": "SKIPPED",
+                "objective_value": None,
+                "runtime_seconds": None,
+            }
+            logger.warning("Auto-planning skipped: %s", result["message"])
+            return result
+
         absent_dates: set[tuple[int, date]] = set()
         external_fixed_assignments: list[dict[str, Any]] = []
         if self.include_aplano:
@@ -308,6 +322,7 @@ class AutoPlanningService:
                 if external_fixed_assignments
                 else None,
                 employee_preferences=self.employee_preferences,
+                plan_scope=self.plan_scope,
             )
         except Exception as e:
             logger.exception("Failed to load planning context")
@@ -336,7 +351,25 @@ class AutoPlanningService:
             return result
         if not ctx.shifts:
             result = {
-                "message": "No shift instances in date range; generate shift instances first (POST /shift-instances/generate)",
+                "message": "No shift instances in selected plan scope; generate shift instances first or select at least one duty group",
+                "assignments_created": 0,
+                "total_planned": 0,
+                "solver_status": "SKIPPED",
+                "objective_value": None,
+                "runtime_seconds": None,
+            }
+            logger.warning("Auto-planning skipped: %s", result["message"])
+            return result
+
+        planning_month_shift_ids = {
+            s.id for s in ctx.shifts if ctx.start_date <= s.date <= ctx.end_date
+        }
+        if not planning_month_shift_ids:
+            result = {
+                "message": (
+                    "No shift instances in the planning month for the selected plan scope; "
+                    "generate shift instances first or select duty groups that exist this month"
+                ),
                 "assignments_created": 0,
                 "total_planned": 0,
                 "solver_status": "SKIPPED",
@@ -472,12 +505,6 @@ class AutoPlanningService:
                 "Ensure shift instances exist for the selected month (POST /shift-instances/generate).",
                 len(assignments),
             )
-        if len(planning_month_shift_ids) == 0:
-            logger.warning(
-                "No shift instances in planning month (%s to %s). Generate them first.",
-                ctx.start_date,
-                ctx.end_date,
-            )
 
         try:
             logger.info("Writing assignments to database...")
@@ -486,6 +513,7 @@ class AutoPlanningService:
                 start_date=ctx.start_date,
                 end_date=ctx.end_date,
                 existing_assignments_handling=self.existing_assignments_handling,
+                shift_instance_ids=planning_month_shift_ids,
             )
         except Exception as e:
             logger.exception("Failed to write assignments")

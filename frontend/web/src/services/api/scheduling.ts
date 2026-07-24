@@ -117,6 +117,30 @@ export interface EmployeePlanningPreference {
 /** Persisted fields only (no per-run inclusion). */
 export type StoredEmployeePlanningPreference = Omit<EmployeePlanningPreference, 'included'>;
 
+/** Which shift groups to include in this auto-planning run. */
+export interface AutoPlanScope {
+  rb_nursing_nord: boolean;
+  rb_nursing_sued: boolean;
+  rb_doctors_nord: boolean;
+  rb_doctors_sued: boolean;
+  aw_nord: boolean;
+  aw_mitte: boolean;
+  aw_sued: boolean;
+}
+
+export const DEFAULT_AUTO_PLAN_SCOPE: AutoPlanScope = {
+  rb_nursing_nord: true,
+  rb_nursing_sued: true,
+  rb_doctors_nord: true,
+  rb_doctors_sued: true,
+  aw_nord: true,
+  aw_mitte: true,
+  aw_sued: true,
+};
+
+export const isAutoPlanScopeEmpty = (scope: AutoPlanScope): boolean =>
+  !Object.values(scope).some(Boolean);
+
 export interface AutoPlanData {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
@@ -124,6 +148,7 @@ export interface AutoPlanData {
   allow_overplanning?: boolean;
   include_aplano?: boolean;
   employee_preferences?: EmployeePlanningPreference[];
+  plan_scope?: AutoPlanScope;
 }
 
 export interface ResetPlanningData {

@@ -14,6 +14,12 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
+import {
+  LocalHospital as DoctorIcon,
+  Healing as NursingIcon,
+  Weekend as AWIcon,
+  People as PeopleIcon,
+} from '@mui/icons-material';
 import { employeeTypeColors } from '@palliroute/shared';
 import { Employee, EmployeeCapacity } from '../../../types/models';
 import {
@@ -167,24 +173,33 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2 }}>
+      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>
         {(
           [
-            { key: 'all', label: 'Alle' },
-            { key: 'pflege_n', label: 'Pflege N' },
-            { key: 'pflege_s', label: 'Pflege S' },
-            { key: 'arzt', label: 'Ärzte' },
+            { key: 'all', label: 'Alle', icon: <PeopleIcon sx={{ fontSize: 14 }} /> },
+            { key: 'pflege_n', label: 'Pflege N', icon: <NursingIcon sx={{ fontSize: 14 }} /> },
+            { key: 'pflege_s', label: 'Pflege S', icon: <NursingIcon sx={{ fontSize: 14 }} /> },
+            { key: 'arzt', label: 'Ärzte', icon: <DoctorIcon sx={{ fontSize: 14 }} /> },
           ] as const
-        ).map(({ key, label }) => (
+        ).map(({ key, label, icon }) => (
           <Chip
             key={key}
+            icon={icon}
             label={label}
             size="small"
             clickable
             color={employeeFilter === key ? 'primary' : 'default'}
             variant={employeeFilter === key ? 'filled' : 'outlined'}
             onClick={() => setEmployeeFilter(key)}
-            sx={{ fontSize: '0.7rem', height: 24 }}
+            sx={{
+              fontSize: '0.72rem',
+              height: 28,
+              fontWeight: 500,
+              '& .MuiChip-icon': {
+                color: employeeFilter === key ? 'inherit' : 'text.secondary',
+                ml: 0.75,
+              },
+            }}
           />
         ))}
       </Box>
@@ -215,13 +230,33 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                 align="center"
                 sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
               >
-                RB gerade
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  <NursingIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  RB gerade
+                </Box>
               </TableCell>
               <TableCell
                 align="center"
                 sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
               >
-                RB ungerade
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  <NursingIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  RB ungerade
+                </Box>
               </TableCell>
               <TableCell
                 align="center"
@@ -233,7 +268,17 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                 align="center"
                 sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 110 }}
               >
-                AW-Rhythmus
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  <AWIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  AW-Rhythmus
+                </Box>
               </TableCell>
             </TableRow>
           </TableHead>
@@ -267,6 +312,25 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                       <Box
                         sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}
                       >
+                        <Box
+                          sx={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: `${funcColor}22`,
+                            color: funcColor,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {doctor ? (
+                            <DoctorIcon sx={{ fontSize: 13 }} />
+                          ) : (
+                            <NursingIcon sx={{ fontSize: 13 }} />
+                          )}
+                        </Box>
                         <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
                           {employee.last_name}, {employee.first_name}
                         </Typography>
@@ -284,17 +348,6 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                             }}
                           />
                         )}
-                        <Chip
-                          label={employee.function}
-                          size="small"
-                          sx={{
-                            height: 18,
-                            fontSize: '0.65rem',
-                            backgroundColor: `${funcColor}18`,
-                            color: funcColor,
-                            border: `1px solid ${funcColor}40`,
-                          }}
-                        />
                       </Box>
                     </TableCell>
                     <TableCell align="center">
@@ -332,17 +385,30 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                             if (value) updatePreference(empId, { duty_preference: value });
                           }}
                           sx={{
+                            gap: 0.5,
+                            '& .MuiToggleButtonGroup-grouped': {
+                              borderRadius: '6px !important',
+                              border: '1px solid !important',
+                              marginLeft: '0 !important',
+                            },
                             '& .MuiToggleButton-root': {
                               textTransform: 'none',
                               fontSize: '0.7rem',
-                              px: 1,
+                              px: 0.85,
                               py: 0.25,
+                              gap: 0.4,
                             },
                           }}
                         >
                           <ToggleButton value="neutral">Neutral</ToggleButton>
-                          <ToggleButton value="aw">AW</ToggleButton>
-                          <ToggleButton value="rb">RB</ToggleButton>
+                          <ToggleButton value="aw">
+                            <AWIcon sx={{ fontSize: 13 }} />
+                            AW
+                          </ToggleButton>
+                          <ToggleButton value="rb">
+                            <NursingIcon sx={{ fontSize: 13 }} />
+                            RB
+                          </ToggleButton>
                         </ToggleButtonGroup>
                       )}
                     </TableCell>

@@ -10,16 +10,12 @@ from ortools.sat.python import cp_model
 
 from app.services.route_utils import distance_km_to_area_start
 
+from .capacity import (
+    capacity_remaining,
+    capacity_type_for_shift,
+    shift_matches_capacity,
+)
 from .data_loader import EmployeePlanningPreference, PlanningContext, ShiftInfo
-
-# Capacity type -> (category, role, time_of_day filter: None = any)
-CAPACITY_SHIFT_FILTER = {
-    "RB_NURSING_WEEKDAY": ("RB_WEEKDAY", "NURSING", "NONE"),
-    "RB_NURSING_WEEKEND": ("RB_WEEKEND", "NURSING", None),  # DAY+NIGHT together
-    "RB_DOCTORS_WEEKDAY": ("RB_WEEKDAY", "DOCTOR", "NONE"),
-    "RB_DOCTORS_WEEKEND": ("RB_WEEKEND", "DOCTOR", "NONE"),
-    "AW_NURSING": ("AW", "NURSING", "NONE"),
-}
 
 
 @dataclass
@@ -62,12 +58,7 @@ def _w2_rhythm_multiplier(pref: EmployeePlanningPreference | None, role: str) ->
 
 
 def _shift_matches_capacity(s: ShiftInfo, cap_type: str) -> bool:
-    cat, role, tod = CAPACITY_SHIFT_FILTER[cap_type]
-    if s.category != cat or s.role != role:
-        return False
-    if tod is None:
-        return True
-    return s.time_of_day == tod
+    return shift_matches_capacity(s, cap_type)
 
 
 def _get_shifts_for_capacity(
@@ -83,10 +74,18 @@ def _get_shifts_for_capacity(
 
 def _get_capacity_type_for_shift(s: ShiftInfo) -> str | None:
     """Return the capacity type this shift counts toward, or None if none."""
-    for cap_type in CAPACITY_SHIFT_FILTER:
-        if _shift_matches_capacity(s, cap_type):
-            return cap_type
-    return None
+    return capacity_type_for_shift(s)
+
+
+def _capacity_limit(ctx: PlanningContext, employee_id: int, cap_type: str) -> int:
+    """Configured max minus out-of-scope duties already consuming capacity."""
+    max_count = ctx.capacity_max.get(employee_id, {}).get(cap_type, 0)
+    used = getattr(ctx, "capacity_already_used", {}).get(employee_id, {}).get(cap_type, 0)
+    return capacity_remaining(max_count, used)
+
+def _is_decision_shift(s: ShiftInfo, planning_start: date) -> bool:
+    """True for planning-month (+ trailing Sunday) shifts the solver may freely fill."""
+    return s.date >= planning_start
 
 
 def _aw_weekend_pairs(shifts: list[ShiftInfo]) -> list[tuple[int, int]]:
@@ -260,17 +259,24 @@ def build_model(
 ) -> PlanningModel:
     """
     Build CP-SAT model with variables and all constraints.
-    Only planning-month shifts are used for H4 capacity; all shifts (incl. prev month) for H6/H7 and soft.
+    Decision variables: planning-month shifts (from ctx.start_date) only.
+    Previous-month shifts are context: variables only for fixed/preferred history
+    (W2/W3), no free fill, no fill bonus.
     """
     model = cp_model.CpModel()
     employees = ctx.employees
     shifts = ctx.shifts
     planning_month = ctx.planning_month
     fixed = ctx.fixed_assignments
+    preferred = set(getattr(ctx, "preferred_assignments", set()) or set())
+    context_history_keys = fixed | preferred
 
-    # --- Variables: x[(e_idx, s_idx)] only for compatible (role match); skip if employee absent on shift date ---
+    # --- Variables: x[(e_idx, s_idx)] only for compatible (role match); skip if employee absent/busy ---
     # 0 Kapazität in einer Kategorie = kein Zugriff auf Schichten dieser Kategorie (gilt auch bei Überplanung)
-    absent_dates = getattr(ctx, "absent_dates", set())
+    # Vormonat: keine freien Variablen — nur bestehende Historie (fixed/preferred) für Soft-Constraints.
+    absent_dates = getattr(ctx, "absent_dates", set()) or set()
+    busy_dates = getattr(ctx, "busy_dates", set()) or set()
+    unavailable_dates = absent_dates | busy_dates
     employee_prefs = getattr(ctx, "employee_preferences", None) or {}
     x: dict[tuple[int, int], cp_model.IntVar] = {}
     for e in employees:
@@ -279,21 +285,51 @@ def build_model(
         for s in shifts:
             if e.role != s.role:
                 continue
-            if (e.id, s.date) in absent_dates:
+            key = (e.index, s.index)
+            is_context = not _is_decision_shift(s, ctx.start_date)
+            if is_context:
+                if key not in context_history_keys:
+                    continue
+                if key in fixed:
+                    # Feste Historie immer abbilden (W2/W3), unabhängig von Kapazitätsfiltern
+                    x[key] = model.NewBoolVar(f"x_{e.index}_{s.index}")
+                    continue
+                # preferred: normale Filter, dann Soft-Bonus ohne Fill-Bonus
+            if (e.id, s.date) in unavailable_dates:
                 continue
             cap_type = _get_capacity_type_for_shift(s)
+            # Configured max 0 = no entitlement (even with overplanning)
             if cap_type is not None and caps.get(cap_type, 0) == 0:
-                continue  # 0 heißt 0: MA darf diese Kategorie nicht überplant werden
+                continue
             if s.category in ("RB_WEEKDAY", "RB_WEEKEND") and not _rb_week_allowed(
                 pref, s.calendar_week
             ):
                 continue
-            key = (e.index, s.index)
             x[key] = model.NewBoolVar(f"x_{e.index}_{s.index}")
     pairs = list(x.keys())
 
     # --- H1: Pro Schicht max. 1 Mitarbeiter; bei Overplanning: jede Schicht im Planungsmonat genau 1 ---
+    # Locked shifts (MANUAL von nicht-planbaren MA, oder Fix ohne Variable): keine weitere Solver-Zuweisung.
+    locked_shifts = set(getattr(ctx, "locked_shift_indices", set()) or set())
+    for e_idx, s_idx in fixed:
+        if (e_idx, s_idx) not in x:
+            # Fix kann nicht gesetzt werden (z. B. Kapazität 0) → Schicht sperren statt Doppelbesetzung
+            locked_shifts.add(s_idx)
+
+    for s_idx in locked_shifts:
+        for ei, s in pairs:
+            if s != s_idx:
+                continue
+            # Nie eine feste Zuweisung auf 0 zwingen (Lock ⊕ Fixed wäre sonst INFEASIBLE)
+            if (ei, s_idx) in fixed:
+                continue
+            model.Add(x[(ei, s_idx)] == 0)
+
+    fixed_shift_indices = {s_idx for (_, s_idx) in fixed}
     for s_idx in range(len(shifts)):
+        # Rein gelockte Schichten (ohne Fix): alle freien Vars sind 0 — kein H1 nötig
+        if s_idx in locked_shifts and s_idx not in fixed_shift_indices:
+            continue
         vars_s = [x[(e, s_idx)] for (e, s) in pairs if s == s_idx]
         if not vars_s:
             continue
@@ -321,6 +357,7 @@ def build_model(
             for cap_type, max_count in caps.items():
                 if max_count < 0:
                     continue
+                limit = _capacity_limit(ctx, eid, cap_type)
                 s_indices = _get_shifts_for_capacity(shifts, planning_month, cap_type)
                 if not s_indices:
                     continue
@@ -330,7 +367,7 @@ def build_model(
                     if ei == e.index and s_idx in s_indices
                 ]
                 if vars_cap:
-                    model.Add(sum(vars_cap) <= max_count)
+                    model.Add(sum(vars_cap) <= limit)
 
     # --- H5: Fix existing assignments (RESPECT) ---
     for e_idx, s_idx in fixed:
@@ -368,15 +405,14 @@ def build_model(
     # --- Objective: weighted sum of soft violations ---
     objective_terms: list = []
 
-    # Anreiz, Schichten zu besetzen: stark über Strafen, damit immer alle Schichten
-    # gefüllt werden wenn möglich (ohne Kapazität zu überschreiten bei Überplanung AUS)
+    # Anreiz, Schichten zu besetzen — nur Entscheidungs-Schichten (Planungsmonat), nicht Vormonat-Kontext
     fill_bonus = 1000
     for e_idx, s_idx in pairs:
-        objective_terms.append(-fill_bonus * x[(e_idx, s_idx)])
+        if _is_decision_shift(shifts[s_idx], ctx.start_date):
+            objective_terms.append(-fill_bonus * x[(e_idx, s_idx)])
 
     # Aplano-Vormonat als weiche Historie:
     # Bevorzuge (MA, Schicht)-Paare aus external history, erzwinge sie aber nicht hart.
-    preferred = getattr(ctx, "preferred_assignments", set()) or set()
     preferred_bonus = 350
     for key in preferred:
         if key in x:
@@ -671,6 +707,7 @@ def build_model(
             for cap_type, max_count in caps.items():
                 if max_count < 0:
                     continue
+                limit = _capacity_limit(ctx, eid, cap_type)
                 s_indices = _get_shifts_for_capacity(shifts, planning_month, cap_type)
                 if not s_indices or max_count == 0:
                     continue
@@ -682,7 +719,7 @@ def build_model(
                 if not vars_cap:
                     continue
                 over = model.NewIntVar(0, len(vars_cap), f"over_{e.index}_{cap_type}")
-                model.Add(over >= sum(vars_cap) - max_count)
+                model.Add(over >= sum(vars_cap) - limit)
                 objective_terms.append(over * penalty_overplanning)
 
     if objective_terms:

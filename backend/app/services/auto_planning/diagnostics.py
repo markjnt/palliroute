@@ -44,6 +44,9 @@ def collect_infeasibility_hints(
                 reasons.append("role_mismatch")
             if (e.id, s.date) in absent:
                 reasons.append("absent_on_shift_date")
+            busy = getattr(ctx, "busy_dates", set()) or set()
+            if (e.id, s.date) in busy:
+                reasons.append("busy_on_shift_date")
             caps = ctx.capacity_max.get(e.id, {})
             ct = _get_capacity_type_for_shift(s)
             if ct is not None and caps.get(ct, 0) == 0:

@@ -14,6 +14,8 @@ from app import db
 from app.models.employee import Employee
 from app.models.scheduling import Assignment, EmployeeCapacity, ShiftDefinition, ShiftInstance
 
+from .capacity import CAPACITY_TYPES, empty_capacity_counts
+from .occupancy import ExistingAssignmentRef, classify_occupancy
 from .roles import ROLE_DOCTOR, ROLE_NURSING, employee_role
 
 # Canonical area names used by shift definitions; employee area may be "Nordkreis" etc.
@@ -88,6 +90,79 @@ def parse_employee_preferences(
 
 
 @dataclass
+class PlanScope:
+    """Which shift groups to include in this planning run."""
+
+    rb_nursing_nord: bool = True
+    rb_nursing_sued: bool = True
+    rb_doctors_nord: bool = True
+    rb_doctors_sued: bool = True
+    aw_nord: bool = True
+    aw_mitte: bool = True
+    aw_sued: bool = True
+
+    def is_empty(self) -> bool:
+        return not any(
+            (
+                self.rb_nursing_nord,
+                self.rb_nursing_sued,
+                self.rb_doctors_nord,
+                self.rb_doctors_sued,
+                self.aw_nord,
+                self.aw_mitte,
+                self.aw_sued,
+            )
+        )
+
+    def allows_shift(self, category: str, role: str, area: str | None) -> bool:
+        """Hard filter: whether a shift definition belongs to the selected scope."""
+        area_norm = _normalize_area(area) or (area or "")
+        cat = (category or "").upper()
+        role_u = (role or "").upper()
+
+        if cat in ("RB_WEEKDAY", "RB_WEEKEND"):
+            if role_u == "NURSING":
+                if area_norm == "Nord":
+                    return self.rb_nursing_nord
+                if area_norm == "Süd":
+                    return self.rb_nursing_sued
+                return False
+            if role_u == "DOCTOR":
+                if area_norm == "Nord":
+                    return self.rb_doctors_nord
+                if area_norm == "Süd":
+                    return self.rb_doctors_sued
+                return False
+            return False
+
+        if cat == "AW":
+            if area_norm == "Nord":
+                return self.aw_nord
+            if area_norm == "Mitte":
+                return self.aw_mitte
+            if area_norm == "Süd":
+                return self.aw_sued
+            return False
+
+        return False
+
+
+def parse_plan_scope(raw: dict[str, Any] | None) -> PlanScope | None:
+    """Parse plan_scope from API request. None = include all shift groups."""
+    if raw is None or not isinstance(raw, dict):
+        return None
+    return PlanScope(
+        rb_nursing_nord=bool(raw.get("rb_nursing_nord", True)),
+        rb_nursing_sued=bool(raw.get("rb_nursing_sued", True)),
+        rb_doctors_nord=bool(raw.get("rb_doctors_nord", True)),
+        rb_doctors_sued=bool(raw.get("rb_doctors_sued", True)),
+        aw_nord=bool(raw.get("aw_nord", True)),
+        aw_mitte=bool(raw.get("aw_mitte", True)),
+        aw_sued=bool(raw.get("aw_sued", True)),
+    )
+
+
+@dataclass
 class PlanableEmployee:
     """Employee included in the solver with index, role, optional area and optional home coordinates."""
 
@@ -148,19 +223,26 @@ class PlanningContext:
     prev_month_end: date
     employees: list[PlanableEmployee] = field(default_factory=list)
     shifts: list[ShiftInfo] = field(default_factory=list)
-    # employee_id -> { capacity_type -> max_count } for planning month
+    # employee_id -> { capacity_type -> configured max_count } for planning month
     capacity_max: dict[int, dict[str, int]] = field(default_factory=dict)
+    # employee_id -> { capacity_type -> remaining out-of-scope duties already consuming max }
+    capacity_already_used: dict[int, dict[str, int]] = field(default_factory=dict)
     # fixed (e_idx, s_idx) when existing_assignments_handling == RESPECT
+    # (also MANUAL assignments under OVERWRITE, which are never deleted)
     fixed_assignments: set[tuple[int, int]] = field(default_factory=set)
     # Soft preferences (typically Aplano previous-month history), not hard constraints.
     preferred_assignments: set[tuple[int, int]] = field(default_factory=set)
     # employee_id -> e_idx, shift_instance_id -> s_idx
     employee_id_to_idx: dict[int, int] = field(default_factory=dict)
     shift_id_to_idx: dict[int, int] = field(default_factory=dict)
-    # (employee_id, date) pairs where employee is absent and must not be assigned
+    # Real absences only (e.g. Aplano). Out-of-scope occupancy is busy_dates.
     absent_dates: set[tuple[int, date]] = field(default_factory=set)
+    # (employee_id, date) occupied by out-of-scope duties that remain after this run
+    busy_dates: set[tuple[int, date]] = field(default_factory=set)
     # Per-run employee preferences (None = include all planable employees with defaults)
     employee_preferences: dict[int, EmployeePlanningPreference] | None = None
+    # Shift indices that must not receive a new solver assignment (claimed / non-planable)
+    locked_shift_indices: set[int] = field(default_factory=set)
 
 
 def load_planning_context(
@@ -170,6 +252,7 @@ def load_planning_context(
     absent_dates: set[tuple[int, date]] | None = None,
     external_fixed_assignments: list[dict[str, Any]] | None = None,
     employee_preferences: dict[int, EmployeePlanningPreference] | None = None,
+    plan_scope: PlanScope | None = None,
 ) -> PlanningContext:
     """
     Load planning context for the given date range.
@@ -205,20 +288,29 @@ def load_planning_context(
         .order_by(ShiftInstance.date, ShiftInstance.id)
         .all()
     )
-    # Eager load shift_definition to avoid lazy load
+    # Eager load shift_definition to avoid lazy load.
+    # plan_scope filters planning-month (+ trailing Sunday) decision shifts only.
+    # Previous-month shifts stay loaded so W2/W3 / fixed history keep full context.
     shift_infos: list[ShiftInfo] = []
-    for i, si in enumerate(shift_instances):
+    for si in shift_instances:
         sd = si.shift_definition
+        area = _normalize_area(sd.area) or sd.area
+        if (
+            plan_scope is not None
+            and si.date >= ctx_start
+            and not plan_scope.allows_shift(sd.category, sd.role, area)
+        ):
+            continue
         shift_infos.append(
             ShiftInfo(
-                index=i,
+                index=len(shift_infos),
                 id=si.id,
                 date=si.date,
                 calendar_week=si.calendar_week,
                 month=si.month,
                 category=sd.category,
                 role=sd.role,
-                area=_normalize_area(sd.area) or sd.area,
+                area=area,
                 time_of_day=sd.time_of_day,
                 is_weekday=sd.is_weekday,
                 is_weekend=sd.is_weekend,
@@ -246,26 +338,19 @@ def load_planning_context(
             )
             employee_id_to_idx[emp.id] = idx
 
-    # Capacity: for planning month only, all 5 types per employee
-    capacity_types = [
-        "RB_NURSING_WEEKDAY",
-        "RB_NURSING_WEEKEND",
-        "RB_DOCTORS_WEEKDAY",
-        "RB_DOCTORS_WEEKEND",
-        "AW_NURSING",
-    ]
+    # Capacity: for planning month only, all types per employee
     capacity_max: dict[int, dict[str, int]] = {}
     capacities = EmployeeCapacity.query.filter(
         EmployeeCapacity.employee_id.in_(employee_id_to_idx),
-        EmployeeCapacity.capacity_type.in_(capacity_types),
+        EmployeeCapacity.capacity_type.in_(CAPACITY_TYPES),
     ).all()
     for cap in capacities:
         if cap.employee_id not in capacity_max:
-            capacity_max[cap.employee_id] = {ct: 0 for ct in capacity_types}
+            capacity_max[cap.employee_id] = empty_capacity_counts()
         capacity_max[cap.employee_id][cap.capacity_type] = cap.max_count
     for eid in employee_id_to_idx:
         if eid not in capacity_max:
-            capacity_max[eid] = {ct: 0 for ct in capacity_types}
+            capacity_max[eid] = empty_capacity_counts()
 
     # Mitarbeiter ohne jegliche Kapazität aus Planung ausschließen (gilt mit und ohne Überplanung)
     employees_with_capacity = [
@@ -317,16 +402,8 @@ def load_planning_context(
     # Shift id -> index
     shift_id_to_idx = {s.id: s.index for s in shift_infos}
 
-    # Feste Assignments (nur Solver-Input; nichts wird in der DB überschrieben):
-    # - Planungsmonat bei RESPECT: aus DB
-    # - Folgetag (z. B. So nach Monatsende): aus DB
-    # - Vormonat:
-    #   - OHNE Aplano-Historie: aus DB
-    #   - MIT Aplano-Historie: DB-Fixes im Vormonat ignorieren; Aplano wirkt nur als
-    #     SOFT-Präferenz (preferred_assignments), nicht als harte x==1-Fixierung.
-    # RESPECT/OVERWRITE gilt nur für den ausgewählten Planungsmonat.
-    fixed_assignments: set[tuple[int, int]] = set()
-    existing = (
+    # Existing commitments (fixed / locked / busy / capacity already used)
+    existing_rows = (
         db.session.query(Assignment)
         .join(ShiftInstance)
         .filter(
@@ -336,22 +413,31 @@ def load_planning_context(
         )
         .all()
     )
-    for a in existing:
-        e_idx = employee_id_to_idx.get(a.employee_id)
-        s_idx = shift_id_to_idx.get(a.shift_instance_id)
-        if e_idx is None or s_idx is None:
-            continue
-        shift_date = a.shift_instance.date
-        if shift_date < ctx_start:
-            # Vormonat aus DB nur verwenden, wenn keine Aplano-Historie vorliegt.
-            if not external_fixed_assignments:
-                fixed_assignments.add((e_idx, s_idx))
-        elif shift_date > ctx_end:
-            # Folgetag(e) nach Monatsende weiterhin aus DB übernehmen.
-            fixed_assignments.add((e_idx, s_idx))
-        elif existing_assignments_handling.lower() == "respect":
-            # Planungsmonat: nur bei RESPECT fixieren
-            fixed_assignments.add((e_idx, s_idx))
+    existing_refs = [
+        ExistingAssignmentRef(
+            employee_id=a.employee_id,
+            shift_instance_id=a.shift_instance_id,
+            source=a.source,
+            shift_date=a.shift_instance.date,
+            shift_month=a.shift_instance.month,
+            category=a.shift_instance.shift_definition.category,
+            role=a.shift_instance.shift_definition.role,
+            time_of_day=a.shift_instance.shift_definition.time_of_day,
+        )
+        for a in existing_rows
+    ]
+    occupancy = classify_occupancy(
+        existing=existing_refs,
+        employee_id_to_idx=employee_id_to_idx,
+        shift_id_to_idx=shift_id_to_idx,
+        ctx_start=ctx_start,
+        ctx_end=ctx_end,
+        planning_month=planning_month,
+        existing_assignments_handling=existing_assignments_handling,
+        has_external_prev_history=bool(external_fixed_assignments),
+        plan_scope_active=plan_scope is not None,
+        capacity_employee_ids=set(capacity_max),
+    )
 
     preferred_assignments: set[tuple[int, int]] = set()
 
@@ -423,11 +509,14 @@ def load_planning_context(
         employees=planable,
         shifts=shift_infos,
         capacity_max=capacity_max,
-        fixed_assignments=fixed_assignments,
+        capacity_already_used=occupancy.capacity_already_used,
+        fixed_assignments=occupancy.fixed_assignments,
         preferred_assignments=preferred_assignments,
         employee_id_to_idx=employee_id_to_idx,
         shift_id_to_idx=shift_id_to_idx,
-        absent_dates=absent_dates if absent_dates is not None else set(),
+        absent_dates=set(absent_dates) if absent_dates is not None else set(),
+        busy_dates=occupancy.busy_dates,
         employee_preferences=employee_preferences,
+        locked_shift_indices=occupancy.locked_shift_indices,
     )
     return ctx
