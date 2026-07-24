@@ -83,6 +83,7 @@ def _capacity_limit(ctx: PlanningContext, employee_id: int, cap_type: str) -> in
     used = getattr(ctx, "capacity_already_used", {}).get(employee_id, {}).get(cap_type, 0)
     return capacity_remaining(max_count, used)
 
+
 def _is_decision_shift(s: ShiftInfo, planning_start: date) -> bool:
     """True for planning-month (+ trailing Sunday) shifts the solver may freely fill."""
     return s.date >= planning_start

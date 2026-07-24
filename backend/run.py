@@ -17,8 +17,7 @@ def check_database_connection() -> None:
                 pass
     except OperationalError as exc:
         print(
-            "\nFEHLER: Keine Verbindung zur PostgreSQL-Datenbank.\n"
-            f"\nDetails: {exc}\n",
+            f"\nFEHLER: Keine Verbindung zur PostgreSQL-Datenbank.\n\nDetails: {exc}\n",
             file=sys.stderr,
         )
         sys.exit(1)

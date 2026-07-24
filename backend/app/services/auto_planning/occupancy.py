@@ -83,7 +83,9 @@ def classify_occupancy(
     """
     respect = existing_assignments_handling.lower() == "respect"
     out = OccupancyCommitments()
-    cap_ids = capacity_employee_ids if capacity_employee_ids is not None else set(employee_id_to_idx)
+    cap_ids = (
+        capacity_employee_ids if capacity_employee_ids is not None else set(employee_id_to_idx)
+    )
     fixed_candidates: list[_FixedCandidate] = []
 
     for a in existing:
@@ -103,11 +105,7 @@ def classify_occupancy(
             # Out-of-scope (or otherwise not in decision set)
             if plan_scope_active and in_planning_window:
                 out.busy_dates.add((a.employee_id, shift_date))
-            if (
-                plan_scope_active
-                and a.employee_id in cap_ids
-                and a.shift_month == planning_month
-            ):
+            if plan_scope_active and a.employee_id in cap_ids and a.shift_month == planning_month:
                 cap_type = capacity_type_for_fields(a.category, a.role, a.time_of_day)
                 if cap_type is not None:
                     used = out.capacity_already_used.setdefault(

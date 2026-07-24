@@ -50,7 +50,15 @@ def test_prev_month_vars_only_for_fixed_or_preferred_history():
         prev_month_end=date(2026, 2, 28),
         employees=[emp],
         shifts=[prev_a, prev_b, plan],
-        capacity_max={10: {"RB_NURSING_WEEKDAY": 4, "RB_NURSING_WEEKEND": 0, "RB_DOCTORS_WEEKDAY": 0, "RB_DOCTORS_WEEKEND": 0, "AW_NURSING": 0}},
+        capacity_max={
+            10: {
+                "RB_NURSING_WEEKDAY": 4,
+                "RB_NURSING_WEEKEND": 0,
+                "RB_DOCTORS_WEEKDAY": 0,
+                "RB_DOCTORS_WEEKEND": 0,
+                "AW_NURSING": 0,
+            }
+        },
         fixed_assignments={(0, 0)},  # only prev_a fixed
         preferred_assignments={(0, 1)},  # prev_b preferred
         employee_id_to_idx={10: 0},
@@ -75,7 +83,15 @@ def test_prev_month_without_history_has_no_vars():
         prev_month_end=date(2026, 2, 28),
         employees=[emp],
         shifts=[prev, plan],
-        capacity_max={10: {"RB_NURSING_WEEKDAY": 4, "RB_NURSING_WEEKEND": 0, "RB_DOCTORS_WEEKDAY": 0, "RB_DOCTORS_WEEKEND": 0, "AW_NURSING": 0}},
+        capacity_max={
+            10: {
+                "RB_NURSING_WEEKDAY": 4,
+                "RB_NURSING_WEEKEND": 0,
+                "RB_DOCTORS_WEEKDAY": 0,
+                "RB_DOCTORS_WEEKEND": 0,
+                "AW_NURSING": 0,
+            }
+        },
         fixed_assignments=set(),
         preferred_assignments=set(),
         employee_id_to_idx={10: 0},
