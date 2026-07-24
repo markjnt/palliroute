@@ -3,13 +3,7 @@ import { persist } from 'zustand/middleware';
 
 // Typ für gültige Wochentage
 export type Weekday =
-  | 'monday'
-  | 'tuesday'
-  | 'wednesday'
-  | 'thursday'
-  | 'friday'
-  | 'saturday'
-  | 'sunday';
+  'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
 interface WeekdayState {
   // State

@@ -1,10 +1,5 @@
 export type MarkerType =
-  | 'employee'
-  | 'patient'
-  | 'tour_area'
-  | 'tour_patient'
-  | 'custom'
-  | 'pflegeheim';
+  'employee' | 'patient' | 'tour_area' | 'tour_patient' | 'custom' | 'pflegeheim';
 
 export interface MarkerData {
   position: google.maps.LatLng;
