@@ -119,7 +119,7 @@ jobs:
           failure-threshold: error
       - uses: docker/setup-buildx-action@v4
       - name: Verify backend API image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/backend.Dockerfile
@@ -132,7 +132,7 @@ jobs:
           provenance: false
           sbom: false
       - name: Verify backend scheduler image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/backend.Dockerfile
@@ -145,7 +145,7 @@ jobs:
           provenance: false
           sbom: false
       - name: Verify frontend web image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/frontend_web.Dockerfile
@@ -157,7 +157,7 @@ jobs:
           provenance: false
           sbom: false
       - name: Verify frontend PWA image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/frontend_pwa.Dockerfile
