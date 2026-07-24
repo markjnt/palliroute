@@ -7,6 +7,7 @@ import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { MainBottomSheet } from './MainBottomSheet';
 import UserSearchDrawer from '../user/UserSelectSheet';
 import { TopOverviewBar } from './TopOverviewBar';
+import StaleRefreshDialog from '../refresh/StaleRefreshDialog';
 
 const WEEKDAY_STORAGE_KEY = 'pwa-weekday-storage';
 
@@ -125,6 +126,8 @@ const MainLayout: React.FC = () => {
 
         <UserSearchDrawer open={isUserDrawerOpen} onClose={handleDrawerClose} />
       </Box>
+
+      <StaleRefreshDialog />
     </Box>
   );
 };
