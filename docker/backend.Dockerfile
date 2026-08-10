@@ -27,10 +27,18 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /backend
 
-# WeasyPrint via apt (version pinned by Debian bookworm package index)
+# Native libs for pip weasyprint (do not apt-install the weasyprint package —
+# it pulls outdated system Python pkgs that Trivy flags alongside pip installs).
 # hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends weasyprint \
+    && apt-get install -y --no-install-recommends \
+        libcairo2 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libgdk-pixbuf-2.0-0 \
+        libffi8 \
+        shared-mime-info \
+        fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better layer caching
