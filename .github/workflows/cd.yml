@@ -4,11 +4,19 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
+    inputs:
+      stage:
+        description: Target stage
+        required: true
+        type: choice
+        options:
+          - prod
+          - dev
 
 concurrency:
-  group: cd-production
+  group: cd-${{ inputs.stage || github.event.workflow_run.head_branch || github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -16,15 +24,45 @@ permissions:
   security-events: write
 
 env:
-  IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}
+  IMAGE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   gate:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      stage: ${{ steps.meta.outputs.stage }}
+      deploy_dir: ${{ steps.meta.outputs.deploy_dir }}
     steps:
-      - name: Verify CI status
-        run: echo "Proceeding with deployment for ${IMAGE_TAG}"
+      - name: Resolve stage
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            STAGE="${{ inputs.stage }}"
+          else
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            case "$BRANCH" in
+              main) STAGE=prod ;;
+              dev) STAGE=dev ;;
+              *)
+                echo "Unsupported branch for CD: $BRANCH"
+                exit 1
+                ;;
+            esac
+          fi
+
+          case "$STAGE" in
+            prod) DEPLOY_DIR=palliroute ;;
+            dev) DEPLOY_DIR=palliroute-dev ;;
+            *)
+              echo "Unknown stage: $STAGE"
+              exit 1
+              ;;
+          esac
+
+          echo "stage=$STAGE" >> "$GITHUB_OUTPUT"
+          echo "deploy_dir=$DEPLOY_DIR" >> "$GITHUB_OUTPUT"
+          echo "Deploy stage=$STAGE dir=~/$DEPLOY_DIR sha=$IMAGE_SHA"
 
   build-scan-push:
     runs-on: ubuntu-latest
@@ -53,10 +91,12 @@ jobs:
             target: ""
             image: markjnt/palliroute-frontend-pwa
             cache: docker.io/markjnt/palliroute-frontend-pwa:buildcache
+    env:
+      STAGE: ${{ needs.gate.outputs.stage }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ env.IMAGE_SHA }}
 
       - uses: docker/setup-buildx-action@v4
 
@@ -76,8 +116,8 @@ jobs:
           push: false
           load: true
           tags: |
-            ${{ matrix.image }}:${{ env.IMAGE_TAG }}
-            ${{ matrix.image }}:latest
+            ${{ matrix.image }}:${{ env.IMAGE_SHA }}
+            ${{ matrix.image }}:${{ env.STAGE }}
           cache-from: type=registry,ref=${{ matrix.cache }}
           cache-to: type=registry,ref=${{ matrix.cache }},mode=max
           provenance: false
@@ -92,8 +132,8 @@ jobs:
           push: false
           load: true
           tags: |
-            ${{ matrix.image }}:${{ env.IMAGE_TAG }}
-            ${{ matrix.image }}:latest
+            ${{ matrix.image }}:${{ env.IMAGE_SHA }}
+            ${{ matrix.image }}:${{ env.STAGE }}
           cache-from: type=registry,ref=${{ matrix.cache }}
           cache-to: type=registry,ref=${{ matrix.cache }},mode=max
           provenance: false
@@ -107,7 +147,7 @@ jobs:
         with:
           version: v0.71.2
           scan-type: image
-          image-ref: ${{ matrix.image }}:${{ env.IMAGE_TAG }}
+          image-ref: ${{ matrix.image }}:${{ env.IMAGE_SHA }}
           format: json
           output: trivy-results.json
           ignore-unfixed: true
@@ -129,31 +169,39 @@ jobs:
         if: ${{ !cancelled() && hashFiles('trivy-results.sarif') != '' }}
         with:
           sarif_file: trivy-results.sarif
-          category: trivy-${{ matrix.name }}
+          category: trivy-${{ needs.gate.outputs.stage }}-${{ matrix.name }}
 
       - name: Upload SBOM
         uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: sbom-${{ matrix.name }}
+          name: sbom-${{ needs.gate.outputs.stage }}-${{ matrix.name }}
           path: sbom-${{ matrix.name }}.spdx.json
           retention-days: 90
 
       - name: Push image
         run: |
-          docker push "${{ matrix.image }}:${{ env.IMAGE_TAG }}"
-          docker push "${{ matrix.image }}:latest"
+          docker push "${{ matrix.image }}:${{ env.IMAGE_SHA }}"
+          docker push "${{ matrix.image }}:${{ env.STAGE }}"
+          if [ "${{ env.STAGE }}" = "prod" ]; then
+            docker tag "${{ matrix.image }}:${{ env.STAGE }}" "${{ matrix.image }}:latest"
+            docker push "${{ matrix.image }}:latest"
+          fi
 
   deploy:
     runs-on: self-hosted
-    needs: build-scan-push
+    needs: [gate, build-scan-push]
+    env:
+      DEPLOY_DIR: ${{ needs.gate.outputs.deploy_dir }}
+      STAGE: ${{ needs.gate.outputs.stage }}
     steps:
       - name: Validate compose configuration
-        run: docker compose -f "$HOME/palliroute/docker-compose.yml" config
+        run: docker compose -f "$HOME/$DEPLOY_DIR/docker-compose.yml" --env-file "$HOME/$DEPLOY_DIR/.env" config
 
       - name: Pull and restart services
         run: |
-          cd "$HOME/palliroute"
+          cd "$HOME/$DEPLOY_DIR"
+          echo "Deploying stage=$STAGE to $HOME/$DEPLOY_DIR"
           docker compose pull
           docker compose up -d
           docker image prune -f
