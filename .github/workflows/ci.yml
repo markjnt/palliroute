@@ -194,11 +194,28 @@ jobs:
           exit-code: 0
 
       - name: Generate reports and gate on findings
+        if: always() && hashFiles('trivy-results.json') != ''
         run: |
           trivy convert --format sarif --severity CRITICAL,HIGH \
             --output trivy-results.sarif trivy-results.json
           trivy convert --format spdx-json \
             --output "sbom-${{ matrix.name }}.spdx.json" trivy-results.json
+          trivy convert --format table --severity CRITICAL,HIGH --scanners vuln \
+            --output trivy-results.txt trivy-results.json
+
+          {
+            echo "### Trivy: \`${{ matrix.name }}\`"
+            echo ""
+            if [[ -s trivy-results.txt ]]; then
+              echo '```'
+              cat trivy-results.txt
+              echo '```'
+            else
+              echo "No CRITICAL/HIGH findings."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Fail the job on CRITICAL/HIGH (same gate as before)
           trivy convert --format table --severity CRITICAL,HIGH --scanners vuln \
             --exit-code 1 trivy-results.json
 
@@ -211,7 +228,7 @@ jobs:
 
       - name: Upload SBOM
         uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && hashFiles('sbom-${{ matrix.name }}.spdx.json') != '' }}
         with:
           name: sbom-${{ matrix.name }}
           path: sbom-${{ matrix.name }}.spdx.json
