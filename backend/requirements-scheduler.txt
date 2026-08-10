@@ -2,4 +2,4 @@ requests==2.34.2
 apscheduler==3.10.4
 dotenv==0.9.9
 # Base-image pin for Trivy HIGH (CVE-2025-47273)
-setuptools==78.1.1
+setuptools==83.0.0
