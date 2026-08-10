@@ -11,7 +11,8 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 WORKDIR /scheduler
 
 COPY backend/requirements-scheduler.txt .
-RUN pip install --no-cache-dir -r requirements-scheduler.txt
+RUN pip install --no-cache-dir -r requirements-scheduler.txt \
+    && rm -rf /usr/local/lib/python*/ensurepip /usr/local/lib/python*/test/wheeldata
 
 # Copy only scheduler script and config
 COPY backend/run_scheduler.py .
@@ -47,7 +48,10 @@ COPY backend/requirements.txt .
 # hadolint ignore=DL3042
 RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install --no-cache-dir -U pip && \
-    pip install --no-cache-dir --prefer-binary -r requirements.txt
+    pip install --no-cache-dir --prefer-binary -r requirements.txt && \
+    # Official python images ship outdated setuptools wheels under ensurepip/test;
+    # Trivy flags those even when site-packages already has patched versions.
+    rm -rf /usr/local/lib/python*/ensurepip /usr/local/lib/python*/test/wheeldata
 
 # Copy backend code
 COPY backend/ .
