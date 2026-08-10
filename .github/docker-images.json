@@ -1,0 +1,22 @@
+[
+  {
+    "name": "backend-api",
+    "file": "docker/backend.Dockerfile",
+    "target": "main"
+  },
+  {
+    "name": "backend-scheduler",
+    "file": "docker/backend.Dockerfile",
+    "target": "scheduler-image"
+  },
+  {
+    "name": "frontend-web",
+    "file": "docker/frontend_web.Dockerfile",
+    "target": ""
+  },
+  {
+    "name": "frontend-pwa",
+    "file": "docker/frontend_pwa.Dockerfile",
+    "target": ""
+  }
+]

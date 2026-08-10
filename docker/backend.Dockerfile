@@ -27,19 +27,22 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /backend
 
-# WeasyPrint via apt (version pinned by Debian bookworm package index)
+# Native libs for pip weasyprint
 # hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends weasyprint \
+    && apt-get install -y --no-install-recommends \
+        libcairo2 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libgdk-pixbuf-2.0-0 \
+        libffi8 \
+        shared-mime-info \
+        fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better layer caching
 COPY backend/requirements.txt .
-
-# hadolint ignore=DL3042
-RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install --no-cache-dir -U pip && \
-    pip install --no-cache-dir --prefer-binary -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code
 COPY backend/ .
@@ -61,4 +64,4 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 # Create scheduler image
 FROM scheduler AS scheduler-image
-CMD ["python", "run_scheduler.py"] 
+CMD ["python", "run_scheduler.py"]

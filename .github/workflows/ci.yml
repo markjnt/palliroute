@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   changes:
@@ -36,6 +37,7 @@ jobs:
               - 'docker/**'
               - 'docker-compose.yml'
               - '.dockerignore'
+              - '.github/docker-images.json'
             github:
               - '.github/**'
 
@@ -92,7 +94,7 @@ jobs:
       - name: Dependency audit
         run: npm audit --audit-level=high
 
-  docker-ci:
+  docker-matrix:
     runs-on: ubuntu-latest
     needs: changes
     if: |
@@ -100,74 +102,137 @@ jobs:
       needs.changes.outputs.backend == 'true' ||
       needs.changes.outputs.frontend == 'true' ||
       needs.changes.outputs.github == 'true'
+    outputs:
+      images: ${{ steps.set.outputs.images }}
+      dockerfiles: ${{ steps.set.outputs.dockerfiles }}
     steps:
       - uses: actions/checkout@v7
-      - name: Lint Dockerfiles
+      - id: set
+        run: |
+          echo "images=$(jq -c . .github/docker-images.json)" >> "$GITHUB_OUTPUT"
+          echo "dockerfiles=$(jq -c '[.[].file] | unique' .github/docker-images.json)" >> "$GITHUB_OUTPUT"
+
+  docker-lint:
+    runs-on: ubuntu-latest
+    needs: [changes, docker-matrix]
+    if: |
+      needs.changes.outputs.docker == 'true' ||
+      needs.changes.outputs.backend == 'true' ||
+      needs.changes.outputs.frontend == 'true' ||
+      needs.changes.outputs.github == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        dockerfile: ${{ fromJson(needs.docker-matrix.outputs.dockerfiles) }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Lint Dockerfile
         uses: hadolint/hadolint-action@v3.3.0
         with:
-          dockerfile: docker/backend.Dockerfile
+          dockerfile: ${{ matrix.dockerfile }}
           failure-threshold: error
-      - name: Lint frontend web Dockerfile
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: docker/frontend_web.Dockerfile
-          failure-threshold: error
-      - name: Lint frontend PWA Dockerfile
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: docker/frontend_pwa.Dockerfile
-          failure-threshold: error
+
+  docker-ci:
+    runs-on: ubuntu-latest
+    needs: [changes, docker-matrix, docker-lint]
+    if: |
+      needs.changes.outputs.docker == 'true' ||
+      needs.changes.outputs.backend == 'true' ||
+      needs.changes.outputs.frontend == 'true' ||
+      needs.changes.outputs.github == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.docker-matrix.outputs.images) }}
+    env:
+      IMAGE_TAG: palliroute-${{ matrix.name }}:ci
+    steps:
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
-      - name: Verify backend API image
+
+      - name: Build image
+        if: matrix.target != ''
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: docker/backend.Dockerfile
-          target: main
+          file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
           push: false
           load: true
-          tags: palliroute-backend-api:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
           provenance: false
           sbom: false
-      - name: Verify backend scheduler image
+
+      - name: Build image (default target)
+        if: matrix.target == ''
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: docker/backend.Dockerfile
-          target: scheduler-image
+          file: ${{ matrix.file }}
           push: false
           load: true
-          tags: palliroute-backend-scheduler:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
           provenance: false
           sbom: false
-      - name: Verify frontend web image
-        uses: docker/build-push-action@v7
+
+      # ignore-unfixed: true — CVEs without an available patch are excluded from the gate.
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          context: .
-          file: docker/frontend_web.Dockerfile
-          push: false
-          load: true
-          tags: palliroute-frontend-web:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
-      - name: Verify frontend PWA image
-        uses: docker/build-push-action@v7
+          version: v0.71.2
+          scan-type: image
+          image-ref: ${{ env.IMAGE_TAG }}
+          format: json
+          output: trivy-results.json
+          ignore-unfixed: true
+          scanners: vuln
+          list-all-pkgs: true
+          exit-code: 0
+
+      - name: Generate reports and gate on findings
+        if: always() && hashFiles('trivy-results.json') != ''
+        run: |
+          trivy convert --format sarif --severity CRITICAL,HIGH \
+            --output trivy-results.sarif trivy-results.json
+          trivy convert --format spdx-json \
+            --output "sbom-${{ matrix.name }}.spdx.json" trivy-results.json
+          trivy convert --format table --severity CRITICAL,HIGH --scanners vuln \
+            --output trivy-results.txt trivy-results.json
+
+          {
+            echo "### Trivy: \`${{ matrix.name }}\`"
+            echo ""
+            if [[ -s trivy-results.txt ]]; then
+              echo '```'
+              cat trivy-results.txt
+              echo '```'
+            else
+              echo "No CRITICAL/HIGH findings."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Fail the job on CRITICAL/HIGH (same gate as before)
+          trivy convert --format table --severity CRITICAL,HIGH --scanners vuln \
+            --exit-code 1 trivy-results.json
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: ${{ !cancelled() && hashFiles('trivy-results.sarif') != '' }}
         with:
-          context: .
-          file: docker/frontend_pwa.Dockerfile
-          push: false
-          load: true
-          tags: palliroute-frontend-pwa:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
+          sarif_file: trivy-results.sarif
+          category: trivy-${{ matrix.name }}
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() && hashFiles('sbom-${{ matrix.name }}.spdx.json') != '' }}
+        with:
+          name: sbom-${{ matrix.name }}
+          path: sbom-${{ matrix.name }}.spdx.json
+          retention-days: 90
 
   security-ci:
     runs-on: ubuntu-latest
@@ -179,3 +244,44 @@ jobs:
         uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Always runs so branch protection can require this single check.
+  # Path-filtered jobs may be "skipped"; that counts as OK here.
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - changes
+      - backend-ci
+      - frontend-ci
+      - docker-matrix
+      - docker-lint
+      - docker-ci
+      - security-ci
+    steps:
+      - name: Verify CI jobs
+        run: |
+          results=(
+            "changes:${{ needs.changes.result }}"
+            "backend-ci:${{ needs.backend-ci.result }}"
+            "frontend-ci:${{ needs.frontend-ci.result }}"
+            "docker-matrix:${{ needs.docker-matrix.result }}"
+            "docker-lint:${{ needs.docker-lint.result }}"
+            "docker-ci:${{ needs.docker-ci.result }}"
+            "security-ci:${{ needs.security-ci.result }}"
+          )
+          failed=0
+          for entry in "${results[@]}"; do
+            name="${entry%%:*}"
+            result="${entry##*:}"
+            echo "$name → $result"
+            case "$result" in
+              success|skipped) ;;
+              *)
+                echo "::error::$name finished with $result"
+                failed=1
+                ;;
+            esac
+          done
+          exit "$failed"
