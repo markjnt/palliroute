@@ -29,9 +29,10 @@ Bearbeiten Sie **`.env`** im App-Ordner (z. B. `~/palliroute`):
 
 | Variable | Beschreibung |
 |----------|--------------|
+| **STAGE** | `prod` oder `dev` — Projektname, Container, Traefik-Router und Docker-Image-Tag (`…:prod` / `…:dev`). |
 | **WEB_DOMAIN** | Domain für das Web-Frontend (z. B. `web.palliroute.de`). DNS A-Record muss auf den Server zeigen. |
-| **PWA_DOMAIN** | Domain für das PWA-Frontend (z. B. `pwa.palliroute.de`). Wird für die spätere Umstellung auf Traefik/Domain vorgehalten; PWA ist aktuell weiter über Port 3001 erreichbar. |
-| **CORS_ORIGINS** | Erlaubte Ursprünge für CORS, kommagetrennt (Web-/PWA-Domain; bei PWA über IP zusätzlich `http://<Server-IP>:3001`; localhost). |
+| **PWA_DOMAIN** | Domain für die PWA (HTTPS über Traefik, wie Web). |
+| **CORS_ORIGINS** | Erlaubte Ursprünge für CORS, kommagetrennt (Web-/PWA-Domains, localhost für lokale Dev). |
 | **SECRET_KEY** | Geheimer Schlüssel für die Flask-Anwendung. |
 | **GOOGLE_MAPS_API_KEY** | Google Maps API-Schlüssel für Geocoding und Routenplanung. |
 | **APLANO_API_KEY** | API-Schlüssel für die Aplano-Integration. |
@@ -40,6 +41,8 @@ Bearbeiten Sie **`.env`** im App-Ordner (z. B. `~/palliroute`):
 | **EXCEL_IMPORT_PATH** | Pfad zum Ordner mit **Mitarbeiterliste** und **Pflegeheime** (absolut oder relativ zum Projektroot). |
 | **EXPORT_PALLIDOC_PATH** | Pfad zum PalliDoc-Export-Ordner (absolut oder relativ zum Projektroot). |
 | **POSTGRES_PASSWORD** | PostgreSQL-Passwort für den Docker-Service `postgres`. |
+
+Dieselbe `docker-compose.yml` gilt für Prod und Dev — Unterschiede nur über die jeweilige `.env`.
 
 **Ordnerstruktur für den Import:**
 
@@ -57,7 +60,7 @@ docker compose up -d
 ### 4. Zugriff auf die Anwendung
 
 - **Web-Frontend:** `https://<WEB_DOMAIN>` (z. B. `https://web.palliroute.de`). HTTP wird automatisch auf HTTPS umgeleitet.
-- **PWA-Frontend:** aktuell `http://<Server-IP>:3001`.
+- **PWA-Frontend:** `https://<PWA_DOMAIN>` (z. B. `https://pwa.palliroute.de`).
 - **Backend-API:** Nur intern; Aufrufe erfolgen über die Frontends unter `/api`.
 - **Traefik-Dashboard:** Nur lokal auf dem Server unter `http://localhost:8080` (nicht von außen erreichbar).
 

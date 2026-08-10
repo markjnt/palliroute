@@ -1,7 +1,9 @@
+name: palliroute-${STAGE:-prod}
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: palliroute-postgres
+    container_name: palliroute-${STAGE:-prod}-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-palliroute}
       POSTGRES_USER: ${POSTGRES_USER:-palliroute}
@@ -22,8 +24,8 @@ services:
       - app-network
 
   backend-api:
-    image: markjnt/palliroute-backend-api
-    container_name: palliroute-backend-api
+    image: markjnt/palliroute-backend-api:${STAGE:-prod}
+    container_name: palliroute-${STAGE:-prod}-backend-api
     pull_policy: always
     volumes:
       - ./backend/data:/backend/data
@@ -47,8 +49,8 @@ services:
       - app-network
 
   backend-scheduler:
-    image: markjnt/palliroute-backend-scheduler
-    container_name: palliroute-backend-scheduler
+    image: markjnt/palliroute-backend-scheduler:${STAGE:-prod}
+    container_name: palliroute-${STAGE:-prod}-backend-scheduler
     pull_policy: always
     volumes:
       - ${EXCEL_IMPORT_PATH}:/scheduler/data/excel_import
@@ -64,8 +66,8 @@ services:
       - backend-api
 
   frontend-web:
-    image: markjnt/palliroute-frontend-web
-    container_name: palliroute-frontend-web
+    image: markjnt/palliroute-frontend-web:${STAGE:-prod}
+    container_name: palliroute-${STAGE:-prod}-frontend-web
     pull_policy: always
     expose:
       - "3000"
@@ -78,23 +80,32 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
-      - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN}`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.web.loadbalancer.server.port=3000"
-      - "traefik.http.services.web.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.web-${STAGE:-prod}.rule=Host(`${WEB_DOMAIN}`)"
+      - "traefik.http.routers.web-${STAGE:-prod}.entrypoints=websecure"
+      - "traefik.http.routers.web-${STAGE:-prod}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.web-${STAGE:-prod}.loadbalancer.server.port=3000"
+      - "traefik.http.services.web-${STAGE:-prod}.loadbalancer.server.scheme=http"
 
   frontend-pwa:
-    image: markjnt/palliroute-frontend-pwa
-    container_name: palliroute-frontend-pwa
+    image: markjnt/palliroute-frontend-pwa:${STAGE:-prod}
+    container_name: palliroute-${STAGE:-prod}-frontend-pwa
     pull_policy: always
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     depends_on:
       - backend-api
     restart: unless-stopped
     networks:
       - app-network
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.pwa-${STAGE:-prod}.rule=Host(`${PWA_DOMAIN}`)"
+      - "traefik.http.routers.pwa-${STAGE:-prod}.entrypoints=websecure"
+      - "traefik.http.routers.pwa-${STAGE:-prod}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.pwa-${STAGE:-prod}.loadbalancer.server.port=3001"
+      - "traefik.http.services.pwa-${STAGE:-prod}.loadbalancer.server.scheme=http"
 
 networks:
   app-network:
