@@ -1,5 +1,7 @@
 requests==2.34.2
 apscheduler==3.10.4
 dotenv==0.9.9
-# Base-image pin for Trivy HIGH (CVE-2025-47273)
+# Base-image pins for Trivy HIGH findings
 setuptools==78.1.1
+jaraco.context==6.1.0
+wheel==0.46.2
