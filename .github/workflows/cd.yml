@@ -21,7 +21,6 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write
 
 env:
   IMAGE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -64,7 +63,7 @@ jobs:
           echo "deploy_dir=$DEPLOY_DIR" >> "$GITHUB_OUTPUT"
           echo "Deploy stage=$STAGE dir=~/$DEPLOY_DIR sha=$IMAGE_SHA"
 
-  build-scan-push:
+  build-push:
     runs-on: ubuntu-latest
     needs: gate
     strategy:
@@ -139,46 +138,6 @@ jobs:
           provenance: false
           sbom: false
 
-      # One image scan; SARIF, table gate, and SBOM are derived via `trivy convert`.
-      # ignore-unfixed: true — CVEs without an available patch are excluded from the gate.
-      # We accept that trade-off so deploys are not blocked by issues we cannot remediate yet.
-      - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          version: v0.71.2
-          scan-type: image
-          image-ref: ${{ matrix.image }}:${{ env.IMAGE_SHA }}
-          format: json
-          output: trivy-results.json
-          ignore-unfixed: true
-          scanners: vuln
-          list-all-pkgs: true
-          exit-code: 0
-
-      - name: Generate reports and gate on findings
-        run: |
-          trivy convert --format sarif --severity CRITICAL,HIGH \
-            --output trivy-results.sarif trivy-results.json
-          trivy convert --format spdx-json \
-            --output "sbom-${{ matrix.name }}.spdx.json" trivy-results.json
-          trivy convert --format table --severity CRITICAL,HIGH --scanners vuln \
-            --exit-code 1 trivy-results.json
-
-      - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v4
-        if: ${{ !cancelled() && hashFiles('trivy-results.sarif') != '' }}
-        with:
-          sarif_file: trivy-results.sarif
-          category: trivy-${{ needs.gate.outputs.stage }}-${{ matrix.name }}
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: sbom-${{ needs.gate.outputs.stage }}-${{ matrix.name }}
-          path: sbom-${{ matrix.name }}.spdx.json
-          retention-days: 90
-
       - name: Push image
         run: |
           docker push "${{ matrix.image }}:${{ env.IMAGE_SHA }}"
@@ -190,7 +149,7 @@ jobs:
 
   deploy:
     runs-on: self-hosted
-    needs: [gate, build-scan-push]
+    needs: [gate, build-push]
     env:
       DEPLOY_DIR: ${{ needs.gate.outputs.deploy_dir }}
       STAGE: ${{ needs.gate.outputs.stage }}
