@@ -244,3 +244,44 @@ jobs:
         uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Always runs so branch protection can require this single check.
+  # Path-filtered jobs may be "skipped"; that counts as OK here.
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - changes
+      - backend-ci
+      - frontend-ci
+      - docker-matrix
+      - docker-lint
+      - docker-ci
+      - security-ci
+    steps:
+      - name: Verify CI jobs
+        run: |
+          results=(
+            "changes:${{ needs.changes.result }}"
+            "backend-ci:${{ needs.backend-ci.result }}"
+            "frontend-ci:${{ needs.frontend-ci.result }}"
+            "docker-matrix:${{ needs.docker-matrix.result }}"
+            "docker-lint:${{ needs.docker-lint.result }}"
+            "docker-ci:${{ needs.docker-ci.result }}"
+            "security-ci:${{ needs.security-ci.result }}"
+          )
+          failed=0
+          for entry in "${results[@]}"; do
+            name="${entry%%:*}"
+            result="${entry##*:}"
+            echo "$name → $result"
+            case "$result" in
+              success|skipped) ;;
+              *)
+                echo "::error::$name finished with $result"
+                failed=1
+                ;;
+            esac
+          done
+          exit "$failed"
