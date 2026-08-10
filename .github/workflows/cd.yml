@@ -32,6 +32,7 @@ jobs:
     outputs:
       stage: ${{ steps.meta.outputs.stage }}
       deploy_dir: ${{ steps.meta.outputs.deploy_dir }}
+      images: ${{ steps.matrix.outputs.images }}
     steps:
       - name: Resolve stage
         id: meta
@@ -63,35 +64,26 @@ jobs:
           echo "deploy_dir=$DEPLOY_DIR" >> "$GITHUB_OUTPUT"
           echo "Deploy stage=$STAGE dir=~/$DEPLOY_DIR sha=$IMAGE_SHA"
 
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.IMAGE_SHA }}
+
+      - name: Load image matrix
+        id: matrix
+        run: |
+          echo "images=$(jq -c . .github/docker-images.json)" >> "$GITHUB_OUTPUT"
+
   build-push:
     runs-on: ubuntu-latest
     needs: gate
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: backend-api
-            file: docker/backend.Dockerfile
-            target: main
-            image: markjnt/palliroute-backend-api
-            cache: docker.io/markjnt/palliroute-backend-api:buildcache
-          - name: backend-scheduler
-            file: docker/backend.Dockerfile
-            target: scheduler-image
-            image: markjnt/palliroute-backend-scheduler
-            cache: docker.io/markjnt/palliroute-backend-scheduler:buildcache
-          - name: frontend-web
-            file: docker/frontend_web.Dockerfile
-            target: ""
-            image: markjnt/palliroute-frontend-web
-            cache: docker.io/markjnt/palliroute-frontend-web:buildcache
-          - name: frontend-pwa
-            file: docker/frontend_pwa.Dockerfile
-            target: ""
-            image: markjnt/palliroute-frontend-pwa
-            cache: docker.io/markjnt/palliroute-frontend-pwa:buildcache
+        include: ${{ fromJson(needs.gate.outputs.images) }}
     env:
       STAGE: ${{ needs.gate.outputs.stage }}
+      IMAGE: markjnt/palliroute-${{ matrix.name }}
+      CACHE: docker.io/markjnt/palliroute-${{ matrix.name }}:buildcache
     steps:
       - uses: actions/checkout@v7
         with:
@@ -115,10 +107,10 @@ jobs:
           push: false
           load: true
           tags: |
-            ${{ matrix.image }}:${{ env.IMAGE_SHA }}
-            ${{ matrix.image }}:${{ env.STAGE }}
-          cache-from: type=registry,ref=${{ matrix.cache }}
-          cache-to: type=registry,ref=${{ matrix.cache }},mode=max
+            ${{ env.IMAGE }}:${{ env.IMAGE_SHA }}
+            ${{ env.IMAGE }}:${{ env.STAGE }}
+          cache-from: type=registry,ref=${{ env.CACHE }}
+          cache-to: type=registry,ref=${{ env.CACHE }},mode=max
           provenance: false
           sbom: false
 
@@ -131,20 +123,20 @@ jobs:
           push: false
           load: true
           tags: |
-            ${{ matrix.image }}:${{ env.IMAGE_SHA }}
-            ${{ matrix.image }}:${{ env.STAGE }}
-          cache-from: type=registry,ref=${{ matrix.cache }}
-          cache-to: type=registry,ref=${{ matrix.cache }},mode=max
+            ${{ env.IMAGE }}:${{ env.IMAGE_SHA }}
+            ${{ env.IMAGE }}:${{ env.STAGE }}
+          cache-from: type=registry,ref=${{ env.CACHE }}
+          cache-to: type=registry,ref=${{ env.CACHE }},mode=max
           provenance: false
           sbom: false
 
       - name: Push image
         run: |
-          docker push "${{ matrix.image }}:${{ env.IMAGE_SHA }}"
-          docker push "${{ matrix.image }}:${{ env.STAGE }}"
+          docker push "${{ env.IMAGE }}:${{ env.IMAGE_SHA }}"
+          docker push "${{ env.IMAGE }}:${{ env.STAGE }}"
           if [ "${{ env.STAGE }}" = "prod" ]; then
-            docker tag "${{ matrix.image }}:${{ env.STAGE }}" "${{ matrix.image }}:latest"
-            docker push "${{ matrix.image }}:latest"
+            docker tag "${{ env.IMAGE }}:${{ env.STAGE }}" "${{ env.IMAGE }}:latest"
+            docker push "${{ env.IMAGE }}:latest"
           fi
 
   deploy:
