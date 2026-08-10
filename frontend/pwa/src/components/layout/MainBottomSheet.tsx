@@ -1,5 +1,5 @@
 import { Sheet, SheetRef } from 'react-modal-sheet';
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { RouteInfo } from '../route/RouteInfo';
 import { RouteList } from '../route/RouteList';
 import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
@@ -12,14 +12,11 @@ interface MainBottomSheetProps {
   onClose: () => void;
 }
 
-export interface MainBottomSheetRef {
-  // No methods needed for simple open/close behavior
-}
+export type MainBottomSheetRef = Record<string, never>;
 
 export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetProps>(
   ({ isOpen, onClose }, ref) => {
     const sheetRef = useRef<SheetRef>(null);
-    const [currentSnap, setCurrentSnap] = useState(1);
     const { shouldRender: shouldRenderSheet, onCloseEnd } = useDeferredSheetMount(isOpen);
     const { resetForNewUser } = useAdditionalRoutesStore();
     const { selectedUserId, selectedTourArea } = useUserStore();
@@ -31,10 +28,6 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
     useEffect(() => {
       resetForNewUser();
     }, [selectedUserId, selectedTourArea, resetForNewUser]);
-
-    const handleSnapChange = (snapIndex: number) => {
-      setCurrentSnap(snapIndex);
-    };
 
     // No imperative methods needed for simple open/close behavior
     useImperativeHandle(ref, () => ({}), []);
@@ -52,7 +45,6 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
           onCloseEnd={onCloseEnd}
           initialSnap={0}
           snapPoints={snapPoints}
-          onSnap={handleSnapChange}
           disableDrag={isDragging}
         >
           <Sheet.Container>
