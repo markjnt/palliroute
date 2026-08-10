@@ -11,8 +11,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 WORKDIR /scheduler
 
 COPY backend/requirements-scheduler.txt .
-RUN pip install --no-cache-dir -r requirements-scheduler.txt \
-    && rm -rf /usr/local/lib/python*/ensurepip /usr/local/lib/python*/test/wheeldata
+RUN pip install --no-cache-dir -r requirements-scheduler.txt
 
 # Copy only scheduler script and config
 COPY backend/run_scheduler.py .
@@ -28,8 +27,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /backend
 
-# Native libs for pip weasyprint (do not apt-install the weasyprint package —
-# it pulls outdated system Python pkgs that Trivy flags alongside pip installs).
+# Native libs for pip weasyprint
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -44,14 +42,7 @@ RUN apt-get update \
 
 # Copy requirements first for better layer caching
 COPY backend/requirements.txt .
-
-# hadolint ignore=DL3042
-RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install --no-cache-dir -U pip && \
-    pip install --no-cache-dir --prefer-binary -r requirements.txt && \
-    # Official python images ship outdated setuptools wheels under ensurepip/test;
-    # Trivy flags those even when site-packages already has patched versions.
-    rm -rf /usr/local/lib/python*/ensurepip /usr/local/lib/python*/test/wheeldata
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code
 COPY backend/ .
@@ -73,4 +64,4 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 # Create scheduler image
 FROM scheduler AS scheduler-image
-CMD ["python", "run_scheduler.py"] 
+CMD ["python", "run_scheduler.py"]

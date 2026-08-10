@@ -8,13 +8,7 @@ pandas==3.0.5
 openpyxl==3.1.5
 googlemaps==4.10.0
 gunicorn==23.0.0
-apscheduler==3.10.4
 requests==2.34.2
 weasyprint==69.0
 jinja2==3.1.6
 ortools==9.15.6755
-# Transitive / base-image pins for Trivy HIGH findings
-msgpack==1.2.1
-setuptools==83.0.0
-jaraco.context==6.1.0
-wheel==0.46.2
