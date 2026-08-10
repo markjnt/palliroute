@@ -33,7 +33,7 @@ export interface Employee {
   updated_at?: string;
 }
 
-export interface EmployeeFormData extends Omit<Employee, 'id' | 'created_at' | 'updated_at'> {}
+export type EmployeeFormData = Omit<Employee, 'id' | 'created_at' | 'updated_at'>;
 
 export interface EmployeeImportResponse {
   message: string;

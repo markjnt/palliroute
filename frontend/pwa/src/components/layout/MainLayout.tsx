@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Box, SwipeableDrawer, Button, Menu, MenuItem, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Box } from '@mui/material';
 import { MapView } from './MainViewMap';
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
@@ -9,12 +8,17 @@ import UserSearchDrawer from '../user/UserSelectSheet';
 import { TopOverviewBar } from './TopOverviewBar';
 import StaleRefreshDialog from '../refresh/StaleRefreshDialog';
 
+declare global {
+  interface Window {
+    __closeWeekdaySelector?: () => void;
+  }
+}
+
 const WEEKDAY_STORAGE_KEY = 'pwa-weekday-storage';
 
 const MainLayout: React.FC = () => {
   const { selectedUserId, selectedTourArea } = useUserStore();
   const { resetToCurrentDay, resetToCurrentAreaDay } = useWeekdayStore();
-  const navigate = useNavigate();
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -89,9 +93,7 @@ const MainLayout: React.FC = () => {
     setIsSheetOpen(false);
     setIsUserDrawerOpen(false); // Also close user select sheet when map/outside is clicked
     // Also close weekday selector when map is clicked
-    if ((window as any).__closeWeekdaySelector) {
-      (window as any).__closeWeekdaySelector();
-    }
+    window.__closeWeekdaySelector?.();
   };
 
   return (

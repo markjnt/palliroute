@@ -41,9 +41,9 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
         setIsWeekdayMenuOpen(false);
       };
       // Store close handler so it can be called from MainLayout
-      (window as any).__closeWeekdaySelector = closeHandler;
+      window.__closeWeekdaySelector = closeHandler;
       return () => {
-        delete (window as any).__closeWeekdaySelector;
+        delete window.__closeWeekdaySelector;
       };
     }
   }, [onCloseWeekdaySelector]);
