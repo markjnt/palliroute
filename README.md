@@ -73,6 +73,48 @@ docker compose down
 # Traefik (selten; betrifft alle Environments)
 cd ~/traefik && docker compose down
 ```
+
+## Entwicklung und Deployment
+
+Es gibt zwei Stages auf dem Server:
+
+| Branch | Stage | Deploy-Pfad | Image-Tag |
+|--------|-------|-------------|-----------|
+| `dev` | Staging | `~/palliroute-dev` | `:dev` |
+| `main` | Produktion | `~/palliroute` | `:prod` |
+
+Dieselbe `docker-compose.yml` — Unterschiede nur über die jeweilige `.env` (`STAGE=dev` bzw. `STAGE=prod`).
+
+### Ablauf für neue Features / Änderungen
+
+1. **Von `dev` aus arbeiten**
+
+```bash
+git checkout dev
+git pull
+git checkout -b feature/mein-ding
+# … ändern, committen …
+git push -u origin HEAD
+```
+
+2. **Pull Request nach `dev`**  
+   CI prüft den PR. Nach dem Merge nach `dev` startet CD und deployt automatisch nach **Staging** (`~/palliroute-dev`, Images `:dev`). Dort testen (Web/PWA-Dev-Domains).
+
+3. **Wenn Staging ok: nach Produktion**  
+   Pull Request **`dev` → `main`**. Nach dem Merge nach `main` deployt CD nach **Produktion** (`~/palliroute`, Images `:prod`).
+
+### Kurzüberblick
+
+| Aktion | Ergebnis |
+|--------|----------|
+| Push/Merge → `dev` | Deploy Staging |
+| Push/Merge → `main` | Deploy Produktion |
+| Dependabot-PRs | gegen `dev` → erst Staging, danach bewusst nach `main` |
+
+Nicht direkt auf `main` entwickeln (außer Hotfixes). Hotfixes nach `main` anschließend zurück nach `dev` mergen, damit die Branches nicht auseinanderlaufen.
+
+Manuelles Deploy ohne Push: GitHub Actions → **CD** → *Run workflow* → Stage `dev` oder `prod` wählen (Branch passend wählen: `dev`/`main`).
+
 ## Lizenz
 
 Dieses Projekt ist urheberrechtlich geschützt. Alle Rechte vorbehalten. Siehe [LICENSE](LICENSE) für Details.
