@@ -107,9 +107,7 @@ def update_employee(id):
         email = data["email"] or None
         if email:
             email = email.strip()
-            conflict = Employee.query.filter(
-                Employee.email.ilike(email), Employee.id != id
-            ).first()
+            conflict = Employee.query.filter(Employee.email.ilike(email), Employee.id != id).first()
             if conflict:
                 return jsonify({"error": "E-Mail bereits vergeben"}), 400
         data["email"] = email

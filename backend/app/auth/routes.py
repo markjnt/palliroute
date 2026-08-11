@@ -20,9 +20,7 @@ def auth_me():
         {
             "auth_mode": "jwt",
             "oid": claims.get("oid") or claims.get("sub"),
-            "email": claims.get("email")
-            or claims.get("preferred_username")
-            or claims.get("upn"),
+            "email": claims.get("email") or claims.get("preferred_username") or claims.get("upn"),
             "name": claims.get("name"),
             "employee": employee.to_dict() if employee else None,
         }

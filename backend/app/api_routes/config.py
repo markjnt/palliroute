@@ -4,9 +4,9 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 
+from app.auth.decorators import require_internal
 from app.models.system_info import SystemInfo
 from app.services.holiday_service import fetch_holidays_for_year
-from app.auth.decorators import require_internal
 
 bp = Blueprint("config", __name__)
 
