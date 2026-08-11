@@ -39,6 +39,11 @@ services:
       - APLANO_API_KEY=${APLANO_API_KEY}
       - HOLIDAY_STATE=${HOLIDAY_STATE}
       - HOLIDAY_API_BASE_URL=${HOLIDAY_API_BASE_URL}
+      - AUTH_ENABLED=${AUTH_ENABLED:-true}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - ENTRA_EMAIL_DOMAIN=${ENTRA_EMAIL_DOMAIN:-sapv-oberberg.de}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
     expose:
       - "9000"
     restart: unless-stopped
@@ -59,6 +64,7 @@ services:
       - AUTO_IMPORT_ENABLED=${AUTO_IMPORT_ENABLED}
       - AUTO_IMPORT_TIMES=${AUTO_IMPORT_TIMES}
       - BACKEND_API_URL=http://backend-api:9000
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
     restart: unless-stopped
     networks:
       - app-network
@@ -69,6 +75,8 @@ services:
     image: markjnt/palliroute-frontend-web:${STAGE:-prod}
     container_name: palliroute-${STAGE:-prod}-frontend-web
     pull_policy: always
+    environment:
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
     expose:
       - "3000"
     depends_on:
@@ -92,6 +100,9 @@ services:
     pull_policy: always
     expose:
       - "3001"
+    environment:
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
     depends_on:
       - backend-api
     restart: unless-stopped
