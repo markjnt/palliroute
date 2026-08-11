@@ -29,6 +29,8 @@ export interface Employee {
   work_hours: number;
   area: Area;
   alias?: string;
+  email?: string | null;
+  entra_oid?: string | null;
   created_at?: string;
   updated_at?: string;
 }

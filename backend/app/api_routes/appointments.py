@@ -3,6 +3,7 @@ import json
 from flask import Blueprint, jsonify, request
 
 from app import db
+from app.auth.decorators import require_internal
 from app.models.appointment import Appointment
 from app.models.route import Route
 from app.services.holiday_service import is_aw_area_assignment_day
@@ -252,6 +253,7 @@ def move_appointment():
 
 
 @appointments_bp.route("/assign-area", methods=["POST"])
+@require_internal
 def assign_tour_area():
     """
     Weist einen noch nicht zugewiesenen AW-Flächentermin Nord/Mitte/Süd zu (Wochenende oder NRW-Feiertag Mo–Fr).

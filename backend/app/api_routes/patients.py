@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from flask import Blueprint, current_app, jsonify, request
 
 from app import db
+from app.auth.decorators import require_internal
 from app.models.patient import Patient
 from app.models.system_info import SystemInfo
 from app.services.excel_import_service import ExcelImportService
@@ -109,6 +110,7 @@ def patient_import_status():
 
 
 @patients_bp.route("/import", methods=["POST"])
+@require_internal
 def import_patients():
     """
     Import patients and appointments from an Excel file.

@@ -6,6 +6,7 @@ from flask_cors import cross_origin
 
 from app.models.system_info import SystemInfo
 from app.services.holiday_service import fetch_holidays_for_year
+from app.auth.decorators import require_internal
 
 bp = Blueprint("config", __name__)
 
@@ -61,6 +62,7 @@ def get_time_account_as_of():
 
 @bp.route("/last-import-time", methods=["POST"])
 @cross_origin()
+@require_internal
 def update_last_import_time():
     """Update the last import time via API"""
     try:

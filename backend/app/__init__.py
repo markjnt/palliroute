@@ -26,7 +26,7 @@ def create_app(config_class=Config):
             r"/api/*": {
                 "origins": app.config["CORS_ORIGINS"],  # Get allowed origins from config
                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                "allow_headers": ["Content-Type", "Authorization"],
+                "allow_headers": ["Content-Type", "Authorization", "X-Internal-Api-Key"],
             }
         },
     )
@@ -37,6 +37,10 @@ def create_app(config_class=Config):
     from . import models
 
     migrate.init_app(app, db)
+
+    from .auth.middleware import init_auth
+
+    init_auth(app)
 
     # Register error handlers
     @app.errorhandler(400)
@@ -61,7 +65,9 @@ def create_app(config_class=Config):
     from .api_routes.pflegeheime import pflegeheime_bp
     from .api_routes.routes import routes_bp
     from .api_routes.scheduling import scheduling_bp
+    from .auth.routes import auth_bp
 
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(employees_bp, url_prefix="/api/employees")
     app.register_blueprint(patients_bp, url_prefix="/api/patients")
     app.register_blueprint(appointments_bp, url_prefix="/api/appointments")

@@ -3,6 +3,7 @@ import os
 from flask import Blueprint, current_app, jsonify, request
 
 from app import db
+from app.auth.decorators import require_internal
 from app.models.appointment import Appointment
 from app.models.employee import Employee
 from app.models.employee_planning import EmployeePlanning
@@ -25,6 +26,7 @@ def get_employee(id):
 
 
 @employees_bp.route("/", methods=["POST"])
+@require_internal
 def create_employee():
     data = request.get_json()
 
@@ -59,6 +61,16 @@ def create_employee():
     if not isinstance(work_hours, (int, float)) or work_hours < 0 or work_hours > 100:
         return jsonify({"error": "Stellenumfang muss zwischen 0 und 100 liegen"}), 400
 
+    email = data.get("email") or None
+    if email:
+        email = email.strip()
+        if Employee.query.filter(Employee.email.ilike(email)).first():
+            return jsonify({"error": "E-Mail bereits vergeben"}), 400
+
+    entra_oid = data.get("entra_oid") or None
+    if entra_oid and Employee.query.filter_by(entra_oid=entra_oid).first():
+        return jsonify({"error": "Entra OID bereits vergeben"}), 400
+
     new_employee = Employee(
         first_name=data["first_name"],
         last_name=data["last_name"],
@@ -69,6 +81,8 @@ def create_employee():
         work_hours=work_hours,
         area=data.get("area"),
         alias=data.get("alias"),
+        email=email,
+        entra_oid=entra_oid,
     )
 
     db.session.add(new_employee)
@@ -78,6 +92,7 @@ def create_employee():
 
 
 @employees_bp.route("/<int:id>", methods=["PUT"])
+@require_internal
 def update_employee(id):
     employee = Employee.query.get_or_404(id)
     data = request.get_json()
@@ -87,6 +102,27 @@ def update_employee(id):
         work_hours = data["work_hours"]
         if not isinstance(work_hours, (int, float)) or work_hours < 0 or work_hours > 100:
             return jsonify({"error": "Stellenumfang muss zwischen 0 und 100 liegen"}), 400
+
+    if "email" in data:
+        email = data["email"] or None
+        if email:
+            email = email.strip()
+            conflict = Employee.query.filter(
+                Employee.email.ilike(email), Employee.id != id
+            ).first()
+            if conflict:
+                return jsonify({"error": "E-Mail bereits vergeben"}), 400
+        data["email"] = email
+
+    if "entra_oid" in data:
+        entra_oid = data["entra_oid"] or None
+        if entra_oid:
+            conflict = Employee.query.filter(
+                Employee.entra_oid == entra_oid, Employee.id != id
+            ).first()
+            if conflict:
+                return jsonify({"error": "Entra OID bereits vergeben"}), 400
+        data["entra_oid"] = entra_oid
 
     fields = [
         "first_name",
@@ -98,6 +134,8 @@ def update_employee(id):
         "work_hours",
         "area",
         "alias",
+        "email",
+        "entra_oid",
     ]
 
     for field in fields:
@@ -109,6 +147,7 @@ def update_employee(id):
 
 
 @employees_bp.route("/<int:id>", methods=["DELETE"])
+@require_internal
 def delete_employee(id):
     try:
         employee = Employee.query.get_or_404(id)
@@ -133,6 +172,7 @@ def delete_employee(id):
 
 
 @employees_bp.route("/import", methods=["POST"])
+@require_internal
 def import_employees():
     # Get file path from config
     file_path = current_app.config.get("EMPLOYEES_IMPORT_PATH")

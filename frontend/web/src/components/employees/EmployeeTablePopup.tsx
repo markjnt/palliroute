@@ -110,6 +110,14 @@ export const EmployeeTablePopup: React.FC<EmployeeTablePopupProps> = ({
       renderCell: (params: GridRenderCellParams) => params.value || '-',
     },
     {
+      field: 'email',
+      headerName: 'E-Mail',
+      flex: 1,
+      minWidth: 160,
+      filterable: true,
+      renderCell: (params: GridRenderCellParams) => params.value || '-',
+    },
+    {
       field: 'actions',
       headerName: 'Aktionen',
       width: 100,

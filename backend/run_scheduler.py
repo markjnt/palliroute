@@ -134,8 +134,16 @@ class SimpleScheduler:
 
             # Make API call to backend-api
             api_base_url = config.BACKEND_API_URL
+            headers = {}
+            internal_key = config.INTERNAL_API_KEY or os.environ.get("INTERNAL_API_KEY")
+            if internal_key:
+                headers["X-Internal-Api-Key"] = internal_key
 
-            response = requests.post(f"{api_base_url}/api/patients/import?sync=true", timeout=600)
+            response = requests.post(
+                f"{api_base_url}/api/patients/import?sync=true",
+                headers=headers,
+                timeout=600,
+            )
             if response.status_code == 200:
                 print("INFO: Import completed successfully via API")
 
@@ -146,6 +154,7 @@ class SimpleScheduler:
                 update_response = requests.post(
                     f"{api_base_url}/api/config/last-import-time",
                     json={"last_import_time": current_time},
+                    headers=headers,
                     timeout=30,
                 )
 

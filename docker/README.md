@@ -18,8 +18,12 @@ docker buildx build --platform linux/amd64,linux/arm64 -t markjnt/palliroute-fro
 ```
 
 ## Frontend-PWA
+Wie Web: Env-Variablen (`AZURE_TENANT_ID` / `AZURE_CLIENT_ID`) kommen per Compose in den
+Container; das nginx-Image ersetzt sie in `nginx_pwa.conf.template` (→ `/config.js`).
+
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -t markjnt/palliroute-frontend-pwa -f docker/frontend_pwa.Dockerfile --push .
 ```
 
-Lokale Frontend-Entwicklung (ohne Docker): `cd frontend && npm install`, dann `npm run dev:web` / `npm run dev:pwa`. 
+Lokale Frontend-Entwicklung (ohne Docker): `cd frontend && npm install`, dann `npm run dev:web` / `npm run dev:pwa`.
+Auth lokal: `frontend/.env` nach `frontend/.env.example` (INTERNAL_API_KEY + VITE_AZURE_*).

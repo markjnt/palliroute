@@ -48,6 +48,11 @@ const validationSchema = Yup.object({
     .oneOf(areaOptions.map((opt) => opt.value))
     .required('Gebiet ist erforderlich'),
   alias: Yup.string().optional(),
+  email: Yup.string()
+    .transform((value) => (value === '' ? undefined : value))
+    .email('Ungültige E-Mail')
+    .optional(),
+  entra_oid: Yup.string().optional().nullable(),
 });
 
 export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, employee }) => {
@@ -66,18 +71,26 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
       work_hours: employee?.work_hours || 100,
       area: employee?.area || 'Nordkreis',
       alias: employee?.alias || '',
+      email: employee?.email || '',
+      entra_oid: employee?.entra_oid || '',
     },
     validationSchema,
+    enableReinitialize: true,
     onSubmit: async (values) => {
       try {
+        const payload = {
+          ...values,
+          email: values.email?.trim() || null,
+          entra_oid: values.entra_oid?.trim() || null,
+        };
         if (employee) {
           await updateEmployeeMutation.mutateAsync({
             id: employee.id!,
-            employeeData: values,
+            employeeData: payload,
           });
           setNotification('Mitarbeiter erfolgreich aktualisiert', 'success');
         } else {
-          await createEmployeeMutation.mutateAsync(values);
+          await createEmployeeMutation.mutateAsync(payload);
           setNotification('Mitarbeiter erfolgreich erstellt', 'success');
         }
         onClose(true);
@@ -222,6 +235,36 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 helperText={
                   (formik.touched.alias && formik.errors.alias) ||
                   'Optionaler Alias für den Mitarbeiter'
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                id="email"
+                name="email"
+                label="E-Mail (Entra)"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={
+                  (formik.touched.email && formik.errors.email) ||
+                  'Optional: wird beim PWA-Login aus Entra befüllt (Match vorname.nachname@…)'
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                id="entra_oid"
+                name="entra_oid"
+                label="Entra OID (optional)"
+                value={formik.values.entra_oid}
+                onChange={formik.handleChange}
+                error={formik.touched.entra_oid && Boolean(formik.errors.entra_oid)}
+                helperText={
+                  (formik.touched.entra_oid && formik.errors.entra_oid) ||
+                  'Optional: wird beim ersten PWA-Login automatisch gesetzt'
                 }
               />
             </Grid>

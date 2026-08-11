@@ -29,6 +29,7 @@ import { useUserStore } from '../../stores/useUserStore';
 import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
 import { Employee } from '../../types/models';
 import { employeeTypeColors } from '@palliroute/shared';
+import { LogoutButton, isAuthConfigured } from '@palliroute/auth';
 import TourAreaSelector from './TourAreaSelector';
 import { AdditionalRoutesSelector } from '../route/AdditionalRoutesSelector';
 import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
@@ -239,6 +240,12 @@ const UserSearchDrawer: React.FC<UserSearchDrawerProps> = ({ open, onClose }) =>
                 <DoneIcon />
               </IconButton>
             </Box>
+
+            {isAuthConfigured() && (
+              <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'flex-end' }}>
+                <LogoutButton />
+              </Box>
+            )}
 
             {/* Filter Chips */}
             <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
