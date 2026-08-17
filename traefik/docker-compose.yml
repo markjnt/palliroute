@@ -11,12 +11,11 @@ services:
       - "--providers.docker.network=traefik-public"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.forwardedHeaders.trustedIPs=${SOPHOS_TRUSTED_IPS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}"
       - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=${DNS_CHALLENGE_PROVIDER}"
       - "--certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     environment:
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
     ports:
@@ -31,6 +30,14 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
+      # HTTP→HTTPS for everything on :80 except routers with higher priority (PWA, Kompass).
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.http-catchall.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-https"
+      - "traefik.http.routers.http-catchall.priority=1"
+      - "traefik.http.routers.http-catchall.service=api@internal"
 
 networks:
   traefik-public:
