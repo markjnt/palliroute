@@ -30,14 +30,6 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      # HTTP→HTTPS for everything on :80 except routers with higher priority (PWA, Kompass).
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
-      - "traefik.http.routers.http-catchall.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-https"
-      - "traefik.http.routers.http-catchall.priority=1"
-      - "traefik.http.routers.http-catchall.service=api@internal"
 
 networks:
   traefik-public:

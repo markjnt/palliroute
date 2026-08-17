@@ -149,7 +149,6 @@ services:
       - "traefik.docker.network=traefik-public"
       - "traefik.http.routers.pwa-${STAGE:-prod}.rule=Host(`${PWA_DOMAIN}`)"
       - "traefik.http.routers.pwa-${STAGE:-prod}.entrypoints=web"
-      - "traefik.http.routers.pwa-${STAGE:-prod}.priority=100"
       - "traefik.http.services.pwa-${STAGE:-prod}.loadbalancer.server.port=3001"
       - "traefik.http.services.pwa-${STAGE:-prod}.loadbalancer.server.scheme=http"
 
