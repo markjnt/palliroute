@@ -1,23 +1,7 @@
 # syntax=docker/dockerfile:1.6
 
-# python:3.12-slim currently ships util-linux 2.41-5 (CVE-2026-53615).
-FROM python:3.12-slim AS debian-patched
-# hadolint ignore=DL3008
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        bsdutils \
-        libblkid1 \
-        liblastlog2-2 \
-        libmount1 \
-        libsmartcols1 \
-        libuuid1 \
-        login \
-        mount \
-        util-linux \
-    && rm -rf /var/lib/apt/lists/*
-
 # Build stage for scheduler
-FROM debian-patched AS scheduler
+FROM python:3.12-slim AS scheduler
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_INPUT=1 \
@@ -25,6 +9,9 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /scheduler
+
+# hadolint ignore=DL3005
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements-scheduler.txt .
 RUN pip install --no-cache-dir -r requirements-scheduler.txt
@@ -34,7 +21,7 @@ COPY backend/run_scheduler.py .
 COPY backend/config.py .
 
 # Main stage for API
-FROM debian-patched AS main
+FROM python:3.12-slim AS main
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_INPUT=1 \
@@ -43,9 +30,10 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /backend
 
-# Native libs for pip weasyprint
-# hadolint ignore=DL3008
+# Native libs for pip weasyprint; upgrade picks up util-linux CVE-2026-53615
+# hadolint ignore=DL3005,DL3008
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         libcairo2 \
         libpango-1.0-0 \
