@@ -21,6 +21,8 @@ class Employee(db.Model):
     time_account = db.Column(
         db.Float, nullable=True
     )  # Stundenkonto (hours balance), e.g. +12.5 or -3.0
+    email = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    entra_oid = db.Column(db.String(36), unique=True, nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -54,6 +56,8 @@ class Employee(db.Model):
             "area": self.area,
             "alias": self.alias,
             "time_account": self.time_account,
+            "email": self.email,
+            "entra_oid": self.entra_oid,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
@@ -73,4 +77,6 @@ class Employee(db.Model):
             area=data.get("area"),
             alias=data.get("alias"),
             time_account=data.get("time_account"),
+            email=data.get("email"),
+            entra_oid=data.get("entra_oid"),
         )

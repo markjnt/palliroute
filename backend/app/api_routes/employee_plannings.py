@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 
 from app import db
+from app.auth.decorators import require_internal
 from app.models.appointment import Appointment
 from app.models.employee_planning import EmployeePlanning
 from app.models.route import Route
@@ -128,6 +129,7 @@ def get_current_responsible(employee_id, weekday, calendar_week):
 
 
 @employee_planning_bp.route("/<int:employee_id>/<string:weekday>/replacement", methods=["PUT"])
+@require_internal
 def update_replacement(employee_id, weekday):
     """Update replacement for specific employee and weekday and automatically move appointments"""
     data = request.get_json()

@@ -25,4 +25,4 @@ def check_database_connection() -> None:
 
 if __name__ == "__main__":
     check_database_connection()
-    app.run(debug=True, port=9000, host="0.0.0.0")
+    app.run(debug=False, port=9000, host="0.0.0.0")

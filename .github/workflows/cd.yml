@@ -156,5 +156,6 @@ jobs:
           cd "$HOME/$DEPLOY_DIR"
           echo "Deploying stage=$STAGE to $HOME/$DEPLOY_DIR"
           docker compose pull
-          docker compose up -d
+          docker compose up -d --wait --wait-timeout 180
+          docker compose ps
           docker image prune -f

@@ -12,6 +12,7 @@ COPY frontend/packages/api/package.json packages/api/
 COPY frontend/packages/queries/package.json packages/queries/
 COPY frontend/packages/stores/package.json packages/stores/
 COPY frontend/packages/ui/package.json packages/ui/
+COPY frontend/packages/auth/package.json packages/auth/
 
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
@@ -28,7 +29,8 @@ RUN apk update && apk upgrade
 
 COPY --from=build /app/frontend/pwa/dist /usr/share/nginx/html
 
-COPY docker/nginx_pwa.conf /etc/nginx/conf.d/default.conf
+# Official nginx image runs envsubst on /etc/nginx/templates/*.template
+COPY docker/nginx_pwa.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 3001
 

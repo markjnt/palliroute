@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { CssBaseline, ThemeProvider, createTheme, Box, Typography } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
+import { ProtectedRoute, useAuth, LogoutButton, isAuthConfigured } from '@palliroute/auth';
 import InstallPrompt from './components/install/InstallPrompt';
 import MainLayout from './components/layout/MainLayout';
+import { useAuthMe } from './services/queries/useAuthMe';
+import { useUserStore } from './stores/useUserStore';
 
-// Create a theme instance with Apple-inspired design
 const theme = createTheme({
   palette: {
     primary: {
@@ -66,13 +68,112 @@ interface NavigatorWithStandalone extends Navigator {
   standalone?: boolean;
 }
 
-const App: React.FC = () => {
-  const isInstalled =
+function isPwaInstalled(): boolean {
+  return (
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as NavigatorWithStandalone).standalone === true ||
-    document.referrer.includes('android-app://');
+    document.referrer.includes('android-app://')
+  );
+}
 
-  // Choose backend based on device capabilities
+/** After login: map Entra account → employee, then show the app. */
+const AuthenticatedApp: React.FC = () => {
+  const { displayName } = useAuth();
+  const { data: me, isLoading, isError } = useAuthMe();
+  const { setSelectedUser } = useUserStore();
+
+  useEffect(() => {
+    const employeeId = me?.employee?.id;
+    if (employeeId) {
+      // Only when the authenticated employee changes (login), not on every manual switch
+      setSelectedUser(employeeId);
+    }
+  }, [me?.employee?.id, setSelectedUser]);
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (isError) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        minHeight="100vh"
+        gap={2}
+        px={2}
+      >
+        <Typography variant="h6">Anmeldung fehlgeschlagen</Typography>
+        <Typography color="text.secondary" textAlign="center">
+          Konnte Benutzerdaten nicht laden. Bitte erneut anmelden.
+        </Typography>
+        <LogoutButton />
+      </Box>
+    );
+  }
+
+  if (me && !me.employee) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        minHeight="100vh"
+        gap={2}
+        px={2}
+      >
+        <Typography variant="h6">Konto nicht zugeordnet</Typography>
+        <Typography color="text.secondary" textAlign="center">
+          {displayName ? `${displayName}: ` : ''}
+          Ihr Microsoft-Konto ist noch keinem Mitarbeiter zugeordnet. Bitte wenden Sie sich an die
+          Disposition.
+        </Typography>
+        <LogoutButton />
+      </Box>
+    );
+  }
+
+  return <MainLayout />;
+};
+
+/** Installed PWA only: login (if configured) → app. */
+const InstalledShell: React.FC = () => {
+  if (!isAuthConfigured()) {
+    return <MainLayout />;
+  }
+
+  return (
+    <ProtectedRoute>
+      <AuthenticatedApp />
+    </ProtectedRoute>
+  );
+};
+
+/**
+ * Install first (no login / no API), then auth + app in standalone mode.
+ */
+const AppRoutes: React.FC = () => {
+  if (!isPwaInstalled()) {
+    return (
+      <Routes>
+        <Route path="/install" element={<InstallPrompt />} />
+        <Route path="*" element={<Navigate to="/install" replace />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<InstalledShell />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+const App: React.FC = () => {
   const isTouchDevice = 'ontouchstart' in window;
   const backend = isTouchDevice ? TouchBackend : HTML5Backend;
 
@@ -81,11 +182,7 @@ const App: React.FC = () => {
       <CssBaseline />
       <DndProvider backend={backend}>
         <Router>
-          <Routes>
-            <Route path="/install" element={<InstallPrompt />} />
-            <Route path="/" element={isInstalled ? <MainLayout /> : <Navigate to="/install" />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          <AppRoutes />
         </Router>
       </DndProvider>
     </ThemeProvider>

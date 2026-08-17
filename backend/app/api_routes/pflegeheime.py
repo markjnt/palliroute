@@ -2,6 +2,7 @@ import os
 
 from flask import Blueprint, current_app, jsonify
 
+from app.auth.decorators import require_internal
 from app.models.pflegeheim import Pflegeheim
 from app.services.excel_import_service import ExcelImportService
 
@@ -15,6 +16,7 @@ def get_pflegeheime():
 
 
 @pflegeheime_bp.route("/import", methods=["POST"])
+@require_internal
 def import_pflegeheime():
     file_path = current_app.config.get("PFLEGEHEIME_IMPORT_PATH")
     if not file_path:

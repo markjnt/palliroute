@@ -10,6 +10,9 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /scheduler
 
+# hadolint ignore=DL3005
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 COPY backend/requirements-scheduler.txt .
 RUN pip install --no-cache-dir -r requirements-scheduler.txt
 
@@ -27,9 +30,10 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /backend
 
-# Native libs for pip weasyprint
-# hadolint ignore=DL3008
+# Native libs for pip weasyprint; upgrade picks up util-linux CVE-2026-53615
+# hadolint ignore=DL3005,DL3008
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         libcairo2 \
         libpango-1.0-0 \

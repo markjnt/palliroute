@@ -88,3 +88,11 @@ class Config:
     # NRW public holidays (feiertage-api.de)
     HOLIDAY_API_BASE_URL = os.environ.get("HOLIDAY_API_BASE_URL", "https://feiertage-api.de/api/")
     HOLIDAY_STATE = os.environ.get("HOLIDAY_STATE", "NW")
+
+    # Auth (Entra JWT for PWA; Internal-Key for web nginx + scheduler)
+    AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "true").lower() == "true"
+    AZURE_TENANT_ID = os.environ.get("AZURE_TENANT_ID")
+    AZURE_CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
+    INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY")
+    # Used to auto-map PWA users: vorname.nachname@ENTRA_EMAIL_DOMAIN ↔ token email
+    ENTRA_EMAIL_DOMAIN = os.environ.get("ENTRA_EMAIL_DOMAIN", "sapv-oberberg.de")
