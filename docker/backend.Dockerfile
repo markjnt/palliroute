@@ -1,7 +1,23 @@
 # syntax=docker/dockerfile:1.6
 
+# python:3.12-slim currently ships util-linux 2.41-5 (CVE-2026-53615).
+FROM python:3.12-slim AS debian-patched
+# hadolint ignore=DL3008
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        bsdutils \
+        libblkid1 \
+        liblastlog2-2 \
+        libmount1 \
+        libsmartcols1 \
+        libuuid1 \
+        login \
+        mount \
+        util-linux \
+    && rm -rf /var/lib/apt/lists/*
+
 # Build stage for scheduler
-FROM python:3.12-slim AS scheduler
+FROM debian-patched AS scheduler
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_INPUT=1 \
@@ -18,7 +34,7 @@ COPY backend/run_scheduler.py .
 COPY backend/config.py .
 
 # Main stage for API
-FROM python:3.12-slim AS main
+FROM debian-patched AS main
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_INPUT=1 \
