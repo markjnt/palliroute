@@ -8,6 +8,7 @@ from app.models.appointment import Appointment
 from app.models.employee import Employee
 from app.models.employee_planning import EmployeePlanning
 from app.models.route import Route
+from app.models.scheduling import Assignment, EmployeeAutoPlanningPreference, EmployeeCapacity
 from app.services.excel_import_service import ExcelImportService
 
 employees_bp = Blueprint("employees", __name__)
@@ -155,9 +156,16 @@ def delete_employee(id):
 
         # Delete related appointments
         Appointment.query.filter_by(employee_id=id).delete()
+        Appointment.query.filter_by(origin_employee_id=id).update({"origin_employee_id": None})
+        Appointment.query.filter_by(tour_employee_id=id).update({"tour_employee_id": None})
 
         # Delete related employee planning
+        EmployeePlanning.query.filter_by(replacement_id=id).update({"replacement_id": None})
         EmployeePlanning.query.filter_by(employee_id=id).delete()
+
+        EmployeeCapacity.query.filter_by(employee_id=id).delete()
+        Assignment.query.filter_by(employee_id=id).delete()
+        EmployeeAutoPlanningPreference.query.filter_by(employee_id=id).delete()
 
         # Now delete the employee
         db.session.delete(employee)
