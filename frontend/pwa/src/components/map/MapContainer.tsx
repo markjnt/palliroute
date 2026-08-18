@@ -117,13 +117,21 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
     const newMarkers = [];
 
     if (selectedTourArea) {
-      // Für AW-Bereiche: Nur den zentralen Start-Marker anzeigen
-      const tourAreaStartMarker = createTourAreaMarkerData(selectedTourArea);
-      if (tourAreaStartMarker) {
-        newMarkers.push({ ...tourAreaStartMarker, isInactive: false });
+      const areaRoute = visibleRoutes.find((r) => r.area === selectedTourArea);
+      const assignedEmployee = areaRoute?.employee_id
+        ? employees.find((e) => e.id === areaRoute.employee_id)
+        : undefined;
+      const employeeMarker = assignedEmployee
+        ? createEmployeeMarkerData(assignedEmployee, areaRoute?.id)
+        : null;
+      if (employeeMarker) {
+        newMarkers.push({ ...employeeMarker, isInactive: false });
+      } else {
+        const tourAreaStartMarker = createTourAreaMarkerData(selectedTourArea);
+        if (tourAreaStartMarker) {
+          newMarkers.push({ ...tourAreaStartMarker, isInactive: false });
+        }
       }
-
-      // Keine zusätzlichen AW-Bereich-Marker mehr, da der zentrale orange Marker ausreicht
     } else {
       // Für Mitarbeiter: Hauptmitarbeiter anzeigen
       const selectedEmployee = employees.find((e) => e.id === selectedUserId);
@@ -225,14 +233,19 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
         const color = isMainRoute ? '#2196F3' : getTourAreaColor(route.area);
 
         return {
-          employeeId: null, // AW/tour-area routes have no employee
+          employeeId: route.employee_id || null,
           routeId: route.id,
           routeOrder: parseRouteOrder(route.route_order),
           color,
           polyline: route.polyline,
           totalDistance: route.total_distance || 0,
           totalDuration: route.total_duration || 0,
-          employeeName: `AW ${route.area}`,
+          employeeName: (() => {
+            const employee = employees.find((e) => e.id === route.employee_id);
+            return employee
+              ? `AW ${route.area}: ${employee.first_name} ${employee.last_name}`
+              : `AW ${route.area}`;
+          })(),
         };
       } else {
         // Für Mitarbeiter-Routen: Bestehende Logik

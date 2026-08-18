@@ -6,11 +6,13 @@ from ..models.employee import Employee
 from ..models.patient import Patient
 from ..models.route import Route
 from .route_utils import (
+    AW_TOUR_AREAS,
     calculate_route_duration,
     calculate_visit_duration,
+    find_aw_tour_route,
+    get_aw_route_start_location,
     get_departure_time,
     get_gmaps_client,
-    get_tour_area_start_location,
 )
 
 
@@ -45,16 +47,17 @@ class RoutePlanner:
 
             # Get route from database
             if is_area_route:
-                query = Route.query.filter_by(weekday=weekday.lower(), area=area)
-                if calendar_week:
-                    query = query.filter_by(calendar_week=calendar_week)
-                route = query.first()
+                route = find_aw_tour_route(weekday, area, calendar_week)
                 if not route:
                     raise ValueError(
                         f"No area route found for {area} on {weekday} (KW {calendar_week})"
                     )
             else:
-                query = Route.query.filter_by(employee_id=employee_id, weekday=weekday.lower())
+                query = Route.query.filter(
+                    Route.employee_id == employee_id,
+                    Route.weekday == weekday.lower(),
+                    ~Route.area.in_(AW_TOUR_AREAS),
+                )
                 if calendar_week:
                     query = query.filter_by(calendar_week=calendar_week)
                 route = query.first()
@@ -83,7 +86,12 @@ class RoutePlanner:
 
             # Get coordinates for all locations
             if is_area_route:
-                start_location = get_tour_area_start_location(area)
+                assigned_employee = (
+                    Employee.query.filter_by(id=route.employee_id).first()
+                    if route.employee_id
+                    else None
+                )
+                start_location = get_aw_route_start_location(area or route.area, assigned_employee)
             else:
                 # Get employee location for weekday routes
                 employee = Employee.query.filter_by(id=employee_id).first()

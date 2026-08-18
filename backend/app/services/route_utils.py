@@ -5,6 +5,22 @@ from datetime import date, datetime, timedelta
 import googlemaps
 
 from app.models.appointment import VISIT_TYPE_DURATIONS
+from app.models.route import Route
+
+AW_TOUR_AREAS = ("Nord", "Mitte", "Süd")
+
+
+def is_aw_tour_area(area: str | None) -> bool:
+    """True if this is an AW Flächenroute (Nord / Mitte / Süd), not Nordkreis/Südkreis."""
+    return area in AW_TOUR_AREAS
+
+
+def find_aw_tour_route(weekday: str, area: str, calendar_week: int | None = None):
+    """AW-Flächenroute für Wochentag, Fläche und Kalenderwoche."""
+    query = Route.query.filter_by(weekday=weekday.lower(), area=area)
+    if calendar_week is not None:
+        query = query.filter_by(calendar_week=calendar_week)
+    return query.first()
 
 
 def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -93,6 +109,20 @@ def calculate_visit_duration(appointments: list) -> int:
     Returns: duration in minutes
     """
     return sum(VISIT_TYPE_DURATIONS.get(appointment.visit_type, 0) for appointment in appointments)
+
+
+def get_aw_route_start_location(area: str, employee=None) -> dict[str, float]:
+    """
+    Start/end for an AW tour: assigned employee's home if coordinates exist,
+    otherwise the central area start (Nord / Mitte / Süd).
+    """
+    if (
+        employee is not None
+        and getattr(employee, "latitude", None) is not None
+        and getattr(employee, "longitude", None) is not None
+    ):
+        return {"lat": float(employee.latitude), "lng": float(employee.longitude)}
+    return get_tour_area_start_location(area)
 
 
 def get_tour_area_start_location(area: str) -> dict[str, float]:

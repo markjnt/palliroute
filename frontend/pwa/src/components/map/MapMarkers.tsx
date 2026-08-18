@@ -87,8 +87,8 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
     const route = routes.find((r) => r.id === marker.routeId);
     if (!route) return false;
 
-    // For AW/tour-area routes (no employee_id), check if it's an additional area
-    if (!route.employee_id) {
+    // For AW/tour-area routes, check if it's an additional area
+    if (selectedTourArea || !route.employee_id) {
       return route.area !== selectedTourArea && selectedEmployeeIds.includes(route.area);
     }
 
@@ -107,8 +107,8 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
     const route = routes.find((r) => r.id === marker.routeId);
     if (!route) return null;
 
-    // For AW/tour-area routes (no employee_id), use area-based colors
-    if (!route.employee_id) {
+    // For AW/tour-area routes, use area-based colors
+    if (selectedTourArea || !route.employee_id) {
       const getTourAreaColor = (area: string) => {
         switch (area) {
           case 'Nord':

@@ -120,6 +120,28 @@ export const useOptimizeTourAreaRoutes = () => {
   });
 };
 
+export const useAssignAwTourEmployee = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ routeId, employeeId }: { routeId: number; employeeId: number | null }) =>
+      routesApi.assignAwTourEmployee(routeId, employeeId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.detail(result.route.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.lists(),
+        exact: false,
+      });
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.byDay(),
+        exact: false,
+      });
+    },
+  });
+};
+
 // Hook to reorder an appointment up or down in a route
 export const useReorderAppointment = () => {
   const queryClient = useQueryClient();

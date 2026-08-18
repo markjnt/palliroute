@@ -127,8 +127,18 @@ export const calculateRouteBounds = (
   let hasValidPoints = false;
 
   if (selectedTourArea) {
-    const start = getTourAreaStartLocation(selectedTourArea);
-    bounds.extend(new google.maps.LatLng(start.lat, start.lng));
+    const areaRoute = routes.find((r) => r.area === selectedTourArea);
+    const assignedEmployee = areaRoute?.employee_id
+      ? employees.find((e) => e.id === areaRoute.employee_id)
+      : undefined;
+    if (assignedEmployee?.latitude && assignedEmployee?.longitude) {
+      bounds.extend(
+        new google.maps.LatLng(assignedEmployee.latitude, assignedEmployee.longitude)
+      );
+    } else {
+      const start = getTourAreaStartLocation(selectedTourArea);
+      bounds.extend(new google.maps.LatLng(start.lat, start.lng));
+    }
     hasValidPoints = true;
   }
 

@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ShiftDefinition, ShiftInstance, EmployeeCapacity, Assignment } from '../../types/models';
 import {
   schedulingApi,
   AplanoCompareResponse,
@@ -16,7 +15,6 @@ import {
   AutoPlanData,
   ResetPlanningData,
 } from '../api/scheduling';
-import { routeKeys } from './useRoutes';
 
 // Keys for React Query cache
 export const schedulingKeys = {
@@ -136,15 +134,10 @@ export const useCreateAssignment = () => {
 
   return useMutation({
     mutationFn: (data: CreateAssignmentData) => schedulingApi.createAssignment(data),
-    onSuccess: (newAssignment) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
-
-      // Invalidate route queries if this is an AW assignment (affects weekend routes)
-      if (newAssignment.shift_definition?.category === 'AW') {
-        queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
-      }
     },
   });
 };
@@ -155,15 +148,10 @@ export const useUpdateAssignment = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateAssignmentData }) =>
       schedulingApi.updateAssignment(id, data),
-    onSuccess: (updatedAssignment) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
-
-      // Invalidate route queries if this is an AW assignment
-      if (updatedAssignment.shift_definition?.category === 'AW') {
-        queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
-      }
     },
   });
 };
@@ -173,23 +161,10 @@ export const useDeleteAssignment = () => {
 
   return useMutation({
     mutationFn: (id: number) => schedulingApi.deleteAssignment(id),
-    onMutate: async (id) => {
-      // Get the assignment from cache before deletion to check if it's an AW assignment
-      const cachedAssignments = queryClient.getQueryData<Assignment[]>(
-        schedulingKeys.assignments.lists()
-      );
-      const cachedAssignment = cachedAssignments?.find((a) => a.id === id);
-      return { wasAwAssignment: cachedAssignment?.shift_definition?.category === 'AW' };
-    },
-    onSuccess: (_, id, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
-
-      // Invalidate route queries if this was an AW assignment
-      if (context?.wasAwAssignment) {
-        queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
-      }
     },
   });
 };
@@ -205,7 +180,6 @@ export const useAutoPlan = () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
-      queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
     },
   });
 };
@@ -221,7 +195,6 @@ export const useResetPlanning = () => {
       queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
       queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
-      queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
     },
   });
 };

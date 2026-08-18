@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 
 from .. import db
+from ..auth.decorators import require_internal
 from ..models.employee import Employee
 from ..models.route import Route
 from ..services.aplano_sync import sync_employee_planning
@@ -10,6 +11,7 @@ from ..services.holiday_service import is_aw_area_assignment_day
 from ..services.pdf_generator import PDFGenerator
 from ..services.route_optimizer import RouteOptimizer
 from ..services.route_planner import RoutePlanner
+from ..services.route_utils import AW_TOUR_AREAS, is_aw_tour_area
 
 routes_bp = Blueprint("routes", __name__)
 route_planner = RoutePlanner()
@@ -152,12 +154,10 @@ def update_route(route_id):
         # Update route order
         route.set_route_order(route_order)
 
-        # Neu berechnen: AW-Flächenroute (Nord/Mitte/Süd) zuerst — kann employee_id haben (AW-Zuweisung),
-        # muss aber weiter mit Zentralstart geplant werden, nicht vom Mitarbeiter-Wohnort.
-        aw_tour_areas = ("Nord", "Mitte", "Süd")
-        if (
-            is_aw_area_assignment_day(route.calendar_week, route.weekday)
-            and route.area in aw_tour_areas
+        # Neu berechnen: AW-Flächenroute (Nord/Mitte/Süd) zuerst — Start vom zugewiesenen
+        # Mitarbeiter-Wohnort, sonst Zentralstart.
+        if is_aw_area_assignment_day(route.calendar_week, route.weekday) and is_aw_tour_area(
+            route.area
         ):
             route_planner.plan_route(
                 route.weekday, area=route.area, calendar_week=route.calendar_week
@@ -189,6 +189,67 @@ def get_route(route_id):
         route = Route.query.get_or_404(route_id)
         return jsonify({"route": route.to_dict()})
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@routes_bp.route("/<int:route_id>/assign-employee", methods=["PUT"])
+@require_internal
+def assign_employee_to_aw_tour(route_id):
+    """
+    Assign or unassign an employee to an AW tour for this day and area.
+    Expected JSON body: { "employee_id": 1 } or { "employee_id": null }
+    """
+    try:
+        route = Route.query.get_or_404(route_id)
+
+        if not is_aw_tour_area(route.area):
+            return jsonify({"error": "Mitarbeiter können nur AW-Touren zugewiesen werden."}), 400
+
+        if not is_aw_area_assignment_day(route.calendar_week, route.weekday):
+            return jsonify(
+                {"error": "Zuweisung nur für AW-Touren (Wochenende oder Feiertag)."}
+            ), 400
+
+        data = request.get_json()
+        if not data or "employee_id" not in data:
+            return jsonify({"error": "employee_id is required (number or null)"}), 400
+
+        employee_id = data.get("employee_id")
+        if employee_id is None:
+            route.employee_id = None
+        else:
+            employee = Employee.query.get(employee_id)
+            if not employee:
+                return jsonify({"error": "Employee not found"}), 404
+            route.employee_id = employee.id
+
+        route.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        planning_failed = False
+        planning_error = None
+        try:
+            route_planner.plan_route(
+                route.weekday, area=route.area, calendar_week=route.calendar_week
+            )
+        except Exception as plan_error:
+            planning_failed = True
+            planning_error = str(plan_error)
+            print(
+                f"AW tour assignment saved but route planning failed for route {route.id}: {plan_error}"
+            )
+
+        route = Route.query.get(route_id)
+        payload = {
+            "message": "AW-Tour zugewiesen",
+            "route": route.to_dict(),
+        }
+        if planning_failed:
+            payload["planning_failed"] = True
+            payload["planning_error"] = planning_error
+        return jsonify(payload)
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 
@@ -226,7 +287,11 @@ def optimize_routes():
                 )
             else:
                 # Optimize all routes for this employee/weekday (all calendar weeks)
-                routes = Route.query.filter_by(employee_id=employee_id, weekday=weekday).all()
+                routes = Route.query.filter(
+                    Route.employee_id == employee_id,
+                    Route.weekday == weekday,
+                    ~Route.area.in_(AW_TOUR_AREAS),
+                ).all()
                 optimized_count = 0
                 for route in routes:
                     try:
@@ -254,7 +319,7 @@ def optimize_routes():
                 )
             else:
                 # Optimize all routes for this area/weekday (all calendar weeks)
-                routes = Route.query.filter_by(employee_id=None, weekday=weekday, area=area).all()
+                routes = Route.query.filter_by(weekday=weekday, area=area).all()
                 optimized_count = 0
                 for route in routes:
                     try:
@@ -346,6 +411,7 @@ def download_route_pdf():
                     Route.employee_id == employee.id,
                     Route.weekday.in_(weekdays),
                     Route.calendar_week == calendar_week,
+                    ~Route.area.in_(AW_TOUR_AREAS),
                 )
                 .order_by(
                     # Custom order for weekdays
@@ -409,7 +475,7 @@ def download_route_pdf():
             key = r.area or "Unbekannt"
             area_to_routes.setdefault(key, []).append(r)
         for area, routes_in_area in area_to_routes.items():
-            # Get employee name if employee_id is set (from AW assignment)
+            # Get employee name if employee_id is set (AW-Tour-Zuweisung)
             employee_name = None
             # Check if any route in this area has an employee_id
             for route in routes_in_area:

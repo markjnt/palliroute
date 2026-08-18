@@ -27,6 +27,7 @@ import { WeekendTourHeader } from './tour/WeekendTourHeader';
 import { WeekendTourStats } from './tour/WeekendTourStats';
 import { WeekendTourControls } from './tour/WeekendTourControls';
 import { WeekendTourSummary } from './tour/WeekendTourSummary';
+import { AwTourEmployeeSelect } from './tour/AwTourEmployeeSelect';
 import { UnassignedWeekendAppointments } from './UnassignedWeekendAppointments';
 import {
   usePatientManagement,
@@ -36,6 +37,8 @@ import {
   useRouteVisibility,
   useNrwpHolidayForTourDay,
 } from '../../../hooks';
+import { useAssignAwTourEmployee } from '../../../services/queries/useRoutes';
+import { useNotificationStore } from '../../../stores/useNotificationStore';
 
 interface WeekendToursViewProps {
   selectedDay: Weekday;
@@ -63,6 +66,8 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
   selectedDay,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const assignAwTourEmployee = useAssignAwTourEmployee();
+  const { setNotification } = useNotificationStore();
 
   // Custom hooks for business logic
   const patientManagement = usePatientManagement({
@@ -150,6 +155,30 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
     await routeManagement.optimizeTourAreaRoute();
   };
 
+  const handleAssignEmployee = async (employeeId: number | null) => {
+    if (!routeId) {
+      setNotification('Keine AW-Tour vorhanden', 'error');
+      return;
+    }
+    try {
+      const result = await assignAwTourEmployee.mutateAsync({ routeId, employeeId });
+      if (result.planning_failed) {
+        setNotification(
+          'Mitarbeiter zugewiesen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.',
+          'warning'
+        );
+      } else {
+        setNotification(
+          employeeId ? 'Mitarbeiter der AW-Tour zugewiesen' : 'Mitarbeiterzuweisung entfernt',
+          'success'
+        );
+      }
+    } catch (error) {
+      console.error('Fehler beim Zuweisen des Mitarbeiters:', error);
+      setNotification('Mitarbeiter konnte nicht zugewiesen werden', 'error');
+    }
+  };
+
   const handleMoveUp = async (patientId: number) => {
     if (!routeId) return;
 
@@ -180,7 +209,7 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        minHeight: expanded ? 'auto' : '100px',
+        minHeight: expanded ? 'auto' : '120px',
         borderWidth: 2.5,
         borderColor: areaColor,
         borderStyle: 'solid',
@@ -194,8 +223,15 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
           alignItems: 'flex-start',
         }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <WeekendTourHeader area={area} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pr: 1 }}>
+          <WeekendTourHeader area={area}>
+            <AwTourEmployeeSelect
+              route={route}
+              employees={employees}
+              isAssigning={assignAwTourEmployee.isPending}
+              onAssign={handleAssignEmployee}
+            />
+          </WeekendTourHeader>
 
           <WeekendTourStats area={area} route={route} />
 

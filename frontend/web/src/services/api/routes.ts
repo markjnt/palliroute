@@ -1,6 +1,11 @@
 import { api } from '@palliroute/shared';
 import { Route, Weekday } from '../../types/models';
 
+export type AssignAwTourEmployeeResult = {
+  route: Route;
+  planning_failed?: boolean;
+};
+
 export const routesApi = {
   // Get all routes with optional filtering
   async getRoutes(params?: {
@@ -87,6 +92,24 @@ export const routesApi = {
         `Failed to optimize tour-area routes for weekday ${weekday} and area ${area}:`,
         error
       );
+      throw error;
+    }
+  },
+
+  async assignAwTourEmployee(
+    routeId: number,
+    employeeId: number | null
+  ): Promise<AssignAwTourEmployeeResult> {
+    try {
+      const response = await api.put(`/routes/${routeId}/assign-employee`, {
+        employee_id: employeeId,
+      });
+      return {
+        route: response.data.route,
+        planning_failed: Boolean(response.data.planning_failed),
+      };
+    } catch (error) {
+      console.error(`Failed to assign employee to AW tour ${routeId}:`, error);
       throw error;
     }
   },
