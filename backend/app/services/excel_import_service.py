@@ -14,7 +14,13 @@ from ..models.employee_planning import EmployeePlanning
 from ..models.patient import Patient
 from ..models.pflegeheim import Pflegeheim
 from ..models.route import Route
-from ..models.scheduling import Assignment, EmployeeCapacity, ShiftDefinition, ShiftInstance
+from ..models.scheduling import (
+    Assignment,
+    EmployeeAutoPlanningPreference,
+    EmployeeCapacity,
+    ShiftDefinition,
+    ShiftInstance,
+)
 from ..models.system_info import SystemInfo
 from .holiday_service import (
     date_for_iso_week_and_weekday,
@@ -218,10 +224,25 @@ class ExcelImportService:
     def cleanup_employee_references(employee_id):
         """
         Clean up references to an employee before deletion:
+        - Delete capacities, shift assignments, and auto-planning preferences
         - Set employee_id to NULL in routes
         - Set employee_id, origin_employee_id, and tour_employee_id to NULL in appointments
         """
         try:
+            capacities_deleted = EmployeeCapacity.query.filter_by(employee_id=employee_id).delete()
+            if capacities_deleted > 0:
+                print(f"  Deleted {capacities_deleted} capacity entries")
+
+            assignments_deleted = Assignment.query.filter_by(employee_id=employee_id).delete()
+            if assignments_deleted > 0:
+                print(f"  Deleted {assignments_deleted} shift assignments")
+
+            preferences_deleted = EmployeeAutoPlanningPreference.query.filter_by(
+                employee_id=employee_id
+            ).delete()
+            if preferences_deleted > 0:
+                print(f"  Deleted {preferences_deleted} auto-planning preferences")
+
             # Update routes: set employee_id to NULL
             routes_updated = Route.query.filter_by(employee_id=employee_id).update(
                 {"employee_id": None}
