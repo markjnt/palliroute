@@ -132,9 +132,7 @@ export const calculateRouteBounds = (
       ? employees.find((e) => e.id === areaRoute.employee_id)
       : undefined;
     if (assignedEmployee?.latitude && assignedEmployee?.longitude) {
-      bounds.extend(
-        new google.maps.LatLng(assignedEmployee.latitude, assignedEmployee.longitude)
-      );
+      bounds.extend(new google.maps.LatLng(assignedEmployee.latitude, assignedEmployee.longitude));
     } else {
       const start = getTourAreaStartLocation(selectedTourArea);
       bounds.extend(new google.maps.LatLng(start.lat, start.lng));
