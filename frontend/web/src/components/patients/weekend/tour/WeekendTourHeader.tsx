@@ -81,9 +81,7 @@ export const WeekendTourHeader: React.FC<WeekendTourHeaderProps> = ({ area, chil
           AW {area}
         </Typography>
       </Box>
-      {children ? (
-        <Box sx={{ display: 'flex', flex: 1, minWidth: 0 }}>{children}</Box>
-      ) : null}
+      {children ? <Box sx={{ display: 'flex', flex: 1, minWidth: 0 }}>{children}</Box> : null}
     </Box>
   );
 };

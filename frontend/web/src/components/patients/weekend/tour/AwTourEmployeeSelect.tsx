@@ -41,8 +41,7 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
       });
   }, [employees]);
 
-  const selectedEmployee =
-    sortedEmployees.find((emp) => emp.id === route?.employee_id) ?? null;
+  const selectedEmployee = sortedEmployees.find((emp) => emp.id === route?.employee_id) ?? null;
 
   return (
     <Autocomplete
@@ -83,13 +82,7 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
           </Box>
         );
       }}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Mitarbeiter"
-          placeholder="Suchen…"
-        />
-      )}
+      renderInput={(params) => <TextField {...params} label="Mitarbeiter" placeholder="Suchen…" />}
       sx={{ flex: 1, minWidth: 0, width: '100%' }}
     />
   );
