@@ -5,9 +5,8 @@ from __future__ import annotations
 from flask import Flask, g, jsonify, request
 
 from .employee_lookup import (
-    _token_email,
     find_employee_for_claims,
-    is_admin_email,
+    is_admin_account,
     parse_admin_emails,
     unmapped_account_info,
 )
@@ -61,8 +60,8 @@ def init_auth(app: Flask) -> None:
             g.authenticated = True
             employee = find_employee_for_claims(claims)
             g.employee = employee
-            g.is_admin = is_admin_email(
-                _token_email(claims),
+            g.is_admin = is_admin_account(
+                claims,
                 parse_admin_emails(app.config.get("ADMIN_EMAILS")),
             )
 
@@ -71,6 +70,7 @@ def init_auth(app: Flask) -> None:
                 unmapped = unmapped_account_info(
                     claims,
                     entra_email_domain=app.config.get("ENTRA_EMAIL_DOMAIN") or "sapv-oberberg.de",
+                    admin_emails=app.config.get("ADMIN_EMAILS"),
                 )
                 return jsonify(
                     {
