@@ -4,11 +4,14 @@ import type { Employee } from '@palliroute/models';
 export interface AuthMeUnmapped {
   code: string;
   detail: string;
+  admin_detail?: string;
   email?: string | null;
+  token_emails?: string[];
   oid?: string | null;
   name?: string | null;
   entra_email_domain?: string;
   name_email_pattern?: string;
+  admin_allowlist_configured?: boolean;
 }
 
 export interface AuthMeResponse {

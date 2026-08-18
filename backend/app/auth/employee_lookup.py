@@ -9,30 +9,57 @@ from app.models.employee import Employee
 from .email_identity import expected_entra_email
 
 
+def _normalize_email(value: str) -> str:
+    return value.strip().strip("'\"").strip().lower()
+
+
+def _claim_email_values(claims: dict) -> list[str]:
+    raw: list[str] = []
+    for key in ("email", "preferred_username", "upn", "unique_name"):
+        val = claims.get(key)
+        if isinstance(val, str):
+            raw.append(val)
+        elif isinstance(val, list):
+            raw.extend(item for item in val if isinstance(item, str))
+    emails_claim = claims.get("emails")
+    if isinstance(emails_claim, list):
+        raw.extend(item for item in emails_claim if isinstance(item, str))
+
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in raw:
+        if "@" not in item:
+            continue
+        normalized = _normalize_email(item)
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            out.append(item.strip().strip("'\"").strip())
+    return out
+
+
 def _token_email(claims: dict) -> str | None:
-    email = (
-        claims.get("email")
-        or claims.get("preferred_username")
-        or claims.get("upn")
-        or claims.get("unique_name")
-    )
-    if email and isinstance(email, str) and "@" in email:
-        return email.strip()
-    return None
+    emails = _claim_email_values(claims)
+    return emails[0] if emails else None
 
 
 def parse_admin_emails(raw: str | None) -> set[str]:
     """Parse comma/semicolon-separated admin emails from env (case-insensitive)."""
     if not raw:
         return set()
-    parts = raw.replace(";", ",").replace("\n", ",")
-    return {part.strip().lower() for part in parts.split(",") if part.strip()}
+    cleaned = raw.strip().strip("'\"").replace(";", ",").replace("\n", ",")
+    return {part for part in (_normalize_email(item) for item in cleaned.split(",")) if part}
 
 
 def is_admin_email(email: str | None, allowlist: set[str]) -> bool:
     if not email or not allowlist:
         return False
-    return email.strip().lower() in allowlist
+    return _normalize_email(email) in allowlist
+
+
+def is_admin_account(claims: dict, allowlist: set[str]) -> bool:
+    if not allowlist:
+        return False
+    return any(_normalize_email(email) in allowlist for email in _claim_email_values(claims))
 
 
 def _claim_oid(claims: dict) -> str | None:
@@ -42,13 +69,17 @@ def _claim_oid(claims: dict) -> str | None:
     return None
 
 
-def unmapped_account_info(claims: dict, *, entra_email_domain: str) -> dict:
+def unmapped_account_info(
+    claims: dict, *, entra_email_domain: str, admin_emails: str | None = None
+) -> dict:
     """Explain why an Entra account could not be mapped to an employee."""
     oid = _claim_oid(claims)
-    email = _token_email(claims)
+    token_emails = _claim_email_values(claims)
+    email = token_emails[0] if token_emails else None
     name = claims.get("name") if isinstance(claims.get("name"), str) else None
     domain = (entra_email_domain or "").strip().lower() or "sapv-oberberg.de"
     pattern = f"vorname.nachname@{domain}"
+    allowlist = parse_admin_emails(admin_emails)
 
     if not email and not oid:
         detail = (
@@ -74,14 +105,30 @@ def unmapped_account_info(claims: dict, *, entra_email_domain: str) -> dict:
             f"und das Namensmuster {pattern}."
         )
 
+    if not allowlist:
+        admin_detail = (
+            "ADMIN_EMAILS ist leer oder nicht gesetzt; Admin-Zugang ist nicht konfiguriert."
+        )
+    elif not token_emails:
+        admin_detail = (
+            "Im Access-Token ist keine E-Mail enthalten, daher kann die Admin-Liste "
+            "nicht geprüft werden."
+        )
+    else:
+        shown = ", ".join(token_emails)
+        admin_detail = f"Kein Treffer in der Admin-Liste. Abgeglichene Token-Mail(s): {shown}."
+
     return {
         "code": "employee_not_mapped",
         "detail": detail,
+        "admin_detail": admin_detail,
         "email": email,
+        "token_emails": token_emails,
         "oid": oid,
         "name": name.strip() if name else None,
         "entra_email_domain": domain,
         "name_email_pattern": pattern,
+        "admin_allowlist_configured": bool(allowlist),
     }
 
 

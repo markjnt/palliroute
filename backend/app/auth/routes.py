@@ -2,7 +2,7 @@
 
 from flask import Blueprint, current_app, g, jsonify
 
-from .employee_lookup import unmapped_account_info
+from .employee_lookup import _token_email, unmapped_account_info
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -27,13 +27,14 @@ def auth_me():
         unmapped = unmapped_account_info(
             claims,
             entra_email_domain=current_app.config.get("ENTRA_EMAIL_DOMAIN") or "sapv-oberberg.de",
+            admin_emails=current_app.config.get("ADMIN_EMAILS"),
         )
 
     return jsonify(
         {
             "auth_mode": "jwt",
             "oid": claims.get("oid") or claims.get("sub"),
-            "email": claims.get("email") or claims.get("preferred_username") or claims.get("upn"),
+            "email": _token_email(claims),
             "name": claims.get("name"),
             "employee": employee.to_dict() if employee else None,
             "is_admin": is_admin,
