@@ -126,12 +126,10 @@ function AuthStatusScreen({ title, children }: { title: string; children: React.
 }
 
 function UnmappedEmployeeScreen({ me }: { me: AuthMeResponse }) {
-  const { displayName } = useAuth();
+  const { displayName, email: msalEmail } = useAuth();
   const unmapped = me.unmapped;
   const name = unmapped?.name || me.name || displayName;
-  const tokenEmails = unmapped?.token_emails?.length
-    ? unmapped.token_emails.join(', ')
-    : unmapped?.email || me.email;
+  const email = unmapped?.email || me.email || msalEmail;
   const oid = unmapped?.oid || me.oid;
   const pattern = unmapped?.name_email_pattern;
 
@@ -141,11 +139,6 @@ function UnmappedEmployeeScreen({ me }: { me: AuthMeResponse }) {
         {unmapped?.detail ||
           'Ihr Microsoft-Konto (Entra ID) ist keinem Mitarbeiter in PalliRoute zugeordnet.'}
       </Typography>
-      {unmapped?.admin_detail ? (
-        <Typography color="text.secondary" textAlign="center" maxWidth={420}>
-          {unmapped.admin_detail}
-        </Typography>
-      ) : null}
       <Box
         sx={{
           width: '100%',
@@ -160,14 +153,13 @@ function UnmappedEmployeeScreen({ me }: { me: AuthMeResponse }) {
         }}
       >
         <AccountDetail label="Name" value={name} />
-        <AccountDetail label="Entra-E-Mail im Token" value={tokenEmails} mono />
+        <AccountDetail label="Entra-E-Mail" value={email} mono />
         <AccountDetail label="Entra-OID" value={oid} mono />
         {pattern ? <AccountDetail label="Erwartetes Namensmuster" value={pattern} mono /> : null}
       </Box>
       <Typography color="text.secondary" textAlign="center" maxWidth={420} variant="body2">
         Bitte wenden Sie sich an einen Admin und geben Sie diese Angaben weiter. Der Mitarbeiter
-        muss in der Excel stehen und über E-Mail oder Namensmuster zu diesem Konto passen. Die
-        Admin-Mail in ADMIN_EMAILS muss exakt der Token-Mail entsprechen (Groß/Klein ist egal).
+        muss in der Excel stehen und über E-Mail oder Namensmuster zu diesem Konto passen.
       </Typography>
     </AuthStatusScreen>
   );
