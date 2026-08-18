@@ -9,6 +9,7 @@ import InstallPrompt from './components/install/InstallPrompt';
 import MainLayout from './components/layout/MainLayout';
 import { useAuthMe } from './services/queries/useAuthMe';
 import { useUserStore } from './stores/useUserStore';
+import type { AuthMeResponse } from './services/api/auth';
 
 const theme = createTheme({
   palette: {
@@ -76,9 +77,104 @@ function isPwaInstalled(): boolean {
   );
 }
 
+function AccountDetail({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value?: string | null;
+  mono?: boolean;
+}) {
+  return (
+    <Box sx={{ textAlign: 'left' }}>
+      <Typography variant="caption" color="text.secondary" display="block">
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          fontFamily: mono && value ? 'ui-monospace, SFMono-Regular, Menlo, monospace' : undefined,
+          wordBreak: 'break-all',
+          color: value ? 'text.primary' : 'text.secondary',
+        }}
+      >
+        {value || 'nicht im Konto enthalten'}
+      </Typography>
+    </Box>
+  );
+}
+
+function AuthStatusScreen({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      minHeight="100vh"
+      gap={2}
+      px={2}
+    >
+      <Typography variant="h6" textAlign="center">
+        {title}
+      </Typography>
+      {children}
+      <LogoutButton />
+    </Box>
+  );
+}
+
+function UnmappedEmployeeScreen({ me }: { me: AuthMeResponse }) {
+  const { displayName, email: msalEmail } = useAuth();
+  const unmapped = me.unmapped;
+  const name = unmapped?.name || me.name || displayName;
+  const email = unmapped?.email || me.email || msalEmail;
+  const oid = unmapped?.oid || me.oid;
+  const pattern = unmapped?.name_email_pattern;
+
+  return (
+    <AuthStatusScreen title="Kein Mitarbeiter hinterlegt">
+      <Typography color="text.secondary" textAlign="center" maxWidth={420}>
+        {unmapped?.detail ||
+          'Ihr Microsoft-Konto (Entra ID) ist keinem Mitarbeiter in PalliRoute zugeordnet.'}
+      </Typography>
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: 420,
+          p: 2,
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+      >
+        <AccountDetail label="Name" value={name} />
+        <AccountDetail label="Entra-E-Mail" value={email} mono />
+        <AccountDetail label="Entra-OID" value={oid} mono />
+        {pattern ? (
+          <AccountDetail label="Erwartetes Namensmuster" value={pattern} mono />
+        ) : null}
+      </Box>
+      <Typography color="text.secondary" textAlign="center" maxWidth={420} variant="body2">
+        Bitte wenden Sie sich an einen Admin und geben Sie diese Angaben weiter. Der Mitarbeiter muss
+        in der Excel stehen und über E-Mail oder Namensmuster zu diesem Konto passen.
+      </Typography>
+    </AuthStatusScreen>
+  );
+}
+
 /** After login: map Entra account → employee, then show the app. */
 const AuthenticatedApp: React.FC = () => {
-  const { displayName } = useAuth();
   const { data: me, isLoading, isError } = useAuthMe();
   const { setSelectedUser } = useUserStore();
 
@@ -96,44 +192,16 @@ const AuthenticatedApp: React.FC = () => {
 
   if (isError) {
     return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        minHeight="100vh"
-        gap={2}
-        px={2}
-      >
-        <Typography variant="h6">Anmeldung fehlgeschlagen</Typography>
-        <Typography color="text.secondary" textAlign="center">
+      <AuthStatusScreen title="Anmeldung fehlgeschlagen">
+        <Typography color="text.secondary" textAlign="center" maxWidth={420}>
           Konnte Benutzerdaten nicht laden. Bitte erneut anmelden.
         </Typography>
-        <LogoutButton />
-      </Box>
+      </AuthStatusScreen>
     );
   }
 
-  if (me && !me.employee) {
-    return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        minHeight="100vh"
-        gap={2}
-        px={2}
-      >
-        <Typography variant="h6">Konto nicht zugeordnet</Typography>
-        <Typography color="text.secondary" textAlign="center">
-          {displayName ? `${displayName}: ` : ''}
-          Ihr Microsoft-Konto ist noch keinem Mitarbeiter zugeordnet. Bitte wenden Sie sich an die
-          Disposition.
-        </Typography>
-        <LogoutButton />
-      </Box>
-    );
+  if (me && !me.employee && !me.is_admin) {
+    return <UnmappedEmployeeScreen me={me} />;
   }
 
   return <MainLayout />;

@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from flask import Flask, g, jsonify, request
 
-from .employee_lookup import find_employee_for_claims
+from .employee_lookup import (
+    _token_email,
+    find_employee_for_claims,
+    is_admin_email,
+    parse_admin_emails,
+    unmapped_account_info,
+)
 from .jwt_validator import validate_azure_token
 
 
@@ -15,6 +21,7 @@ def init_auth(app: Flask) -> None:
         g.auth_mode = None
         g.claims = None
         g.employee = None
+        g.is_admin = False
 
         if request.method == "OPTIONS":
             g.authenticated = True
@@ -54,13 +61,25 @@ def init_auth(app: Flask) -> None:
             g.authenticated = True
             employee = find_employee_for_claims(claims)
             g.employee = employee
+            g.is_admin = is_admin_email(
+                _token_email(claims),
+                parse_admin_emails(app.config.get("ADMIN_EMAILS")),
+            )
 
-            # Unmapped users may only hit /api/auth/*
-            if employee is None and not request.path.startswith("/api/auth"):
+            # Unmapped users may only hit /api/auth/* unless they are allowlisted admins
+            if employee is None and not g.is_admin and not request.path.startswith("/api/auth"):
+                unmapped = unmapped_account_info(
+                    claims,
+                    entra_email_domain=app.config.get("ENTRA_EMAIL_DOMAIN") or "sapv-oberberg.de",
+                )
                 return jsonify(
                     {
                         "error": "Forbidden",
-                        "message": "No employee mapped for this account",
+                        "code": unmapped["code"],
+                        "message": unmapped["detail"],
+                        "email": unmapped["email"],
+                        "oid": unmapped["oid"],
+                        "name": unmapped["name"],
                     }
                 ), 403
             return None

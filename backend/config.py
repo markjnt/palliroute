@@ -96,3 +96,5 @@ class Config:
     INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY")
     # Used to auto-map PWA users: vorname.nachname@ENTRA_EMAIL_DOMAIN ↔ token email
     ENTRA_EMAIL_DOMAIN = os.environ.get("ENTRA_EMAIL_DOMAIN", "sapv-oberberg.de")
+    # Comma-separated Entra emails that may use the PWA without an employee row
+    ADMIN_EMAILS = os.environ.get("ADMIN_EMAILS", "")
