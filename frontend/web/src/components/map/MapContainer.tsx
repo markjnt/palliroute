@@ -245,10 +245,21 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         }
       }
 
-      // Create weekend start marker for each visible area
+      // Create start marker for each visible area: employee home if assigned, else Zentralstart
       visibleAreas.forEach((area) => {
-        const marker = createTourAreaMarkerData(area);
-        if (marker) newMarkers.push(marker);
+        const route = dayRoutes.find((r) => (r.area as string) === area);
+        const assignedEmployee = route?.employee_id
+          ? employees.find((e) => e.id === route.employee_id)
+          : undefined;
+        const employeeMarker = assignedEmployee
+          ? createEmployeeMarkerData(assignedEmployee, route?.id)
+          : null;
+        if (employeeMarker) {
+          newMarkers.push(employeeMarker);
+        } else {
+          const marker = createTourAreaMarkerData(area, route?.id);
+          if (marker) newMarkers.push(marker);
+        }
       });
 
       // AW-Patientenmarker (Sa/So und Feiertags-Mo–Fr): Nummer aus route_order der Flächenroute

@@ -24,7 +24,9 @@ export const EmployeeInfoContent: React.FC<EmployeeInfoContentProps> = ({
   const employee = employees.find((e) => e.id === marker.employeeId);
   if (!employee) return null;
 
-  const route = routes.find((r) => r.employee_id === employee.id);
+  const route = marker.routeId
+    ? routes.find((r) => r.id === marker.routeId)
+    : routes.find((r) => r.employee_id === employee.id);
   const routeDuration = route?.total_duration ?? 0; // in Minuten
   const workHours = employee.work_hours || 0;
   const targetMinutes = Math.round(420 * (workHours / 100));

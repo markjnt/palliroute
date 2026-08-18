@@ -54,8 +54,7 @@ export const RouteInfo: React.FC = () => {
   const selectedRoute = useMemo(() => {
     if (selectedTourArea) {
       return routes.find(
-        (route) =>
-          !route.employee_id && route.area === selectedTourArea && route.weekday === selectedWeekday
+        (route) => route.area === selectedTourArea && route.weekday === selectedWeekday
       );
     } else {
       return routes.find(

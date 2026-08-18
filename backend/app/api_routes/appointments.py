@@ -9,6 +9,7 @@ from app.models.route import Route
 from app.services.holiday_service import is_aw_area_assignment_day
 from app.services.route_optimizer import RouteOptimizer
 from app.services.route_planner import RoutePlanner
+from app.services.route_utils import find_aw_tour_route
 
 appointments_bp = Blueprint("appointments", __name__)
 route_optimizer = RouteOptimizer()
@@ -292,16 +293,9 @@ def assign_tour_area():
         # Ensure target route exists (only relevant for HB/NA)
         target_route = None
         if appointment.visit_type in ("HB", "NA"):
-            # Flächenroute für diesen Wochentag / Kalenderwoche
-            target_route_query = Route.query.filter_by(
-                weekday=appointment.weekday,
-                area=target_area,
+            target_route = find_aw_tour_route(
+                appointment.weekday, target_area, appointment.calendar_week
             )
-            if appointment.calendar_week:
-                target_route_query = target_route_query.filter_by(
-                    calendar_week=appointment.calendar_week
-                )
-            target_route = target_route_query.first()
 
             if not target_route:
                 target_route = Route(

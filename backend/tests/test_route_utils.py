@@ -6,8 +6,10 @@ from app.services.route_utils import (
     calculate_route_duration,
     calculate_visit_duration,
     distance_km_to_area_start,
+    get_aw_route_start_location,
     get_tour_area_start_location,
     haversine_km,
+    is_aw_tour_area,
 )
 
 
@@ -34,6 +36,36 @@ def test_get_tour_area_start_location_normalizes_area(area: str, expected_lat: f
     location = get_tour_area_start_location(area)
     assert location["lat"] == pytest.approx(expected_lat)
     assert "lng" in location
+
+
+@pytest.mark.parametrize(
+    ("area", "expected"),
+    [
+        ("Nord", True),
+        ("Mitte", True),
+        ("Süd", True),
+        ("Nordkreis", False),
+        ("Südkreis", False),
+        (None, False),
+        ("", False),
+    ],
+)
+def test_is_aw_tour_area(area: str | None, expected: bool):
+    assert is_aw_tour_area(area) is expected
+
+
+def test_get_aw_route_start_location_uses_employee_home_when_coordinates_exist():
+    employee = SimpleNamespace(latitude=51.05, longitude=7.4)
+    location = get_aw_route_start_location("Nord", employee)
+    assert location == {"lat": 51.05, "lng": 7.4}
+
+
+def test_get_aw_route_start_location_falls_back_to_area_start():
+    area_start = get_tour_area_start_location("Nord")
+    assert get_aw_route_start_location("Nord", None) == area_start
+    assert get_aw_route_start_location("Nord", SimpleNamespace(latitude=None, longitude=None)) == (
+        area_start
+    )
 
 
 def test_distance_km_to_area_start_without_coordinates():

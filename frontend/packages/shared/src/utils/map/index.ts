@@ -66,6 +66,9 @@ export const getColorForEmployeeType = (employeeType?: string): string => {
   return employeeTypeColors.default;
 };
 
+export const isAwTourArea = (area?: string | null): boolean =>
+  area === 'Nord' || area === 'Mitte' || area === 'Süd';
+
 export const getTourAreaStartLocation = (area: string): { lat: number; lng: number } => {
   let areaNormalized = area;
   if (area.includes('Nord') || area === 'Nordkreis') {

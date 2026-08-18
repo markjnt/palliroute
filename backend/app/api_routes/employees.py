@@ -10,6 +10,7 @@ from app.models.employee_planning import EmployeePlanning
 from app.models.route import Route
 from app.models.scheduling import Assignment, EmployeeAutoPlanningPreference, EmployeeCapacity
 from app.services.excel_import_service import ExcelImportService
+from app.services.route_utils import AW_TOUR_AREAS
 
 employees_bp = Blueprint("employees", __name__)
 
@@ -151,8 +152,12 @@ def delete_employee(id):
     try:
         employee = Employee.query.get_or_404(id)
 
-        # Delete related routes first
-        Route.query.filter_by(employee_id=id).delete()
+        # Weekday employee routes are deleted; AW-Flächenrouten nur entkoppeln
+        Route.query.filter(
+            Route.employee_id == id,
+            ~Route.area.in_(AW_TOUR_AREAS),
+        ).delete(synchronize_session=False)
+        Route.query.filter_by(employee_id=id).update({"employee_id": None})
 
         # Delete related appointments
         Appointment.query.filter_by(employee_id=id).delete()

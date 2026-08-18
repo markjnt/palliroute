@@ -4,13 +4,13 @@ interface NotificationState {
   notification: {
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
+    severity: 'success' | 'error' | 'warning';
   };
   loading: {
     active: boolean;
     message: string;
   };
-  setNotification: (message: string, severity: 'success' | 'error') => void;
+  setNotification: (message: string, severity: 'success' | 'error' | 'warning') => void;
   closeNotification: () => void;
   setLoading: (message: string) => void;
   resetLoading: () => void;

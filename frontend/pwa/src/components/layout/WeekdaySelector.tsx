@@ -311,10 +311,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 
           const dayRoute = selectedTourArea
             ? allRoutes.find(
-                (route) =>
-                  !route.employee_id &&
-                  route.area === selectedTourArea &&
-                  route.weekday === weekday.value
+                (route) => route.area === selectedTourArea && route.weekday === weekday.value
               )
             : allRoutes.find(
                 (route) => route.employee_id === selectedUserId && route.weekday === weekday.value

@@ -1,7 +1,7 @@
 import json
 import os
 import re  # Modul für reguläre Ausdrücke hinzugefügt
-from datetime import date, datetime, time
+from datetime import datetime, time
 from typing import Any
 
 import googlemaps
@@ -18,8 +18,6 @@ from ..models.scheduling import (
     Assignment,
     EmployeeAutoPlanningPreference,
     EmployeeCapacity,
-    ShiftDefinition,
-    ShiftInstance,
 )
 from ..models.system_info import SystemInfo
 from .holiday_service import (
@@ -28,10 +26,12 @@ from .holiday_service import (
     is_weekday_holiday,
 )
 from .route_optimizer import RouteOptimizer
+from .route_utils import AW_TOUR_AREAS, find_aw_tour_route, is_aw_tour_area
 
 
 class ExcelImportService:
     GEOCODE_CACHE_KEY = "geocode_address_cache"
+    AW_TOUR_EMPLOYEE_SNAPSHOT_KEY = "aw_tour_employee_assignments"
     # Class-level cache for geocoding to avoid redundant API calls
     _geocode_cache: dict[str, tuple[float, float]] = {}
 
@@ -204,6 +204,102 @@ class ExcelImportService:
         except Exception as e:
             db.session.rollback()
             raise Exception(f"Error deleting patient data: {str(e)}")
+
+    @staticmethod
+    def _snapshot_aw_tour_employees() -> list[tuple[int, str, str, int]]:
+        """Preserve AW tour employee assignments across patient re-import."""
+        routes = Route.query.filter(
+            Route.area.in_(AW_TOUR_AREAS),
+            Route.employee_id.isnot(None),
+        ).all()
+        return [
+            (route.calendar_week, route.weekday, route.area, route.employee_id)
+            for route in routes
+            if route.calendar_week and route.weekday and route.area and route.employee_id
+        ]
+
+    @staticmethod
+    def _serialize_aw_tour_employee_snapshot(snapshots: list[tuple[int, str, str, int]]) -> str:
+        return json.dumps(
+            [
+                {
+                    "calendar_week": calendar_week,
+                    "weekday": weekday,
+                    "area": area,
+                    "employee_id": employee_id,
+                }
+                for calendar_week, weekday, area, employee_id in snapshots
+            ]
+        )
+
+    @staticmethod
+    def _deserialize_aw_tour_employee_snapshot(raw: str | None) -> list[tuple[int, str, str, int]]:
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(data, list):
+            return []
+        snapshots: list[tuple[int, str, str, int]] = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            calendar_week = item.get("calendar_week")
+            weekday = item.get("weekday")
+            area = item.get("area")
+            employee_id = item.get("employee_id")
+            if calendar_week is None or not weekday or not area or employee_id is None:
+                continue
+            snapshots.append((int(calendar_week), str(weekday), str(area), int(employee_id)))
+        return snapshots
+
+    @staticmethod
+    def _load_persisted_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int]]:
+        raw = SystemInfo.get_value(ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY)
+        return ExcelImportService._deserialize_aw_tour_employee_snapshot(raw)
+
+    @staticmethod
+    def _persist_aw_tour_employee_snapshot(snapshots: list[tuple[int, str, str, int]]) -> None:
+        SystemInfo.set_value(
+            ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY,
+            ExcelImportService._serialize_aw_tour_employee_snapshot(snapshots),
+        )
+
+    @staticmethod
+    def _clear_aw_tour_employee_snapshot() -> None:
+        SystemInfo.set_value(ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY, "[]")
+
+    @staticmethod
+    def _prepare_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int]]:
+        """
+        Live DB assignments win. If routes were already wiped by a failed import,
+        fall back to the last persisted snapshot.
+        """
+        live = ExcelImportService._snapshot_aw_tour_employees()
+        stored = ExcelImportService._load_persisted_aw_tour_employee_snapshot()
+        merged = live if live else stored
+        if merged:
+            ExcelImportService._persist_aw_tour_employee_snapshot(merged)
+        return merged
+
+    @staticmethod
+    def _restore_aw_tour_employees(snapshots: list[tuple[int, str, str, int]]) -> int:
+        """Re-apply AW tour employee assignments after routes were recreated."""
+        restored = 0
+        for calendar_week, weekday, area, employee_id in snapshots:
+            if not Employee.query.get(employee_id):
+                continue
+            route = find_aw_tour_route(weekday, area, calendar_week)
+            if route:
+                route.employee_id = employee_id
+                route.updated_at = datetime.utcnow()
+                restored += 1
+        if restored:
+            db.session.commit()
+            print(f"    Restored {restored} AW tour employee assignments")
+        return restored
 
     @staticmethod
     def delete_planning_for_employee(employee_id):
@@ -1465,8 +1561,11 @@ class ExcelImportService:
             for employee in employees:
                 for weekday in english_weekdays:
                     # Check if route already exists for this employee, weekday, and calendar_week
-                    existing_route = Route.query.filter_by(
-                        employee_id=employee.id, weekday=weekday, calendar_week=calendar_week
+                    existing_route = Route.query.filter(
+                        Route.employee_id == employee.id,
+                        Route.weekday == weekday,
+                        Route.calendar_week == calendar_week,
+                        ~Route.area.in_(AW_TOUR_AREAS),
                     ).first()
 
                     if not existing_route:
@@ -1492,7 +1591,7 @@ class ExcelImportService:
             for area in tour_area_labels:
                 for weekday in english_weekend_days:
                     existing_route = Route.query.filter_by(
-                        employee_id=None, weekday=weekday, area=area, calendar_week=calendar_week
+                        weekday=weekday, area=area, calendar_week=calendar_week
                     ).first()
 
                     if not existing_route:
@@ -1520,7 +1619,7 @@ class ExcelImportService:
                     continue
                 for area in tour_area_labels:
                     existing_route = Route.query.filter_by(
-                        employee_id=None, weekday=weekday, area=area, calendar_week=calendar_week
+                        weekday=weekday, area=area, calendar_week=calendar_week
                     ).first()
                     if not existing_route:
                         print(
@@ -1586,10 +1685,10 @@ class ExcelImportService:
 
         specs: list[tuple] = []
         for route in routes:
-            if route.employee_id is not None:
-                specs.append((route.weekday, route.employee_id, None, route.calendar_week))
-            elif route.area:
+            if is_aw_tour_area(route.area):
                 specs.append((route.weekday, None, route.area, route.calendar_week))
+            elif route.employee_id is not None:
+                specs.append((route.weekday, route.employee_id, None, route.calendar_week))
 
         if not specs:
             print("Route optimization complete: no routes to optimize")
@@ -1616,106 +1715,6 @@ class ExcelImportService:
         )
 
     @staticmethod
-    def _update_weekend_routes_from_aw_assignments(calendar_weeks: list[int]):
-        """
-        Update weekend routes with employee_id from AW (aw_nursing) assignments.
-        Matches routes by area, weekday, and calendar_week.
-        """
-        if not calendar_weeks:
-            return
-
-        # Map route area to assignment area
-        # Route areas can be "Nordkreis", "Südkreis", "Mitte", etc.
-        # Assignment areas are "Nord", "Süd", "Mitte"
-        def normalize_area(route_area: str) -> str:
-            """Convert route area to assignment area format"""
-            if not route_area:
-                return None
-            route_area_lower = route_area.lower()
-            if "nord" in route_area_lower:
-                return "Nord"
-            elif "süd" in route_area_lower or "sued" in route_area_lower:
-                return "Süd"
-            elif "mitte" in route_area_lower:
-                return "Mitte"
-            return None
-
-        # Map weekday string to ISO weekday number (1=Monday, 7=Sunday)
-        weekday_to_iso = {
-            "monday": 1,
-            "tuesday": 2,
-            "wednesday": 3,
-            "thursday": 4,
-            "friday": 5,
-            "saturday": 6,
-            "sunday": 7,
-        }
-
-        updated_count = 0
-        plan_year = default_planning_year()
-
-        # Area-based AW routes (weekend + holiday weekdays use Nord/Mitte/Süd)
-        area_routes = Route.query.filter(
-            Route.employee_id.is_(None),
-            Route.calendar_week.in_(calendar_weeks),
-            Route.area.in_(["Nord", "Mitte", "Süd"]),
-        ).all()
-
-        for route in area_routes:
-            # Normalize route area to match assignment area
-            assignment_area = normalize_area(route.area)
-            if not assignment_area:
-                continue
-
-            # Get the date for this route (from calendar_week and weekday)
-            try:
-                iso_weekday = weekday_to_iso.get(route.weekday.lower())
-                if not iso_weekday:
-                    continue
-
-                route_date = date.fromisocalendar(plan_year, route.calendar_week, iso_weekday)
-                wd = route.weekday.lower()
-                if wd not in ("saturday", "sunday") and not is_weekday_holiday(route_date):
-                    continue
-
-                # Find matching AW assignment using new model structure
-                # AW = category="AW", role="NURSING", time_of_day="NONE"
-                shift_def = ShiftDefinition.query.filter_by(
-                    category="AW", role="NURSING", area=assignment_area, time_of_day="NONE"
-                ).first()
-
-                if shift_def:
-                    # Find shift instance for this date
-                    shift_instance = ShiftInstance.query.filter_by(
-                        shift_definition_id=shift_def.id, date=route_date
-                    ).first()
-
-                    if shift_instance:
-                        # Find assignment for this shift instance
-                        assignment = Assignment.query.filter_by(
-                            shift_instance_id=shift_instance.id
-                        ).first()
-
-                        if assignment:
-                            route.employee_id = assignment.employee_id
-                            route.updated_at = datetime.utcnow()
-                            updated_count += 1
-                            print(
-                                f"    Updated route for area {route.area} on {route.weekday} (KW {route.calendar_week}) with employee_id {assignment.employee_id}"
-                            )
-            except Exception as e:
-                print(
-                    f"    Error updating route {route.id} for area {route.area} on {route.weekday} (KW {route.calendar_week}): {str(e)}"
-                )
-                continue
-
-        if updated_count > 0:
-            db.session.commit()
-            print(f"    Updated {updated_count} weekend routes with AW assignments")
-        else:
-            print("    No weekend routes updated (no matching AW assignments found)")
-
-    @staticmethod
     def import_patients(file_path) -> dict[str, list[Any]]:
         """
         Import patients and their appointments from Excel file (supports multiple sheets)
@@ -1734,6 +1733,9 @@ class ExcelImportService:
         try:
             # Step 0: Geocode cache (before patient delete)
             ExcelImportService.prepare_import()
+
+            # Preserve AW tour employee assignments (survives delete + failed import retry)
+            aw_tour_employee_snapshots = ExcelImportService._prepare_aw_tour_employee_snapshot()
 
             # Step 1: Delete existing patient data (keep employees and their planning)
             print("Step 1: Deleting existing patient data...")
@@ -1806,13 +1808,16 @@ class ExcelImportService:
             empty_routes = ExcelImportService._create_empty_routes(employees, calendar_weeks)
             all_routes.extend(empty_routes)
 
+            # Restore AW tour employee assignments before planning (start = Wohnort)
+            if aw_tour_employee_snapshots:
+                print("\nRestoring AW tour employee assignments...")
+                ExcelImportService._restore_aw_tour_employees(aw_tour_employee_snapshots)
+
             # Step 6: Plan all routes
             print("\nStep 6: Planning all routes...")
             ExcelImportService._plan_all_routes(all_routes)
 
-            # Step 7: Update weekend routes with employee_id from AW assignments
-            print("\nStep 7: Updating weekend routes with AW assignments...")
-            ExcelImportService._update_weekend_routes_from_aw_assignments(calendar_weeks)
+            ExcelImportService._clear_aw_tour_employee_snapshot()
 
             # Calculate final statistics
             calendar_weeks_str = ", ".join(map(str, calendar_weeks)) if calendar_weeks else "None"
