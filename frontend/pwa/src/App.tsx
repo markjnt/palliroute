@@ -105,13 +105,7 @@ function AccountDetail({
   );
 }
 
-function AuthStatusScreen({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function AuthStatusScreen({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Box
       display="flex"
@@ -161,13 +155,11 @@ function UnmappedEmployeeScreen({ me }: { me: AuthMeResponse }) {
         <AccountDetail label="Name" value={name} />
         <AccountDetail label="Entra-E-Mail" value={email} mono />
         <AccountDetail label="Entra-OID" value={oid} mono />
-        {pattern ? (
-          <AccountDetail label="Erwartetes Namensmuster" value={pattern} mono />
-        ) : null}
+        {pattern ? <AccountDetail label="Erwartetes Namensmuster" value={pattern} mono /> : null}
       </Box>
       <Typography color="text.secondary" textAlign="center" maxWidth={420} variant="body2">
-        Bitte wenden Sie sich an einen Admin und geben Sie diese Angaben weiter. Der Mitarbeiter muss
-        in der Excel stehen und über E-Mail oder Namensmuster zu diesem Konto passen.
+        Bitte wenden Sie sich an einen Admin und geben Sie diese Angaben weiter. Der Mitarbeiter
+        muss in der Excel stehen und über E-Mail oder Namensmuster zu diesem Konto passen.
       </Typography>
     </AuthStatusScreen>
   );
