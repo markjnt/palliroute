@@ -21,6 +21,70 @@ def _token_email(claims: dict) -> str | None:
     return None
 
 
+def parse_admin_emails(raw: str | None) -> set[str]:
+    """Parse comma/semicolon-separated admin emails from env (case-insensitive)."""
+    if not raw:
+        return set()
+    parts = raw.replace(";", ",").replace("\n", ",")
+    return {part.strip().lower() for part in parts.split(",") if part.strip()}
+
+
+def is_admin_email(email: str | None, allowlist: set[str]) -> bool:
+    if not email or not allowlist:
+        return False
+    return email.strip().lower() in allowlist
+
+
+def _claim_oid(claims: dict) -> str | None:
+    oid = claims.get("oid") or claims.get("sub")
+    if isinstance(oid, str):
+        return oid.strip() or None
+    return None
+
+
+def unmapped_account_info(claims: dict, *, entra_email_domain: str) -> dict:
+    """Explain why an Entra account could not be mapped to an employee."""
+    oid = _claim_oid(claims)
+    email = _token_email(claims)
+    name = claims.get("name") if isinstance(claims.get("name"), str) else None
+    domain = (entra_email_domain or "").strip().lower() or "sapv-oberberg.de"
+    pattern = f"vorname.nachname@{domain}"
+
+    if not email and not oid:
+        detail = (
+            "Im Microsoft-Konto fehlen E-Mail und Entra-OID. "
+            "Eine Zuordnung zu einem Mitarbeiter ist dadurch nicht möglich."
+        )
+    elif not email:
+        detail = (
+            "Die Entra-OID ist keinem Mitarbeiter zugeordnet, "
+            "und im Microsoft-Konto ist keine E-Mail enthalten. "
+            f"Ohne E-Mail kann auch das Namensmuster {pattern} nicht geprüft werden."
+        )
+    elif not oid:
+        detail = (
+            f"Die E-Mail {email} ist keinem Mitarbeiter zugeordnet "
+            "(weder hinterlegte E-Mail noch Namensmuster "
+            f"{pattern}). Im Token fehlt außerdem die Entra-OID."
+        )
+    else:
+        detail = (
+            f"Für dieses Microsoft-Konto ist kein Mitarbeiter hinterlegt. "
+            f"Geprüft wurden Entra-OID, hinterlegte Mitarbeiter-E-Mail ({email}) "
+            f"und das Namensmuster {pattern}."
+        )
+
+    return {
+        "code": "employee_not_mapped",
+        "detail": detail,
+        "email": email,
+        "oid": oid,
+        "name": name.strip() if name else None,
+        "entra_email_domain": domain,
+        "name_email_pattern": pattern,
+    }
+
+
 def _soft_bind(employee: Employee, *, oid: str | None, email: str | None) -> None:
     """Fill empty email / entra_oid from token; does not overwrite set values."""
     changed = False
@@ -56,12 +120,7 @@ def _find_by_name_email_pattern(token_email: str, domain: str) -> Employee | Non
 
 
 def find_employee_for_claims(claims: dict) -> Employee | None:
-    oid = claims.get("oid") or claims.get("sub")
-    if isinstance(oid, str):
-        oid = oid.strip() or None
-    else:
-        oid = None
-
+    oid = _claim_oid(claims)
     email = _token_email(claims)
 
     if oid:
