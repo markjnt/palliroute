@@ -1,4 +1,4 @@
-import type { Appointment, Route } from '@palliroute/models';
+import type { Appointment, MarkerType, Route } from '@palliroute/models';
 import { appointmentTypeColors, employeeTypeColors } from '../colors';
 
 export const weekdayMap: Record<string, string> = {
@@ -27,6 +27,25 @@ export const parseRouteOrder = (routeOrder: unknown): number[] => {
     console.error('Failed to parse route_order:', error);
     return [];
   }
+};
+
+export const getOwnRouteOrder = (route: Route): number[] => {
+  const customOrder = parseRouteOrder(route.custom_order);
+  return customOrder.length > 0 ? customOrder : parseRouteOrder(route.route_order);
+};
+
+export const getOwnRoutePolyline = (route: Route): string => {
+  return route.custom_polyline || route.polyline || '';
+};
+
+export const getOwnRouteDistance = (route: Route): number => {
+  if (route.custom_distance != null) return route.custom_distance;
+  return route.total_distance || 0;
+};
+
+export const getOwnRouteDuration = (route: Route): number => {
+  if (route.custom_duration != null) return route.custom_duration;
+  return route.total_duration || 0;
 };
 
 export const isValidRoute = (route: Route): boolean => {
@@ -86,4 +105,115 @@ export const getTourAreaStartLocation = (area: string): { lat: number; lng: numb
   };
 
   return tourAreaStartLocations[areaNormalized] || tourAreaStartLocations['Mitte'];
+};
+
+export const GOOGLE_MAPS_MAP_ID = 'DEMO_MAP_ID';
+
+export const GOOGLE_MAPS_LIBRARIES: ('places' | 'geocoding' | 'geometry' | 'marker')[] = [
+  'places',
+  'geocoding',
+  'geometry',
+  'marker',
+];
+
+export const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
+export const MAP_DEFAULT_CENTER = { lat: 51.0267, lng: 7.5683 };
+export const MAP_DEFAULT_ZOOM = 10;
+export const MAP_MIN_ZOOM = 3;
+export const MAP_MAX_ZOOM = 20;
+
+export const ROUTE_POLYLINE = {
+  weight: 5,
+  hoverWeight: 8,
+  dimmedOpacity: 0.18,
+  hitWeight: 18,
+} as const;
+
+export const TOUR_AREA_COLORS = {
+  Nord: '#1976d2',
+  Mitte: '#7b1fa2',
+  Süd: '#388e3c',
+  default: '#ff9800',
+} as const;
+
+export const getTourAreaColor = (area?: string | null): string => {
+  if (area === 'Wochenend-Touren') return TOUR_AREA_COLORS.default;
+  if (area === 'Nord' || area === 'Nordkreis') return TOUR_AREA_COLORS.Nord;
+  if (area === 'Mitte') return TOUR_AREA_COLORS.Mitte;
+  if (area === 'Süd' || area === 'Südkreis') return TOUR_AREA_COLORS.Süd;
+  return TOUR_AREA_COLORS.default;
+};
+
+export interface MarkerAppearance {
+  type: MarkerType;
+  employeeType?: string;
+  visitType?: string;
+  area?: string;
+  routeColor?: string | null;
+  isInactive?: boolean;
+}
+
+export const getMarkerFillColor = ({
+  type,
+  employeeType,
+  visitType,
+  area,
+  routeColor,
+  isInactive = false,
+}: MarkerAppearance): string => {
+  let baseColor: string;
+  if (routeColor) {
+    baseColor = routeColor;
+  } else if (type === 'employee') {
+    baseColor = getColorForEmployeeType(employeeType);
+  } else if (type === 'tour_area') {
+    baseColor = getTourAreaColor(area);
+  } else if (type === 'pflegeheim') {
+    baseColor = '#388e3c';
+  } else if (type === 'custom') {
+    baseColor = '#ff5722';
+  } else {
+    baseColor = getColorForVisitType(visitType);
+  }
+  return isInactive ? '#9E9E9E' : baseColor;
+};
+
+export const getMarkerLabelText = (
+  routePosition?: number,
+  visitType?: string,
+  customLabel?: string
+): string | undefined => {
+  if (customLabel) return customLabel;
+  if (routePosition && (!visitType || visitType === 'HB' || visitType === 'NA')) {
+    return routePosition.toString();
+  }
+  return undefined;
+};
+
+type LatLngLike = { lat: () => number; lng: () => number };
+
+export const groupMarkersByLatLng = <T extends { position: LatLngLike }>(markers: T[]): T[][] => {
+  const grouped = new Map<string, T[]>();
+  for (const marker of markers) {
+    const key = `${marker.position.lat().toFixed(5)}|${marker.position.lng().toFixed(5)}`;
+    const group = grouped.get(key);
+    if (group) group.push(marker);
+    else grouped.set(key, [marker]);
+  }
+  return Array.from(grouped.values());
+};
+
+export const offsetOverlappingLatLng = (
+  lat: number,
+  lng: number,
+  index: number,
+  total: number
+): { lat: number; lng: number } => {
+  if (total === 1) return { lat, lng };
+  const offset = 0.0001;
+  const angle = ((2 * Math.PI) / total) * index;
+  return {
+    lat: lat + Math.sin(angle) * offset,
+    lng: lng + Math.cos(angle) * offset,
+  };
 };

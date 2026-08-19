@@ -68,10 +68,64 @@ export const routeLineColors: string[] = [
 ];
 
 // Helper function to get color for an employee ID
-export const getColorForTour = (employeeId: number | undefined): string => {
+const HEX_COLOR = /^#?([0-9A-Fa-f]{6})$/;
+
+const parseHexColor = (color: string): [number, number, number] | null => {
+  const match = color.trim().match(HEX_COLOR);
+  if (!match) return null;
+  const hex = match[1];
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16),
+  ];
+};
+
+const colorDistance = (a: string, b: string): number => {
+  const pa = parseHexColor(a);
+  const pb = parseHexColor(b);
+  if (!pa || !pb) return Number.POSITIVE_INFINITY;
+  const dr = pa[0] - pb[0];
+  const dg = pa[1] - pb[1];
+  const db = pa[2] - pb[2];
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+};
+
+/** Own PWA tour line / HB marker blue — overlay tours must not look like this. */
+export const OWN_ROUTE_LINE_COLOR = '#2196F3';
+
+/** RGB distance below which two route colors read as the same on the map. */
+const ROUTE_COLOR_SIMILARITY = 100;
+
+const isTooCloseToAvoided = (color: string, avoid: string[]): boolean =>
+  avoid.some(
+    (reserved) =>
+      color.toLowerCase() === reserved.toLowerCase() ||
+      colorDistance(color, reserved) < ROUTE_COLOR_SIMILARITY
+  );
+
+export const getColorForTour = (
+  employeeId: number | undefined,
+  options?: { avoid?: string[] }
+): string => {
   if (!employeeId) return '#9E9E9E'; // Default grey for undefined employee
 
-  // Ensure employeeId is a positive number and convert to zero-based index
-  const index = (Math.abs(employeeId) - 1) % routeLineColors.length;
-  return routeLineColors[index];
+  const start = (Math.abs(employeeId) - 1) % routeLineColors.length;
+  const avoid = options?.avoid ?? [];
+  if (avoid.length === 0) {
+    return routeLineColors[start];
+  }
+
+  for (let offset = 0; offset < routeLineColors.length; offset += 1) {
+    const color = routeLineColors[(start + offset) % routeLineColors.length];
+    if (!isTooCloseToAvoided(color, avoid)) {
+      return color;
+    }
+  }
+
+  return routeLineColors[start];
 };
+
+/** Overlay tour color that stays distinct from the viewer's own route. */
+export const getColorForAdditionalTour = (employeeId: number | undefined): string =>
+  getColorForTour(employeeId, { avoid: [OWN_ROUTE_LINE_COLOR] });
