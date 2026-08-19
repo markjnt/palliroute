@@ -40,14 +40,9 @@ export function useNrwpHolidayLookupForSelectedKw() {
   const { holidayByYmd } = useNrwpHolidaysForYears(holidayYears);
 
   const getHolidayName = useCallback(
-    (weekday: Weekday) => {
-      if (selectedCalendarWeek == null) return null;
-      return holidayNameForCalendarWeekday(
-        holidayByYmd,
-        backendIsoYear,
-        selectedCalendarWeek,
-        weekday
-      );
+    (weekday: Weekday, calendarWeek: number | null = selectedCalendarWeek) => {
+      if (calendarWeek == null) return null;
+      return holidayNameForCalendarWeekday(holidayByYmd, backendIsoYear, calendarWeek, weekday);
     },
     [selectedCalendarWeek, holidayByYmd, backendIsoYear]
   );
