@@ -69,7 +69,10 @@ def test_custom_order_snapshot_ignores_invalid_payload():
     assert ExcelImportService._deserialize_custom_order_snapshot(None) == []
     assert ExcelImportService._deserialize_custom_order_snapshot("not-json") == []
     assert ExcelImportService._deserialize_custom_order_snapshot(json.dumps({"x": 1})) == []
-    assert ExcelImportService._deserialize_custom_order_snapshot(json.dumps([{"weekday": "monday"}])) == []
+    assert (
+        ExcelImportService._deserialize_custom_order_snapshot(json.dumps([{"weekday": "monday"}]))
+        == []
+    )
 
 
 def test_match_custom_order_keeps_remaining_stops_and_appends_new():

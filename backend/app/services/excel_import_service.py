@@ -5,10 +5,9 @@ from collections import defaultdict, deque
 from datetime import datetime, time
 from typing import Any
 
-from sqlalchemy.orm import joinedload
-
 import googlemaps
 import pandas as pd
+from sqlalchemy.orm import joinedload
 
 from .. import db
 from ..models.appointment import VISIT_TYPE_DURATIONS, Appointment
@@ -322,7 +321,9 @@ class ExcelImportService:
         )
 
     @staticmethod
-    def _stop_identity_from_appointment(appointment: Appointment) -> tuple[str, str, str, str, str] | None:
+    def _stop_identity_from_appointment(
+        appointment: Appointment,
+    ) -> tuple[str, str, str, str, str] | None:
         patient = appointment.patient
         if not patient:
             return None

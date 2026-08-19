@@ -80,7 +80,9 @@ class RoutePlanner:
             appointment_ids = route.get_route_order()
             appointments_by_id = {
                 appointment.id: appointment
-                for appointment in Appointment.query.filter(Appointment.id.in_(appointment_ids)).all()
+                for appointment in Appointment.query.filter(
+                    Appointment.id.in_(appointment_ids)
+                ).all()
             }
             appointments = [
                 appointments_by_id[appointment_id]

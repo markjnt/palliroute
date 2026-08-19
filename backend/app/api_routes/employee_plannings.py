@@ -262,10 +262,9 @@ def update_replacement(employee_id, weekday):
                         app_id = move["appointment"].id
                         if move["old_employee_id"] == emp_id:
                             route.remove_appointment_id(app_id)
-                        elif (
-                            move["new_employee_id"] == emp_id
-                            and move["appointment"].visit_type in ("HB", "NA")
-                        ):
+                        elif move["new_employee_id"] == emp_id and move[
+                            "appointment"
+                        ].visit_type in ("HB", "NA"):
                             route.append_appointment_id(app_id)
 
                     try:
