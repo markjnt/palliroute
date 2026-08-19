@@ -7,13 +7,16 @@ import {
   IconButton,
   Button,
   Grid,
+  Card,
+  CardContent,
+  Avatar,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Done as DoneIcon,
   Person as PersonIcon,
-  Logout as LogoutIcon,
   Close as CloseIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { Sheet } from 'react-modal-sheet';
 import { useAuth } from '@palliroute/auth';
@@ -48,6 +51,46 @@ interface AdditionalRoutesSheetProps {
   onClose: () => void;
 }
 
+function LogoutPickCard({ onLogout }: { onLogout: () => void }) {
+  return (
+    <Card
+      onClick={onLogout}
+      sx={{
+        cursor: 'pointer',
+        borderRadius: 2,
+        border: '1px solid rgba(0, 0, 0, 0.08)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+        },
+        transition: 'all 0.2s ease-in-out',
+      }}
+    >
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              bgcolor: 'rgba(255, 59, 48, 0.12)',
+              color: '#FF3B30',
+            }}
+          >
+            <LogoutIcon />
+          </Avatar>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, color: '#FF3B30', fontSize: '0.95rem' }}
+          >
+            Abmelden
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
 export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ open, onClose }) => {
   const { shouldRender, onCloseEnd } = useDeferredSheetMount(open);
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,13 +101,12 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ op
   const { selectedEmployeeIds, selectedAreas, toggleEmployee, toggleArea, deselectAll } =
     useAdditionalRoutesStore();
   const { selectedWeekday } = useWeekdayStore();
-  const { logout, configured, isAuthenticated } = useAuth();
   const { data: me } = useAuthMe();
+  const { logout, configured, isAuthenticated } = useAuth();
   const isAdmin = Boolean(me?.is_admin);
+  const showLogout = configured && isAuthenticated;
   const { data: routes = [] } = useRoutes({ weekday: selectedWeekday as Weekday });
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
-
-  const showLogout = configured && isAuthenticated;
   const selectedEmployee = employees.find((emp) => emp.id === selectedUserId);
 
   const employeesWithRoutes = useMemo(() => {
@@ -150,24 +192,6 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ op
                   gap: 1,
                 }}
               >
-                {isAreaTourDay && showLogout ? (
-                  <IconButton
-                    onClick={() => {
-                      logout();
-                    }}
-                    sx={{
-                      bgcolor: 'rgba(255, 59, 48, 0.12)',
-                      color: '#FF3B30',
-                      flexShrink: 0,
-                      width: '48px',
-                      height: '48px',
-                      '&:hover': { bgcolor: 'rgba(255, 59, 48, 0.2)' },
-                    }}
-                    aria-label="Abmelden"
-                  >
-                    <LogoutIcon />
-                  </IconButton>
-                ) : null}
                 <Typography
                   variant="h6"
                   sx={{ fontWeight: 600, color: '#1d1d1f', flex: 1, minWidth: 0 }}
@@ -228,24 +252,6 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ op
               {isAreaTourDay ? null : (
                 <>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {showLogout && (
-                      <IconButton
-                        onClick={() => {
-                          logout();
-                        }}
-                        sx={{
-                          bgcolor: 'rgba(255, 59, 48, 0.12)',
-                          color: '#FF3B30',
-                          flexShrink: 0,
-                          width: '48px',
-                          height: '48px',
-                          '&:hover': { bgcolor: 'rgba(255, 59, 48, 0.2)' },
-                        }}
-                        aria-label="Abmelden"
-                      >
-                        <LogoutIcon />
-                      </IconButton>
-                    )}
                     <TextField
                       fullWidth
                       variant="outlined"
@@ -354,6 +360,11 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ op
                           />
                         </Grid>
                       ))}
+                      {showLogout ? (
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <LogoutPickCard onLogout={() => logout()} />
+                        </Grid>
+                      ) : null}
                     </Grid>
                   )
                 ) : filteredEmployees.length === 0 ? (
@@ -377,8 +388,21 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ op
                         />
                       </Grid>
                     ))}
+                    {showLogout ? (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <LogoutPickCard onLogout={() => logout()} />
+                      </Grid>
+                    ) : null}
                   </Grid>
                 )}
+                {showLogout &&
+                (isLoading ||
+                  error ||
+                  (isAreaTourDay ? otherAwAreas.length === 0 : filteredEmployees.length === 0)) ? (
+                  <Box sx={{ mt: 1.5 }}>
+                    <LogoutPickCard onLogout={() => logout()} />
+                  </Box>
+                ) : null}
               </Box>
             </Sheet.Scroller>
           </Sheet.Content>

@@ -67,8 +67,8 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
               </div>
               <RouteInfo />
             </Sheet.Header>
-            <Sheet.Content style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <Sheet.Scroller draggableAt="top" style={{ flex: 1, minHeight: 0 }}>
+            <Sheet.Content>
+              <Sheet.Scroller draggableAt="top">
                 <div style={{ paddingBottom: 24 }}>
                   <RouteList onShowAdditionalRoute={onClose} />
                 </div>
