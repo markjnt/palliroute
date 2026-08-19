@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 import { MapContainerProps } from '../../types/mapTypes';
@@ -53,7 +53,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
 
   // Map state
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [mapError, setMapError] = useState<string | null>(null);
 
   // Get selected user and weekday from stores
   const { selectedUserId } = useUserStore();
@@ -62,28 +61,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
 
   // Data hooks
-  const {
-    data: employees = [],
-    isLoading: employeesLoading,
-    refetch: refetchEmployees,
-  } = useEmployees();
-  const {
-    data: patients = [],
-    isLoading: patientsLoading,
-    error: patientsError,
-    refetch: refetchPatients,
-  } = usePatients();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployees();
+  const { data: patients = [], isLoading: patientsLoading, error: patientsError } = usePatients();
   const {
     data: appointments = [],
     isLoading: appointmentsLoading,
     error: appointmentsError,
-    refetch: refetchAppointments,
   } = useAppointmentsByWeekday(selectedWeekday as Weekday);
   const {
     data: routes = [],
     isLoading: routesLoading,
     error: routesError,
-    refetch: refetchRoutes,
   } = useRoutes({
     weekday: selectedWeekday as Weekday,
   });
@@ -242,7 +230,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
             : 'Unknown Employee',
       };
     });
-  }, [visibleRoutes, employees, selectedUserId, isAreaTourDay, selectedAreas, mainRoute]);
+  }, [visibleRoutes, employees, isAreaTourDay, selectedAreas, mainRoute]);
 
   useEffect(() => {
     if (map && employees.length > 0 && patients.length > 0 && appointments.length > 0) {
@@ -264,7 +252,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
   const isLoading =
     employeesLoading || patientsLoading || appointmentsLoading || routesLoading || !isLoaded;
   const error =
-    mapError ||
     (patientsError instanceof Error ? patientsError.message : null) ||
     (appointmentsError instanceof Error ? appointmentsError.message : null) ||
     (routesError instanceof Error ? routesError.message : null);
