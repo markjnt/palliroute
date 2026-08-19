@@ -1,15 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import { useCalendarWeekStore } from '../stores/useCalendarWeekStore';
 import { useNrwpHolidaysForYears } from '../services/queries/useConfig';
-import { holidayNameForCalendarWeekday } from '@palliroute/shared';
+import { holidayNameForCalendarWeekday, isoYearForCalendarWeek } from '@palliroute/shared';
 import type { Weekday } from '../types/models';
 
 export function useNrwpHolidayForTourDay(selectedWeekday: Weekday) {
   const { selectedCalendarWeek } = useCalendarWeekStore();
-  const backendIsoYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
   const holidayYears = useMemo(
-    () => [backendIsoYear - 1, backendIsoYear, backendIsoYear + 1],
-    [backendIsoYear]
+    () => [currentYear - 1, currentYear, currentYear + 1],
+    [currentYear]
   );
   const { holidayByYmd } = useNrwpHolidaysForYears(holidayYears);
 
@@ -17,11 +17,11 @@ export function useNrwpHolidayForTourDay(selectedWeekday: Weekday) {
     if (selectedCalendarWeek == null) return null;
     return holidayNameForCalendarWeekday(
       holidayByYmd,
-      backendIsoYear,
+      isoYearForCalendarWeek(selectedCalendarWeek),
       selectedCalendarWeek,
       selectedWeekday
     );
-  }, [selectedCalendarWeek, selectedWeekday, holidayByYmd, backendIsoYear]);
+  }, [selectedCalendarWeek, selectedWeekday, holidayByYmd]);
 
   const isSaturdayOrSunday = selectedWeekday === 'saturday' || selectedWeekday === 'sunday';
   const isWeekdayHoliday = Boolean(holidayName && !isSaturdayOrSunday);
@@ -32,19 +32,24 @@ export function useNrwpHolidayForTourDay(selectedWeekday: Weekday) {
 
 export function useNrwpHolidayLookupForSelectedKw() {
   const { selectedCalendarWeek } = useCalendarWeekStore();
-  const backendIsoYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
   const holidayYears = useMemo(
-    () => [backendIsoYear - 1, backendIsoYear, backendIsoYear + 1],
-    [backendIsoYear]
+    () => [currentYear - 1, currentYear, currentYear + 1],
+    [currentYear]
   );
   const { holidayByYmd } = useNrwpHolidaysForYears(holidayYears);
 
   const getHolidayName = useCallback(
     (weekday: Weekday, calendarWeek: number | null = selectedCalendarWeek) => {
       if (calendarWeek == null) return null;
-      return holidayNameForCalendarWeekday(holidayByYmd, backendIsoYear, calendarWeek, weekday);
+      return holidayNameForCalendarWeekday(
+        holidayByYmd,
+        isoYearForCalendarWeek(calendarWeek),
+        calendarWeek,
+        weekday
+      );
     },
-    [selectedCalendarWeek, holidayByYmd, backendIsoYear]
+    [selectedCalendarWeek, holidayByYmd]
   );
 
   return getHolidayName;

@@ -8,6 +8,7 @@ import AdditionalRoutesSheet from '../user/AdditionalRoutesSheet';
 import AdminEmployeeSelectSheet from '../user/AdminEmployeeSelectSheet';
 import { TopOverviewBar } from './TopOverviewBar';
 import { useAuthMe } from '../../services/queries/useAuthMe';
+import { useFallbackSelectedWeekday } from '../../hooks/useFallbackSelectedWeekday';
 
 declare global {
   interface Window {
@@ -26,6 +27,7 @@ const MainLayout: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const isAdmin = Boolean(me?.is_admin);
+  useFallbackSelectedWeekday();
 
   useEffect(() => {
     const applyCurrentDay = () => {
