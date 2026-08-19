@@ -1,9 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { Marker } from '@react-google-maps/api';
+import { AdvancedMapMarker, CircleStopMarker, CustomPlaceMarker } from '@palliroute/ui';
+import {
+  getMarkerFillColor,
+  getMarkerLabelText,
+  groupMarkersByLatLng,
+  offsetOverlappingLatLng,
+} from '@palliroute/shared';
+import { useRouteHoverStore } from '@palliroute/stores';
 import { MarkerData } from '../../types/mapTypes';
 import { MarkerInfoWindow } from './MarkerInfoWindow';
-import { Appointment, Employee, Patient } from '../../types/models';
-import { createMarkerIcon, createMarkerLabel } from '../../utils/markerConfig';
+import { Appointment, Employee, Patient, Route } from '../../types/models';
 import { useRouteVisibility } from '../../stores/useRouteVisibilityStore';
 
 interface MapMarkersProps {
@@ -12,33 +18,7 @@ interface MapMarkersProps {
   employees: Employee[];
   appointments: Appointment[];
   userArea?: string;
-  routes: any[]; // Add this line
-}
-
-// Group markers by rounded lat/lng
-function groupMarkersByLatLng(markers: MarkerData[]) {
-  const map = new Map<string, MarkerData[]>();
-  for (const marker of markers) {
-    const lat = marker.position.lat();
-    const lng = marker.position.lng();
-    const key = `${lat.toFixed(5)}|${lng.toFixed(5)}`;
-    if (!map.has(key)) {
-      map.set(key, []);
-    }
-    map.get(key)!.push(marker);
-  }
-  return Array.from(map.values()); // Array of marker groups
-}
-
-// Offset marker positions in a circle if overlapping
-function offsetLatLng(lat: number, lng: number, index: number, total: number) {
-  if (total === 1) return { lat, lng };
-  const offset = 0.0001;
-  const angle = ((2 * Math.PI) / total) * index;
-  return {
-    lat: lat + Math.sin(angle) * offset,
-    lng: lng + Math.cos(angle) * offset,
-  };
+  routes: Route[];
 }
 
 export const MapMarkers: React.FC<MapMarkersProps> = ({
@@ -51,34 +31,33 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
 }) => {
   const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
   const hiddenMarkers = useRouteVisibility((state) => state.hiddenMarkers);
+  const hoveredRouteId = useRouteHoverStore((state) => state.hoveredRouteId);
+  const hoverRoute = useRouteHoverStore((state) => state.hoverRoute);
+  const unhoverRoute = useRouteHoverStore((state) => state.unhoverRoute);
 
-  // Gruppiere alle Marker (keine Filterung mehr)
   const markerGroups = useMemo(() => groupMarkersByLatLng(markers), [markers]);
 
   return (
     <>
       {markerGroups.map((group, groupIdx) =>
         group.map((marker, idx) => {
-          // Marker ausblenden, wenn die zugehörige Route in hiddenMarkers ist
           if (marker.routeId && hiddenMarkers.has(marker.routeId)) {
             return null;
           }
           const origLat = marker.position.lat();
           const origLng = marker.position.lng();
-          const { lat, lng } = offsetLatLng(origLat, origLng, idx, group.length);
+          const { lat, lng } = offsetOverlappingLatLng(origLat, origLng, idx, group.length);
           const displayPosition = new google.maps.LatLng(lat, lng);
-          // Area-based styling
           let opacity = 1;
-          const icon = createMarkerIcon(
-            marker.type,
-            marker.employeeType,
-            marker.visitType,
-            false,
-            marker.area
-          );
+          const color = getMarkerFillColor({
+            type: marker.type,
+            employeeType: marker.employeeType,
+            visitType: marker.visitType,
+            area: marker.area,
+          });
           const label = marker.isInactive
             ? undefined
-            : createMarkerLabel(marker.routePosition, marker.visitType, marker.label);
+            : getMarkerLabelText(marker.routePosition, marker.visitType, marker.label);
           if (marker.isInactive) {
             opacity = 0.6;
           } else if (
@@ -90,16 +69,41 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
           ) {
             opacity = 0.6;
           }
+
+          const isEmphasized =
+            hoveredRouteId != null && marker.routeId != null && marker.routeId === hoveredRouteId;
+          const isDimmed =
+            hoveredRouteId != null && (marker.routeId == null || marker.routeId !== hoveredRouteId);
+
+          let zIndex = 10;
+          if (marker.type === 'custom') zIndex = 1000;
+          else if (isEmphasized) zIndex = 500;
+          else if (isDimmed) zIndex = 1;
+
           return (
-            <Marker
+            <AdvancedMapMarker
               key={`marker-${groupIdx}-${idx}`}
               position={displayPosition}
-              icon={icon}
-              label={label}
+              title={marker.title}
+              zIndex={zIndex}
               onClick={() => setSelectedMarker({ ...marker, displayPosition })}
-              opacity={opacity}
-              zIndex={marker.type === 'custom' ? 1000 : undefined}
-            />
+              onMouseOver={() => {
+                if (marker.routeId != null) hoverRoute(marker.routeId);
+              }}
+              onMouseOut={unhoverRoute}
+            >
+              {marker.type === 'custom' ? (
+                <CustomPlaceMarker opacity={opacity} dimmed={isDimmed} />
+              ) : (
+                <CircleStopMarker
+                  color={color}
+                  label={label}
+                  opacity={opacity}
+                  dimmed={isDimmed}
+                  emphasized={isEmphasized}
+                />
+              )}
+            </AdvancedMapMarker>
           );
         })
       )}

@@ -1,5 +1,5 @@
 import { MarkerData } from '../types/mapTypes';
-import { Route, Employee, Patient, Appointment } from '../types/models';
+import { Employee, Patient, Appointment } from '../types/models';
 import {
   weekdayMap,
   getCurrentWeekday,
@@ -9,6 +9,13 @@ import {
   getColorForVisitType,
   getColorForEmployeeType,
   getTourAreaStartLocation,
+  GOOGLE_MAPS_MAP_ID,
+  GOOGLE_MAPS_LIBRARIES,
+  MAP_CONTAINER_STYLE,
+  MAP_DEFAULT_CENTER,
+  MAP_DEFAULT_ZOOM,
+  MAP_MIN_ZOOM,
+  MAP_MAX_ZOOM,
 } from '@palliroute/shared';
 
 export {
@@ -20,28 +27,15 @@ export {
   getColorForVisitType,
   getColorForEmployeeType,
   getTourAreaStartLocation,
+  GOOGLE_MAPS_MAP_ID,
+  MAP_MIN_ZOOM,
+  MAP_MAX_ZOOM,
 };
 
-export const libraries: ('places' | 'geocoding' | 'geometry')[] = [
-  'places',
-  'geocoding',
-  'geometry',
-];
-
-export const containerStyle = {
-  width: '100%',
-  height: '100%',
-};
-
-export const defaultCenter = {
-  lat: 51.0267,
-  lng: 7.5683,
-};
-
-export const defaultZoom = 10;
-
-export const MAP_MIN_ZOOM = 3;
-export const MAP_MAX_ZOOM = 20;
+export const libraries = GOOGLE_MAPS_LIBRARIES;
+export const containerStyle = MAP_CONTAINER_STYLE;
+export const defaultCenter = MAP_DEFAULT_CENTER;
+export const defaultZoom = MAP_DEFAULT_ZOOM;
 
 export const mapOptions: google.maps.MapOptions = {
   zoomControl: false,
@@ -51,13 +45,7 @@ export const mapOptions: google.maps.MapOptions = {
   rotateControl: false,
   fullscreenControl: false,
   clickableIcons: false,
-  styles: [
-    {
-      featureType: 'poi',
-      elementType: 'labels',
-      stylers: [{ visibility: 'off' }],
-    },
-  ],
+  mapId: GOOGLE_MAPS_MAP_ID,
 };
 
 export const createEmployeeMarkerData = (

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { patientsApi } from '../api/patients';
 import { appointmentKeys } from './useAppointments';
-import { routeKeys } from './useRoutes';
+import { routeKeys, liveListQueryOptions } from './useRoutes';
 import { employeeKeys } from './useEmployees';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
@@ -28,6 +28,7 @@ export const usePatients = (overrideCalendarWeek?: number) => {
   return useQuery({
     queryKey: [...patientKeys.lists(), { calendarWeek }],
     queryFn: () => patientsApi.getAll(calendarWeek || undefined),
+    ...liveListQueryOptions,
   });
 };
 

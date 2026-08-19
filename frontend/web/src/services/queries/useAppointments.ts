@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Weekday } from '../../types/models';
 import { appointmentsApi } from '../api/appointments';
-import { routeKeys } from './useRoutes';
+import { routeKeys, liveListQueryOptions } from './useRoutes';
 import { patientKeys } from './usePatients';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 import { employeePlanningKeys } from './useEmployeePlanning';
@@ -22,6 +22,7 @@ export const useAppointments = () => {
   return useQuery({
     queryKey: appointmentKeys.lists(),
     queryFn: () => appointmentsApi.getAll(),
+    ...liveListQueryOptions,
   });
 };
 
@@ -37,6 +38,7 @@ export const useAppointmentsByWeekday = (weekday: Weekday, overrideCalendarWeek?
     queryKey: [...appointmentKeys.byWeekday(weekday), { calendarWeek }],
     queryFn: () => appointmentsApi.getByWeekday(weekday, calendarWeek || undefined),
     enabled: !!weekday, // Nur ausführen, wenn ein Wochentag angegeben ist
+    ...liveListQueryOptions,
   });
 };
 

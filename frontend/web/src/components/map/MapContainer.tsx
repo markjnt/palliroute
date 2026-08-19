@@ -34,6 +34,7 @@ import {
   defaultZoom,
   mapOptions,
   libraries,
+  GOOGLE_MAPS_MAP_ID,
   MAP_MIN_ZOOM,
   MAP_MAX_ZOOM,
   createEmployeeMarkerData,
@@ -47,10 +48,10 @@ import { usePatients } from '../../services/queries/usePatients';
 import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
 import { useRoutes } from '../../services/queries/useRoutes';
 import { MapMarkers } from './MapMarkers';
-import { RoutePolylines } from './RoutePolylines';
+import { RoutePolylines } from '@palliroute/ui';
 import { AddCustomMarkerDialog } from './AddCustomMarkerDialog';
 import { PflegeheimeDialog } from './PflegeheimeDialog';
-import { routeLineColors, getColorForTour } from '@palliroute/shared';
+import { routeLineColors, getColorForTour, getTourAreaColor } from '@palliroute/shared';
 import { Weekday } from '../../types/models';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 import { useNotificationStore } from '../../stores/useNotificationStore';
@@ -60,6 +61,7 @@ import { useCustomMarkerStore } from '../../stores/useCustomMarkerStore';
 import { useNrwpHolidayForTourDay } from '../../hooks';
 import { usePflegeheime } from '../../services/queries/usePflegeheime';
 import { usePflegeheimeVisibilityStore } from '../../stores/usePflegeheimeVisibilityStore';
+import { useRouteVisibility } from '../../stores/useRouteVisibilityStore';
 import {
   mapFloatingControlSx,
   mapFloatingSurfaceSx,
@@ -94,12 +96,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const toggleShowPflegeheimeOnMap = usePflegeheimeVisibilityStore(
     (s) => s.toggleShowPflegeheimeOnMap
   );
+  const hiddenPolylines = useRouteVisibility((s) => s.hiddenPolylines);
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: apiKey,
     libraries,
+    mapIds: [GOOGLE_MAPS_MAP_ID],
     language: 'de',
     region: 'DE',
   });
@@ -407,20 +411,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const routePaths = useMemo(() => {
     return dayRoutes.map((route) => {
       if (isAreaTourDay) {
-        // AW-Flächenrouten (Wochenende / Feiertag) – ggf. mit employee_id
-        const getAreaColor = (area?: string) => {
-          switch (area) {
-            case 'Nord':
-              return '#1976d2';
-            case 'Mitte':
-              return '#7b1fa2';
-            case 'Süd':
-              return '#388e3c';
-            default:
-              return '#ff9800';
-          }
-        };
-        const color = getAreaColor(route.area as string);
+        const color = getTourAreaColor(route.area as string);
         const employee = employees.find((e) => e.id === route.employee_id);
         const employeeName = employee
           ? `${employee.first_name} ${employee.last_name} (AW ${route.area})`
@@ -839,7 +830,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         onUnmount={() => setMap(null)}
         options={mapOptions}
       >
-        <RoutePolylines routes={routePaths} map={map} />
+        <RoutePolylines routes={routePaths} map={map} hiddenRouteIds={hiddenPolylines} enableHover />
         <MapMarkers
           markers={markers}
           patients={patients}

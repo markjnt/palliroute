@@ -16,23 +16,22 @@ export const PflegeheimInfoContent: React.FC<PflegeheimInfoContentProps> = ({ ma
 
   return (
     <>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, pr: 4.5 }}>
         <BusinessIcon sx={{ color: '#388e3c', fontSize: 20 }} />
         <Typography
           variant="subtitle1"
-          component="div"
           sx={{
-            fontWeight: 'bold',
-            borderBottom: 1,
-            borderColor: 'divider',
-            pb: 0.5,
+            fontWeight: 600,
+            color: '#1d1d1f',
+            fontSize: '1rem',
+            lineHeight: 1.25,
           }}
         >
           {name}
         </Typography>
       </Box>
       {address && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography variant="body2" sx={{ color: '#8E8E93', fontWeight: 500 }}>
           {address}
         </Typography>
       )}
