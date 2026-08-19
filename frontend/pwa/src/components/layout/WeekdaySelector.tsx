@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
-  Chip,
   Button,
   Dialog,
   DialogTitle,
@@ -15,6 +14,7 @@ import {
   Home as HomeIcon,
   Phone as PhoneIcon,
   AddCircle as AddCircleIcon,
+  type SvgIconComponent,
 } from '@mui/icons-material';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
@@ -40,6 +40,52 @@ import {
 import { AreaPickCard } from '../user/EmployeePickCard';
 
 const AW_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
+
+function VisitTypeCount({
+  icon: Icon,
+  count,
+  color,
+}: {
+  icon: SvgIconComponent;
+  count: number;
+  color: string;
+}) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 0.25,
+        width: '100%',
+        minWidth: 0,
+      }}
+    >
+      <Icon sx={{ fontSize: 13, color }} />
+      <Box
+        component="span"
+        sx={{
+          minWidth: 14,
+          height: 12,
+          px: 0.3,
+          borderRadius: 0.75,
+          bgcolor: `${color}14`,
+          border: `1px solid ${color}40`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '0.55rem',
+          fontWeight: 700,
+          lineHeight: 1,
+          color,
+        }}
+      >
+        {count}
+      </Box>
+    </Box>
+  );
+}
 
 const getAwAreaLetter = (area?: string | null): 'N' | 'M' | 'S' | null => {
   if (area === 'Nord') return 'N';
@@ -405,63 +451,9 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
                     mb: 0.35,
                   }}
                 >
-                  <Chip
-                    size="small"
-                    icon={<HomeIcon fontSize="small" />}
-                    label={hbPatients.length}
-                    color="primary"
-                    variant="outlined"
-                    sx={{
-                      height: 15,
-                      fontSize: '0.55rem',
-                      borderColor: 'rgba(25, 118, 210, 0.3)',
-                      bgcolor: 'rgba(25, 118, 210, 0.05)',
-                      flex: 1,
-                      minWidth: 0,
-                      '& .MuiChip-label': {
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      },
-                    }}
-                  />
-                  <Chip
-                    size="small"
-                    icon={<PhoneIcon fontSize="small" />}
-                    label={tkPatients.length}
-                    color="success"
-                    variant="outlined"
-                    sx={{
-                      height: 15,
-                      fontSize: '0.55rem',
-                      borderColor: 'rgba(76, 175, 80, 0.3)',
-                      bgcolor: 'rgba(76, 175, 80, 0.05)',
-                      flex: 1,
-                      minWidth: 0,
-                      '& .MuiChip-label': {
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      },
-                    }}
-                  />
-                  <Chip
-                    size="small"
-                    icon={<AddCircleIcon fontSize="small" />}
-                    label={naPatients.length}
-                    color="secondary"
-                    variant="outlined"
-                    sx={{
-                      height: 15,
-                      fontSize: '0.55rem',
-                      borderColor: 'rgba(156, 39, 176, 0.3)',
-                      bgcolor: 'rgba(156, 39, 176, 0.05)',
-                      flex: 1,
-                      minWidth: 0,
-                      '& .MuiChip-label': {
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      },
-                    }}
-                  />
+                  <VisitTypeCount icon={HomeIcon} count={hbPatients.length} color="#007AFF" />
+                  <VisitTypeCount icon={PhoneIcon} count={tkPatients.length} color="#4caf50" />
+                  <VisitTypeCount icon={AddCircleIcon} count={naPatients.length} color="#FF3B30" />
                 </Box>
 
                 {areaLetter ? (
