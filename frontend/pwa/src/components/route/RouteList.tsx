@@ -272,7 +272,6 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
 
       // Use the first appointment for display
       const appointment = patientAppts[0];
-      const isMultiple = patientAppts.length > 1;
 
       const responsibleEmployee = appointment.employee_id
         ? employees.find((e) => e.id === appointment.employee_id)
@@ -338,7 +337,15 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
     });
 
     return stops;
-  }, [appointments, patients, employees, selectedUserId, selectedWeekday, visibleRoutes]);
+  }, [
+    appointments,
+    patients,
+    employees,
+    selectedUserId,
+    selectedWeekday,
+    visibleRoutes,
+    isAreaTourDay,
+  ]);
 
   // Get TK appointments (phone calls) for the selected employee/area and day
   const tkAppointments = useMemo(() => {
@@ -433,7 +440,6 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
         const patient = patients.find((p) => p.id === appointment.patient_id);
         if (!patient) return;
 
-        const isTourEmployeeAppointment = false; // Normal TK appointments
         const tourEmployee = appointment.tour_employee_id
           ? employees.find((e) => e.id === appointment.tour_employee_id)
           : null;
@@ -501,7 +507,6 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
         const patient = patients.find((p) => p.id === appointment.patient_id);
         if (!patient) return;
 
-        const isTourEmployeeAppointment = true;
         const responsibleEmployee = appointment.employee_id
           ? employees.find((e) => e.id === appointment.employee_id)
           : null;
