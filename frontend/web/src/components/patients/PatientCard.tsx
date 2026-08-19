@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -12,7 +12,6 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Divider,
 } from '@mui/material';
 import {
   Phone as PhoneIcon,
@@ -21,12 +20,8 @@ import {
   Navigation as NavigationIcon,
   SwapHoriz as SwapHorizIcon,
   Person as PersonIcon,
-  ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
 } from '@mui/icons-material';
-import { useDrag } from 'react-dnd';
 import { Patient, Appointment, Weekday } from '../../types/models';
-import { DragItemTypes, PatientDragItem } from '../../types/dragTypes';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { getColorForTour, employeeTypeColors } from '@palliroute/shared';
 import { useAppointmentsByPatient } from '../../services/queries/useAppointments';
@@ -41,10 +36,6 @@ interface PatientCardProps {
   index?: number; // For numbered list of HB visits
   compact?: boolean; // For more compact display in TK, NA, and no-appointment sections
   selectedDay: Weekday; // Der ausgewählte Wochentag
-  onMoveUp?: (patientId: number) => void; // New prop for moving patient up
-  onMoveDown?: (patientId: number) => void; // New prop for moving patient down
-  isFirst?: boolean; // New prop to indicate if this is the first patient in the list
-  isLast?: boolean; // New prop to indicate if this is the last patient in the list
   isTourEmployeeAppointment?: boolean; // Indicates if this is a tour employee appointment (shown but not in route)
   currentEmployeeId?: number; // ID of the employee currently viewing this card (for WeekdayOverview)
   appointmentId?: number; // Specific appointment ID to display (if multiple appointments exist for the same day)
@@ -60,10 +51,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   index,
   compact = false,
   selectedDay,
-  onMoveUp,
-  onMoveDown,
-  isFirst = false,
-  isLast = false,
   isTourEmployeeAppointment = false,
   currentEmployeeId,
   appointmentId,
@@ -71,7 +58,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   tourEmployeeAppointmentsForPatient,
   isFirstTourEmployeeAppointment = true,
 }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [replacementDialog, setReplacementDialog] = useState<{
     open: boolean;
@@ -225,31 +211,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     }
   };
 
-  // Configure drag and drop
-  const [{ isDragging }, drag] = useDrag<PatientDragItem, unknown, { isDragging: boolean }>({
-    type: DragItemTypes.PATIENT,
-    item: {
-      type: DragItemTypes.PATIENT,
-      patientId: patient.id || 0,
-      appointmentIds: appointments
-        .filter((app) => app.weekday === selectedDay)
-        .map((a) => a.id || 0)
-        .filter((id) => id !== 0),
-      sourceEmployeeId: (() => {
-        // Get source employee ID from the selected day appointment
-        const selectedDayAppointment = appointments.find((app) => app.weekday === selectedDay);
-        return selectedDayAppointment?.employee_id || undefined;
-      })(),
-    },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-    canDrag: () => !!patient.id && !isTourEmployeeAppointment, // Disable dragging for tour employee appointments
-  });
-
-  // Connect the drag ref to our cardRef
-  drag(cardRef);
-
   const getBgColor = () => {
     switch (visitType) {
       case 'HB':
@@ -327,19 +288,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     handleMenuClose();
   };
 
-  // Handle move up/down actions
-  const handleMoveUp = () => {
-    if (onMoveUp && patient.id && !isFirst) {
-      onMoveUp(patient.id);
-    }
-  };
-
-  const handleMoveDown = () => {
-    if (onMoveDown && patient.id && !isLast) {
-      onMoveDown(patient.id);
-    }
-  };
-
   const handleReplacementDialogClose = () => {
     setReplacementDialog({ open: false });
   };
@@ -390,15 +338,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({
 
   return (
     <Card
-      ref={cardRef}
       variant="outlined"
       sx={{
         mb: 2,
         backgroundColor: getBgColor(),
         position: 'relative',
         width: '100%',
-        opacity: isDragging ? 0.5 : isTourEmployeeAppointment ? 0.5 : 1,
-        cursor: isTourEmployeeAppointment ? 'default' : 'grab',
+        opacity: isTourEmployeeAppointment ? 0.5 : 1,
         transition: 'all 0.2s ease',
         filter: isTourEmployeeAppointment ? 'grayscale(0.3)' : 'none',
         '&:hover': {
@@ -407,7 +353,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         },
       }}
     >
-      {/* Reordering arrows - hidden for tour employee appointments */}
+      {/* Tour assignment - hidden for tour employee appointments */}
       {!isTourEmployeeAppointment && (
         <Box
           sx={{
@@ -424,56 +370,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}
         >
-          {/* Up arrow - hidden for first patient */}
-          {!isFirst && onMoveUp && (
-            <Tooltip title="Nach oben verschieben" arrow placement="top">
-              <IconButton
-                size="small"
-                onClick={handleMoveUp}
-                sx={{
-                  color: 'text.secondary',
-                  width: 24,
-                  height: 24,
-                  minWidth: 24,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                <ArrowUpwardIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-
-          {/* Down arrow - hidden for last patient */}
-          {!isLast && onMoveDown && (
-            <Tooltip title="Nach unten verschieben" arrow placement="top">
-              <IconButton
-                size="small"
-                onClick={handleMoveDown}
-                sx={{
-                  color: 'text.secondary',
-                  width: 24,
-                  height: 24,
-                  minWidth: 24,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                <ArrowDownwardIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-
-          {/* Separator line when at least one arrow is visible */}
-          {(onMoveUp || onMoveDown) && (
-            <Divider orientation="vertical" flexItem sx={{ height: 16, my: 'auto' }} />
-          )}
-
-          {/* Assign button that opens menu */}
           <Tooltip title="Tour zuweisen" arrow placement="top">
             <IconButton
               size="small"

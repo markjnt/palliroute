@@ -184,24 +184,6 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
     }
   };
 
-  const handleMoveUp = async (patientId: number) => {
-    if (!routeId) return;
-
-    const appointment = areaAppointments.find((a) => a.patient_id === patientId);
-    if (!appointment || !appointment.id) return;
-
-    await routeManagement.movePatientUp(routeId, appointment.id);
-  };
-
-  const handleMoveDown = async (patientId: number) => {
-    if (!routeId) return;
-
-    const appointment = areaAppointments.find((a) => a.patient_id === patientId);
-    if (!appointment || !appointment.id) return;
-
-    await routeManagement.movePatientDown(routeId, appointment.id);
-  };
-
   return (
     <Paper
       elevation={isHovered ? 6 : 2}
@@ -309,10 +291,6 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
                         index={index + 1}
                         selectedDay={selectedDay}
                         area={area}
-                        onMoveUp={handleMoveUp}
-                        onMoveDown={handleMoveDown}
-                        isFirst={index === 0}
-                        isLast={index === sortedRoutePatients.length - 1}
                       />
                     );
                   })}

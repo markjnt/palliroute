@@ -19,8 +19,6 @@ interface TourSectionsProps {
   isTourEmployeeAppointment: (appointment: Appointment, employeeId?: number) => boolean;
   selectedDay: Weekday;
   employeeId?: number;
-  onMoveUp: (patientId: number) => void;
-  onMoveDown: (patientId: number) => void;
   // New props for appointments
   normalRouteAppointments: Appointment[];
   tourEmployeeAppointments: Appointment[];
@@ -42,8 +40,6 @@ const TourSections: React.FC<TourSectionsProps> = ({
   isTourEmployeeAppointment,
   selectedDay,
   employeeId,
-  onMoveUp,
-  onMoveDown,
   normalRouteAppointments,
   tourEmployeeAppointments,
   normalTkAppointments,
@@ -147,10 +143,6 @@ const TourSections: React.FC<TourSectionsProps> = ({
                     visitType={visitType}
                     index={currentIndex}
                     selectedDay={selectedDay}
-                    onMoveUp={onMoveUp}
-                    onMoveDown={onMoveDown}
-                    isFirst={currentIndex === 1}
-                    isLast={globalIndex === allRouteAppointments.length}
                     isTourEmployeeAppointment={false}
                     currentEmployeeId={employeeId}
                     appointmentId={patientAppts[0].id}

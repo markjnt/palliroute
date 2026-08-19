@@ -114,24 +114,6 @@ export const routesApi = {
     }
   },
 
-  // Reorder an appointment up or down in a route
-  async reorderAppointment(
-    routeId: number,
-    appointmentId: number,
-    direction: 'up' | 'down'
-  ): Promise<Route> {
-    try {
-      const response = await api.put(`/routes/${routeId}`, {
-        appointment_id: appointmentId,
-        direction: direction,
-      });
-      return response.data.route;
-    } catch (error) {
-      console.error(`Failed to reorder appointment in route ${routeId}:`, error);
-      throw error;
-    }
-  },
-
   // Download route PDF for a calendar week
   async downloadRoutePdf(calendarWeek: number, selectedWeekday: Weekday): Promise<void> {
     try {
