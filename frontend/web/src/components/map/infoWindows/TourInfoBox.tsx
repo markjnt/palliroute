@@ -44,12 +44,24 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
         mb: 1,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-start',
+        alignItems: 'stretch',
+        width: 'max-content',
+        maxWidth: '100%',
+        minWidth: '100%',
+        boxSizing: 'border-box',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1, minWidth: 0 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          flexWrap: 'nowrap',
+          maxWidth: '100%',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flexShrink: 1 }}>
           {employeeName && (
             <Chip
               label={employeeName}
@@ -60,11 +72,12 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
                 fontWeight: 'bold',
                 fontSize: '0.9rem',
                 letterSpacing: 0.5,
-                maxWidth: '120px',
+                minWidth: 0,
                 '& .MuiChip-label': {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  px: 1,
                 },
               }}
             />
@@ -94,7 +107,8 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
               borderRadius: 2,
               px: 1.2,
               py: 0.5,
-              minWidth: 80,
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-end',

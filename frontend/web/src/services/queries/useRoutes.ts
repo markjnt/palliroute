@@ -3,6 +3,16 @@ import { Route, Weekday } from '../../types/models';
 import { routesApi } from '../api/routes';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 
+export const WEB_LIVE_REFETCH_INTERVAL_MS = 60_000;
+
+export const liveListQueryOptions = {
+  staleTime: 30_000,
+  refetchOnWindowFocus: true,
+  refetchOnMount: true,
+  refetchInterval: WEB_LIVE_REFETCH_INTERVAL_MS,
+  refetchIntervalInBackground: false,
+};
+
 // Keys for React Query cache
 export const routeKeys = {
   all: ['routes'] as const,
@@ -38,6 +48,7 @@ export const useRoutes = (params?: {
   return useQuery({
     queryKey: routeKeys.list(finalParams),
     queryFn: () => routesApi.getRoutes(finalParams),
+    ...liveListQueryOptions,
   });
 };
 
@@ -56,6 +67,7 @@ export const useRoutesForDay = (date: string, employeeId?: number) => {
     queryKey: routeKeys.forDay(date, employeeId),
     queryFn: () => routesApi.getRoutesForDay(date, employeeId),
     enabled: !!date, // Only run the query if we have a date
+    ...liveListQueryOptions,
   });
 };
 

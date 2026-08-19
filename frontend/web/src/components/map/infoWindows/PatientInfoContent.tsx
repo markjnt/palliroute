@@ -1,11 +1,24 @@
 import React from 'react';
-import { Box, Typography, Divider } from '@mui/material';
-import NavigationIcon from '@mui/icons-material/Navigation';
+import { Box, Typography, Chip } from '@mui/material';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import PhoneIcon from '@mui/icons-material/Phone';
+import InfoIcon from '@mui/icons-material/Info';
 import { MarkerData } from '../../../types/mapTypes';
 import { Appointment, Employee, Patient, Route } from '../../../types/models';
 import { getColorForVisitType } from '../../../utils/mapUtils';
 import { getColorForTour } from '@palliroute/shared';
 import { TourInfoBox } from './TourInfoBox';
+
+const visitTypeLabels: Record<string, string> = {
+  HB: 'Hausbesuch',
+  TK: 'Telefonkontakt',
+  NA: 'Neuaufnahme',
+};
+
+const openMaps = (address: string) => {
+  window.open(`https://maps.google.com/?q=${encodeURIComponent(address)}`, '_blank');
+};
 
 interface PatientInfoContentProps {
   marker: MarkerData;
@@ -15,9 +28,6 @@ interface PatientInfoContentProps {
   employees: Employee[];
 }
 
-/**
- * Component for displaying patient information in marker info windows
- */
 export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({
   marker,
   patients,
@@ -28,141 +38,158 @@ export const PatientInfoContent: React.FC<PatientInfoContentProps> = ({
   const patient = patients.find((p) => p.id === marker.patientId);
   if (!patient) return null;
 
-  // Get all appointments for this patient
-  const patientAppointments = appointments.filter((a) => a.patient_id === patient.id);
+  const appointment =
+    appointments.find((a) => a.id === marker.appointmentId) ||
+    appointments.find((a) => a.patient_id === patient.id);
 
-  // Group appointments by weekday
-  const appointmentsByDay: Record<string, Appointment[]> = {};
-  patientAppointments.forEach((app) => {
-    if (!appointmentsByDay[app.weekday]) {
-      appointmentsByDay[app.weekday] = [];
-    }
-    appointmentsByDay[app.weekday].push(app);
-  });
-
-  // Route für diesen Patienten finden (über marker.routeId)
-  let route: Route | undefined = undefined;
-  if (marker.routeId) {
-    route = routes.find((r) => r.id === marker.routeId);
-  }
-
-  // Get tour color from patient's appointments
-  const patientAppointment = patientAppointments[0]; // Verwende den ersten Termin
-  let tourColor = '#888';
-  if (patientAppointment && patientAppointment.employee_id) {
-    const employee = employees.find((e) => e.id === patientAppointment.employee_id);
-    if (employee && employee.id) {
-      tourColor = getColorForTour(employee.id);
-    }
-  }
-
+  const route = marker.routeId ? routes.find((r) => r.id === marker.routeId) : undefined;
+  const employee = appointment?.employee_id
+    ? employees.find((e) => e.id === appointment.employee_id)
+    : route?.employee_id
+      ? employees.find((e) => e.id === route.employee_id)
+      : undefined;
+  const tourColor = employee?.id ? getColorForTour(employee.id) : '#888';
   const area = marker.routeArea || patient.area || '';
-  // Auslastung berechnen, falls Route und Mitarbeiter vorhanden
-  let utilization: number | undefined = undefined;
-  let durationMinutes: number | undefined = undefined;
-  let targetMinutes: number | undefined = undefined;
+
+  let utilization: number | undefined;
+  let durationMinutes: number | undefined;
+  let targetMinutes: number | undefined;
   if (route && route.total_duration && route.employee_id) {
-    const employee = employees.find((e) => e.id === route!.employee_id);
-    if (employee) {
-      const workHours = employee.work_hours || 0;
+    const routeEmployee = employees.find((e) => e.id === route.employee_id);
+    if (routeEmployee) {
+      const workHours = routeEmployee.work_hours || 0;
       targetMinutes = Math.round(420 * (workHours / 100));
       durationMinutes = route.total_duration;
       utilization = targetMinutes > 0 ? (durationMinutes / targetMinutes) * 100 : undefined;
     }
   }
 
+  const address = `${patient.street}, ${patient.zip_code} ${patient.city}`;
+  const visitType = marker.visitType || appointment?.visit_type;
+
   return (
     <>
-      <Typography
-        variant="subtitle1"
-        component="div"
-        sx={{
-          fontWeight: 'bold',
-          borderBottom: 1,
-          borderColor: 'divider',
-          pb: 0.5,
-          mb: 1,
-        }}
-      >
-        {marker.title.split(' - ')[0]}
-      </Typography>
-
-      {marker.visitType && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 1,
-            p: 0.5,
-            bgcolor: `${getColorForVisitType(marker.visitType)}20`,
-            borderRadius: 1,
-          }}
-        >
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.25, pr: 4.5 }}>
+        {marker.routePosition ? (
           <Box
             sx={{
-              width: 12,
-              height: 12,
+              width: 28,
+              height: 28,
               borderRadius: '50%',
-              bgcolor: getColorForVisitType(marker.visitType),
-              mr: 1,
+              bgcolor: tourColor !== '#888' ? tourColor : '#007AFF',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              flexShrink: 0,
+              mt: 0.15,
             }}
-          />
-          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-            {marker.visitType === 'HB'
-              ? 'Hausbesuch'
-              : marker.visitType === 'TK'
-                ? 'Telefonkontakt'
-                : marker.visitType === 'NA'
-                  ? 'Neuaufnahme'
-                  : marker.visitType}
+          >
+            {marker.routePosition}
+          </Box>
+        ) : null}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, color: '#1d1d1f', lineHeight: 1.25, fontSize: '1rem' }}
+          >
+            {patient.first_name} {patient.last_name}
           </Typography>
-        </Box>
-      )}
-
-      {/* Address with area display and vertical divider */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-        {patient.area && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
-            <NavigationIcon
-              fontSize="small"
+          {visitType ? (
+            <Chip
+              label={visitTypeLabels[visitType] || visitType}
+              size="small"
               sx={{
-                mr: 0.5,
-                color: 'text.secondary',
-                transform: patient.area.includes('Nordkreis') ? 'rotate(0deg)' : 'rotate(180deg)',
+                mt: 0.5,
+                bgcolor: `${getColorForVisitType(visitType)}20`,
+                color: getColorForVisitType(visitType),
+                fontSize: '0.7rem',
+                height: 20,
+                fontWeight: 600,
               }}
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-              {patient.area.includes('Nordkreis') ? 'N' : 'S'}
-            </Typography>
-            <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 24 }} />
-          </Box>
-        )}
-        <Typography variant="body2" color="text.secondary">
+          ) : null}
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.25 }}>
+        <LocationOnIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.25, mt: 0.15 }} />
+        <Typography
+          variant="body2"
+          sx={{ color: '#1d1d1f', fontWeight: 500, cursor: 'pointer' }}
+          onClick={() => openMaps(address)}
+        >
           {patient.street}
-          <br />
-          {patient.zip_code} {patient.city}
+          <Box
+            component="span"
+            sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}
+          >
+            {patient.zip_code} {patient.city}
+          </Box>
         </Typography>
       </Box>
 
-      {/* TourInfoBox für Patienten */}
-      {patientAppointment &&
-        patientAppointment.employee_id &&
-        (() => {
-          const employee = employees.find((e) => e.id === patientAppointment.employee_id);
-          if (employee) {
-            return (
-              <TourInfoBox
-                employeeName={`${employee.first_name.charAt(0)}. ${employee.last_name}`}
-                area={area}
-                utilization={utilization}
-                tourColor={tourColor}
-                durationMinutes={durationMinutes}
-                targetMinutes={targetMinutes}
-              />
-            );
-          }
-          return null;
-        })()}
+      {appointment?.time ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.25 }}>
+          <ScheduleIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.25 }} />
+          <Typography variant="body2" sx={{ color: '#1d1d1f', fontWeight: 500 }}>
+            {appointment.time} Uhr
+          </Typography>
+        </Box>
+      ) : null}
+
+      {(patient.phone1 || patient.phone2) && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1.25 }}>
+          {patient.phone1 ? (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PhoneIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.25 }} />
+              <Typography variant="body2" sx={{ color: '#1d1d1f' }}>
+                {patient.phone1}
+              </Typography>
+            </Box>
+          ) : null}
+          {patient.phone2 ? (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PhoneIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.25 }} />
+              <Typography variant="body2" sx={{ color: '#1d1d1f' }}>
+                {patient.phone2}
+              </Typography>
+            </Box>
+          ) : null}
+        </Box>
+      )}
+
+      {appointment?.info ? (
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.25 }}>
+          <InfoIcon sx={{ fontSize: 18, color: '#007AFF', mr: 1.25, mt: 0.15 }} />
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#007AFF',
+              bgcolor: 'rgba(0, 122, 255, 0.1)',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              fontWeight: 500,
+            }}
+          >
+            {appointment.info}
+          </Typography>
+        </Box>
+      ) : null}
+
+      {employee ? (
+        <TourInfoBox
+          employeeName={`${employee.first_name.charAt(0)}. ${employee.last_name}`}
+          area={area}
+          utilization={utilization}
+          tourColor={tourColor}
+          durationMinutes={durationMinutes}
+          targetMinutes={targetMinutes}
+        />
+      ) : null}
     </>
   );
 };

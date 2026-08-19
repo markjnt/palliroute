@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Divider } from '@mui/material';
+import { Box, Typography, Divider, Chip } from '@mui/material';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import { MarkerData } from '../../../types/mapTypes';
 import { Employee, Route } from '../../../types/models';
@@ -40,81 +40,68 @@ export const EmployeeInfoContent: React.FC<EmployeeInfoContentProps> = ({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          fontWeight: 'bold',
-          borderBottom: 1,
-          borderColor: 'divider',
-          pb: 0.5,
-          mb: 1,
-          p: 0.5,
-          bgcolor: 'rgba(52, 52, 52, 0.1)',
-          borderRadius: 1,
+          fontWeight: 600,
+          mb: 1.25,
+          pr: 4.5,
         }}
       >
         <Typography
           variant="subtitle1"
-          component="div"
           sx={{
-            fontWeight: 'bold',
+            fontWeight: 600,
+            color: '#1d1d1f',
+            fontSize: '1rem',
+            lineHeight: 1.25,
             flexGrow: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
           }}
         >
           {marker.title.split(' - ')[0]}
-          <span style={{ fontWeight: 500, color: '#888', marginLeft: 8 }}>{workHours}%</span>
+        </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 600, color: '#8E8E93', ml: 1 }}>
+          {workHours}%
         </Typography>
       </Box>
 
-      {/* Employee function/role */}
       {marker.employeeType && (
-        <Box
+        <Chip
+          label={marker.employeeType}
+          size="small"
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 1.5,
-            p: 0.5,
+            mb: 1.25,
             bgcolor: `${getColorForEmployeeType(marker.employeeType)}20`,
-            borderRadius: 1,
+            color: getColorForEmployeeType(marker.employeeType),
+            fontSize: '0.7rem',
+            height: 20,
+            fontWeight: 600,
           }}
-        >
-          <Box
-            sx={{
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              bgcolor: getColorForEmployeeType(marker.employeeType),
-              mr: 1,
-            }}
-          />
-          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-            {marker.employeeType}
-          </Typography>
-        </Box>
+        />
       )}
 
-      {/* Address with area display and vertical divider */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.25 }}>
         {employee.area && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mr: 1, mt: 0.15 }}>
             <NavigationIcon
               fontSize="small"
               sx={{
                 mr: 0.5,
-                color: 'text.secondary',
+                color: '#8E8E93',
                 transform: employee.area.includes('Nordkreis') ? 'rotate(0deg)' : 'rotate(180deg)',
               }}
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+            <Typography variant="body2" sx={{ color: '#8E8E93', mr: 1, fontWeight: 600 }}>
               {employee.area.includes('Nordkreis') ? 'N' : 'S'}
             </Typography>
-            <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 24 }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 20 }} />
           </Box>
         )}
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: '#1d1d1f', fontWeight: 500 }}>
           {employee.street}
-          <br />
-          {employee.zip_code} {employee.city}
+          <Box
+            component="span"
+            sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}
+          >
+            {employee.zip_code} {employee.city}
+          </Box>
         </Typography>
       </Box>
 

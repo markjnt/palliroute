@@ -18,6 +18,7 @@ import {
   useEmployeeManagement,
   useRouteVisibility,
 } from '../../hooks';
+import { useRouteHoverStore } from '@palliroute/stores';
 
 interface TourContainerProps {
   employee: Employee;
@@ -91,6 +92,10 @@ export const TourContainer: React.FC<TourContainerProps> = ({
   );
   const routeId = route?.id;
   const isVisible = routeVisibility.isVisible;
+  const hoveredRouteId = useRouteHoverStore((s) => s.hoveredRouteId);
+  const hoverRoute = useRouteHoverStore((s) => s.hoverRoute);
+  const unhoverRoute = useRouteHoverStore((s) => s.unhoverRoute);
+  const isHovered = routeId != null && hoveredRouteId === routeId;
 
   // Get patients and appointments using custom hook
   const {
@@ -235,10 +240,10 @@ export const TourContainer: React.FC<TourContainerProps> = ({
     await routeManagement.movePatientDown(routeId, appointment.id);
   };
 
+  const tourColor = employee.id ? getColorForTour(employee.id) : '#9E9E9E';
+
   // Define the border style based on drag and drop state
   const getBorderStyle = () => {
-    const tourColor = employee.id ? getColorForTour(employee.id) : '#9E9E9E';
-
     if (isOver && canDrop) {
       return {
         borderColor: 'success.main',
@@ -268,7 +273,11 @@ export const TourContainer: React.FC<TourContainerProps> = ({
         drop(node);
         dropRef.current = node;
       }}
-      elevation={2}
+      elevation={isHovered ? 6 : 2}
+      onMouseEnter={() => {
+        if (routeId != null) hoverRoute(routeId);
+      }}
+      onMouseLeave={unhoverRoute}
       sx={{
         mb: 1,
         p: 2,
@@ -281,6 +290,7 @@ export const TourContainer: React.FC<TourContainerProps> = ({
         minHeight: expanded ? 'auto' : '100px',
         ...getBorderStyle(),
         backgroundColor: isOver && canDrop ? 'rgba(76, 175, 80, 0.08)' : 'background.paper',
+        boxShadow: isHovered ? `0 0 0 2px ${tourColor}` : undefined,
       }}
     >
       <Box

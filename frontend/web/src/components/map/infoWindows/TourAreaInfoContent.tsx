@@ -28,13 +28,13 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({ marker
     <>
       <Typography
         variant="subtitle1"
-        component="div"
         sx={{
-          fontWeight: 'bold',
-          borderBottom: 1,
-          borderColor: 'divider',
-          pb: 0.5,
-          mb: 1,
+          fontWeight: 600,
+          color: '#1d1d1f',
+          fontSize: '1rem',
+          lineHeight: 1.25,
+          mb: 1.25,
+          pr: 4.5,
         }}
       >
         {marker.title}

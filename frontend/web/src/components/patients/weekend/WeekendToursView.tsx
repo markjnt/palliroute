@@ -39,6 +39,7 @@ import {
 } from '../../../hooks';
 import { useAssignAwTourEmployee } from '../../../services/queries/useRoutes';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
+import { useRouteHoverStore } from '@palliroute/stores';
 
 interface WeekendToursViewProps {
   selectedDay: Weekday;
@@ -129,6 +130,10 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
   // Get route visibility using custom hook
   const routeVisibility = useRouteVisibility({ routeId });
   const isVisible = routeVisibility.isVisible;
+  const hoveredRouteId = useRouteHoverStore((s) => s.hoveredRouteId);
+  const hoverRoute = useRouteHoverStore((s) => s.hoverRoute);
+  const unhoverRoute = useRouteHoverStore((s) => s.unhoverRoute);
+  const isHovered = routeId != null && hoveredRouteId === routeId;
 
   // Get patients using custom hook
   const { hbPatients, tkPatients, naPatients, getSortedRoutePatients, hasAppointmentsForDay } =
@@ -199,7 +204,11 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
 
   return (
     <Paper
-      elevation={2}
+      elevation={isHovered ? 6 : 2}
+      onMouseEnter={() => {
+        if (routeId != null) hoverRoute(routeId);
+      }}
+      onMouseLeave={unhoverRoute}
       sx={{
         mb: 0,
         p: 2,
@@ -214,6 +223,7 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
         borderColor: areaColor,
         borderStyle: 'solid',
         backgroundColor: backgroundColor,
+        boxShadow: isHovered ? `0 0 0 2px ${areaColor}` : undefined,
       }}
     >
       <Box
