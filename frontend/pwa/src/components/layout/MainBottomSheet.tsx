@@ -4,7 +4,6 @@ import { RouteInfo } from '../route/RouteInfo';
 import { RouteList } from '../route/RouteList';
 import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
 import { useUserStore } from '../../stores/useUserStore';
-import { useDragStore } from '../../stores/useDragStore';
 import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
 
 interface MainBottomSheetProps {
@@ -19,15 +18,14 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
     const sheetRef = useRef<SheetRef>(null);
     const { shouldRender: shouldRenderSheet, onCloseEnd } = useDeferredSheetMount(isOpen);
     const { resetForNewUser } = useAdditionalRoutesStore();
-    const { selectedUserId, selectedTourArea } = useUserStore();
-    const { isDragging } = useDragStore();
+    const { selectedUserId } = useUserStore();
 
     const snapPoints = [0.85, 0];
 
     // Reset additional routes when logged-in user or tour area changes
     useEffect(() => {
       resetForNewUser();
-    }, [selectedUserId, selectedTourArea, resetForNewUser]);
+    }, [selectedUserId, resetForNewUser]);
 
     // No imperative methods needed for simple open/close behavior
     useImperativeHandle(ref, () => ({}), []);
@@ -45,7 +43,6 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
           onCloseEnd={onCloseEnd}
           initialSnap={0}
           snapPoints={snapPoints}
-          disableDrag={isDragging}
         >
           <Sheet.Container>
             <Sheet.Header>
@@ -68,12 +65,12 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
                   }}
                 />
               </div>
+              <RouteInfo />
             </Sheet.Header>
             <Sheet.Content style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <Sheet.Scroller draggableAt="top" style={{ flex: 1, minHeight: 0 }}>
                 <div style={{ paddingBottom: 24 }}>
-                  <RouteInfo />
-                  <RouteList />
+                  <RouteList onShowAdditionalRoute={onClose} />
                 </div>
               </Sheet.Scroller>
             </Sheet.Content>

@@ -1,31 +1,15 @@
-import React, { useEffect } from 'react';
-import { Box, Typography, Checkbox, Chip } from '@mui/material';
+import React from 'react';
+import { Box, Typography, Chip } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
-  RadioButtonUnchecked as UncheckedIcon,
   LocationOn as LocationIcon,
   AccessTime as TimeIcon,
   Phone as PhoneIcon,
   Info as InfoIcon,
-  DragIndicator as DragIcon,
 } from '@mui/icons-material';
-import { useDrag, useDrop } from 'react-dnd';
 import { getColorForVisitType } from '../../utils/mapUtils';
-import { useDragStore } from '../../stores/useDragStore';
-import { useRouteCompletionStore, useCompletedStops } from '../../stores/useRouteCompletionStore';
 import { useUserStore } from '../../stores/useUserStore';
-
-// Drag and drop types
-const ItemTypes = {
-  ROUTE_STOP: 'routeStop',
-};
-
-interface DragItem {
-  id: number;
-  index: number;
-  originalIndex: number;
-  type: string;
-}
+import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
+import { StopActionButtons, openMaps, callPhone } from './StopActionButtons';
 
 interface RouteStop {
   id: number;
@@ -37,40 +21,31 @@ interface RouteStop {
   phone1?: string;
   phone2?: string;
   info?: string;
-  isCompleted: boolean;
-  responsibleEmployeeName?: string; // For tour_employee appointments: shows "Zuständig: [Name]"
+  responsibleEmployeeName?: string;
   responsibleEmployeeId?: number;
-  tourEmployeeName?: string; // For responsible employee: shows "Ursprungstour: [Name]"
+  tourEmployeeName?: string;
   tourEmployeeId?: number;
-  isTourEmployeeAppointment?: boolean; // Mark tour_employee appointments for styling
-  originEmployeeName?: string; // For replacement appointments: shows "Ursprünglich (Vertretung): [Name]"
+  isTourEmployeeAppointment?: boolean;
+  originEmployeeName?: string;
   otherResponsibleEmployees?: Array<{
     employee: { id?: number; first_name: string; last_name: string };
     appointmentId: number;
-  }>; // All other appointments for the same patient on the same day
+  }>;
 }
 
 interface RouteStopItemProps {
   stop: RouteStop;
-  index: number;
-  moveStop: (dragIndex: number, hoverIndex: number) => void;
-  onToggle: (stopId: number) => void;
+  onShowAdditionalRoute?: () => void;
 }
 
-export const RouteStopItem: React.FC<RouteStopItemProps> = ({
-  stop,
-  index,
-  moveStop,
-  onToggle,
-}) => {
-  const { setIsDragging } = useDragStore();
-  const completedStops = useCompletedStops();
-  const { selectedUserId, setSelectedUser, setSelectedTourArea } = useUserStore();
+export const RouteStopItem: React.FC<RouteStopItemProps> = ({ stop, onShowAdditionalRoute }) => {
+  const { selectedUserId } = useUserStore();
+  const { addEmployee } = useAdditionalRoutesStore();
 
-  const switchToEmployee = (employeeId?: number) => {
-    if (!employeeId || employeeId === selectedUserId) return;
-    setSelectedUser(employeeId);
-    setSelectedTourArea(null);
+  const showAsAdditionalRoute = (employeeId?: number) => {
+    if (!employeeId || Number(employeeId) === Number(selectedUserId)) return;
+    addEmployee(employeeId);
+    onShowAdditionalRoute?.();
   };
 
   const employeeLinkSx = {
@@ -90,92 +65,30 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
     },
   };
 
-  const isCompleted = completedStops.has(stop.id);
-
-  const [{ isDragging }, drag] = useDrag({
-    type: ItemTypes.ROUTE_STOP,
-    item: { id: stop.id, index, originalIndex: index, type: ItemTypes.ROUTE_STOP },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    canDrag: !stop.isTourEmployeeAppointment, // Disable drag for tour employee appointments
-  });
-
-  // Update global drag state
-  useEffect(() => {
-    setIsDragging(isDragging);
-  }, [isDragging, setIsDragging]);
-
-  const [{ isOver }, drop] = useDrop({
-    accept: ItemTypes.ROUTE_STOP,
-    hover: (item: DragItem, monitor) => {
-      const dragIndex = item.index;
-      const hoverIndex = index;
-
-      // Don't replace items with themselves
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      // Note: we're mutating the monitor item here!
-      // Generally it's better to avoid mutations,
-      // but it's good here for the sake of performance
-      // to avoid expensive index searches.
-      item.index = hoverIndex;
-    },
-    drop: (item: DragItem) => {
-      // Use the original index that we saved
-      const originalIndex = item.originalIndex;
-      const targetIndex = index;
-
-      // Only call moveStop when actually dropping
-      moveStop(originalIndex, targetIndex);
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
-
   return (
     <Box
-      ref={(node: HTMLElement | null) => {
-        if (node) {
-          drop(node);
-        }
-      }}
       sx={{
-        opacity: isDragging ? 0.6 : stop.isTourEmployeeAppointment ? 0.5 : 1,
-        transform: isDragging ? 'rotate(1deg) scale(1.02)' : 'none',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        bgcolor: isOver ? 'rgba(0, 122, 255, 0.08)' : 'transparent',
-        borderTop: isOver ? '3px solid #007AFF' : 'none',
+        opacity: stop.isTourEmployeeAppointment ? 0.5 : 1,
+        filter: stop.isTourEmployeeAppointment ? 'grayscale(0.3)' : 'none',
         borderRadius: 1,
         mx: 0.5,
         my: 0.25,
-        filter: stop.isTourEmployeeAppointment ? 'grayscale(0.3)' : 'none',
       }}
     >
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'stretch',
           p: { xs: 1.25, sm: 1.5 },
-          transition: 'all 0.2s ease',
         }}
       >
-        {/* Position Number with Drag Handle */}
         {!stop.isTourEmployeeAppointment && (
           <Box
-            ref={(node: HTMLElement | null) => {
-              if (node) {
-                drag(node);
-              }
-            }}
             sx={{
               width: { xs: 32, sm: 36 },
               height: { xs: 32, sm: 36 },
               borderRadius: '50%',
-              bgcolor: isCompleted ? '#34C759' : '#007AFF',
+              bgcolor: '#007AFF',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -184,47 +97,22 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               fontWeight: 700,
               mr: { xs: 1.5, sm: 2 },
               flexShrink: 0,
-              position: 'relative',
+              alignSelf: 'flex-start',
               boxShadow: '0 2px 8px rgba(0, 122, 255, 0.25)',
-              transition: 'all 0.2s ease',
-              cursor: 'grab',
-              '&:active': {
-                cursor: 'grabbing',
-              },
             }}
           >
             {stop.position}
-            <DragIcon
-              sx={{
-                position: 'absolute',
-                top: { xs: -6, sm: -8 },
-                right: { xs: -6, sm: -8 },
-                fontSize: { xs: 14, sm: 16 },
-                color: '#8E8E93',
-                bgcolor: 'white',
-                borderRadius: '50%',
-                p: { xs: 0.2, sm: 0.25 },
-                cursor: 'grab',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.2s ease',
-                '&:active': {
-                  cursor: 'grabbing',
-                  transform: 'scale(1.1)',
-                },
-              }}
-            />
           </Box>
         )}
 
-        {/* Stop Info */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.75 }}>
             <Typography
               variant="body2"
               sx={{
                 fontWeight: 600,
-                color: isCompleted ? '#8E8E93' : '#1d1d1f',
-                textDecoration: isCompleted ? 'line-through' : 'none',
+                color: '#1d1d1f',
                 flex: 1,
                 fontSize: { xs: '0.875rem', sm: '1rem' },
                 lineHeight: 1.3,
@@ -232,27 +120,14 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             >
               {stop.patientName}
             </Typography>
-            <Chip
-              label={stop.visitType === 'HB' ? 'HB' : stop.visitType}
-              size="small"
-              sx={{
-                bgcolor: `${getColorForVisitType(stop.visitType)}15`,
-                color: getColorForVisitType(stop.visitType),
-                fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                height: { xs: 18, sm: 20 },
-                ml: { xs: 0.75, sm: 1 },
-                fontWeight: 600,
-                border: `1px solid ${getColorForVisitType(stop.visitType)}30`,
-              }}
-            />
           </Box>
 
-          {/* Zuständig anzeigen (nur beim tour_employee) */}
+
           {stop.responsibleEmployeeName && (
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
                 variant="caption"
-                onClick={() => switchToEmployee(stop.responsibleEmployeeId)}
+                onClick={() => showAsAdditionalRoute(stop.responsibleEmployeeId)}
                 sx={employeeLinkSx}
               >
                 Zuständig: {stop.responsibleEmployeeName}
@@ -260,12 +135,11 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             </Box>
           )}
 
-          {/* Ursprungstour anzeigen (nur beim zuständigen Mitarbeiter) */}
           {stop.tourEmployeeName && (
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
                 variant="caption"
-                onClick={() => switchToEmployee(stop.tourEmployeeId)}
+                onClick={() => showAsAdditionalRoute(stop.tourEmployeeId)}
                 sx={employeeLinkSx}
               >
                 Ursprungstour: {stop.tourEmployeeName}
@@ -273,7 +147,6 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             </Box>
           )}
 
-          {/* Ursprünglich (Vertretung) anzeigen */}
           {stop.originEmployeeName && (
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
@@ -289,14 +162,13 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             </Box>
           )}
 
-          {/* Andere zuständige Mitarbeiter anzeigen (alle weiteren Termine für denselben Patienten am selben Tag) */}
           {stop.otherResponsibleEmployees && stop.otherResponsibleEmployees.length > 0 && (
             <>
               {stop.otherResponsibleEmployees.map((item, idx) => (
                 <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                   <Typography
                     variant="caption"
-                    onClick={() => switchToEmployee(item.employee.id)}
+                    onClick={() => showAsAdditionalRoute(item.employee.id)}
                     sx={employeeLinkSx}
                   >
                     Gemeinsam mit: {item.employee.first_name} {item.employee.last_name}
@@ -322,10 +194,7 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
                 cursor: 'pointer',
                 transition: 'color 0.2s ease',
               }}
-              onClick={() => {
-                const encodedAddress = encodeURIComponent(stop.address);
-                window.location.href = `https://maps.google.com/?q=${encodedAddress}`;
-              }}
+              onClick={() => openMaps(stop.address)}
             >
               {stop.address}
             </Typography>
@@ -377,10 +246,7 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
                       fontSize: '0.75rem',
                       cursor: 'pointer',
                     }}
-                    onClick={() => {
-                      const cleanPhone = stop.phone1!.replace(/\s+/g, '');
-                      window.location.href = `tel:${cleanPhone}`;
-                    }}
+                    onClick={() => callPhone(stop.phone1!)}
                   >
                     {stop.phone1}
                   </Typography>
@@ -396,10 +262,7 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
                       fontSize: '0.75rem',
                       cursor: 'pointer',
                     }}
-                    onClick={() => {
-                      const cleanPhone = stop.phone2!.replace(/\s+/g, '');
-                      window.location.href = `tel:${cleanPhone}`;
-                    }}
+                    onClick={() => callPhone(stop.phone2!)}
                   >
                     {stop.phone2}
                   </Typography>
@@ -407,24 +270,27 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               )}
             </Box>
           )}
+          </Box>
+          <Box sx={{ ml: 1, flexShrink: 0 }}>
+            <StopActionButtons address={stop.address} phone1={stop.phone1} phone2={stop.phone2} />
+          </Box>
         </Box>
 
-        {/* Checkbox */}
-        {!stop.isTourEmployeeAppointment && (
-          <Checkbox
-            checked={isCompleted}
-            icon={<UncheckedIcon sx={{ color: '#C7C7CC' }} />}
-            checkedIcon={<CheckCircleIcon sx={{ color: '#34C759' }} />}
-            sx={{
-              ml: 1,
-              '&:hover': {
-                bgcolor: 'transparent',
-              },
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onChange={() => onToggle(stop.id)}
-          />
-        )}
+        <Chip
+          label={stop.visitType === 'HB' ? 'HB' : stop.visitType}
+          size="small"
+          sx={{
+            alignSelf: 'flex-start',
+            flexShrink: 0,
+            ml: 0.75,
+            bgcolor: `${getColorForVisitType(stop.visitType)}15`,
+            color: getColorForVisitType(stop.visitType),
+            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+            height: { xs: 18, sm: 20 },
+            fontWeight: 600,
+            border: `1px solid ${getColorForVisitType(stop.visitType)}30`,
+          }}
+        />
       </Box>
     </Box>
   );

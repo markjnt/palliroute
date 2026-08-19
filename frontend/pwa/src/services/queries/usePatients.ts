@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { patientsApi } from '../api/patients';
 import { appointmentKeys } from './useAppointments';
-import { routeKeys } from './useRoutes';
+import { liveListQueryOptions, routeKeys } from './useRoutes';
 import { employeeKeys } from './useEmployees';
 
 // Keys für React Query Cache
@@ -18,6 +18,7 @@ export const usePatients = () => {
   return useQuery({
     queryKey: patientKeys.lists(),
     queryFn: () => patientsApi.getAll(),
+    ...liveListQueryOptions,
   });
 };
 

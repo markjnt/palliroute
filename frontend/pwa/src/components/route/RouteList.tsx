@@ -1,25 +1,22 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Box, Typography, Checkbox, Chip, Divider, LinearProgress } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Typography, Chip, Divider } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
-  RadioButtonUnchecked as UncheckedIcon,
-  LocationOn as LocationIcon,
-  AccessTime as TimeIcon,
   Phone as PhoneIcon,
   Info as InfoIcon,
+  AccessTime as TimeIcon,
 } from '@mui/icons-material';
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
-import { useRouteCompletionStore, useCompletedStops } from '../../stores/useRouteCompletionStore';
+import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { usePatients } from '../../services/queries/usePatients';
 import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
-import { useRoutes, useReorderAppointment } from '../../services/queries/useRoutes';
-import { parseRouteOrder } from '../../utils/mapUtils';
-import { getColorForVisitType, getColorForEmployeeType } from '../../utils/mapUtils';
-import { getColorForTour } from '@palliroute/shared';
+import { useRoutes } from '../../services/queries/useRoutes';
+import { findEmployeeDayRoute } from '../../utils/mapUtils';
+import { getOwnRouteOrder } from '@palliroute/shared';
 import { Weekday } from '../../types/models';
 import RouteStopItem from './RouteStopItem';
+import { StopActionButtons, callPhone } from './StopActionButtons';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 
 interface RouteStop {
@@ -32,7 +29,6 @@ interface RouteStop {
   phone1?: string;
   phone2?: string;
   info?: string;
-  isCompleted: boolean;
   responsibleEmployeeName?: string; // For tour_employee appointments: shows "Zuständig: [Name]"
   responsibleEmployeeId?: number;
   tourEmployeeName?: string; // For responsible employee: shows "Ursprungstour: [Name]"
@@ -45,13 +41,15 @@ interface RouteStop {
   }>; // All other appointments for the same patient on the same day
 }
 
-export const RouteList: React.FC = () => {
-  const { selectedUserId, selectedTourArea, setSelectedUser, setSelectedTourArea } = useUserStore();
+interface RouteListProps {
+  onShowAdditionalRoute?: () => void;
+}
+
+export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) => {
+  const { selectedUserId } = useUserStore();
   const { selectedWeekday } = useWeekdayStore();
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
-  const { isStopCompleted, toggleStop, setCurrentWeekday, clearAllCompletedStops } =
-    useRouteCompletionStore();
-  const completedStops = useCompletedStops();
+  const { addEmployee } = useAdditionalRoutesStore();
 
   // Data hooks
   const { data: employees = [] } = useEmployees();
@@ -59,14 +57,12 @@ export const RouteList: React.FC = () => {
   const { data: appointments = [] } = useAppointmentsByWeekday(selectedWeekday as Weekday);
   const { data: routes = [] } = useRoutes({
     weekday: selectedWeekday as Weekday,
-    ...(selectedTourArea ? { tour_area_day: isAreaTourDay } : {}),
   });
-  const reorderMutation = useReorderAppointment();
 
-  const switchToEmployee = (employeeId?: number) => {
-    if (!employeeId || employeeId === selectedUserId) return;
-    setSelectedUser(employeeId);
-    setSelectedTourArea(null);
+  const showAsAdditionalRoute = (employeeId?: number) => {
+    if (!employeeId || Number(employeeId) === Number(selectedUserId)) return;
+    addEmployee(employeeId);
+    onShowAdditionalRoute?.();
   };
 
   const employeeLinkSx = {
@@ -100,56 +96,20 @@ export const RouteList: React.FC = () => {
     return weekdayMap[weekday] || weekday;
   };
 
-  // Reset completion stops when user or tour area changes (but not on initial mount)
-  const prevUserIdRef = useRef<number | null>(null);
-  const prevTourAreaRef = useRef<string | null>(null);
-  const isInitialMountRef = useRef(true);
-
-  useEffect(() => {
-    // Skip on initial mount - only clear if values actually changed
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      prevUserIdRef.current = selectedUserId;
-      prevTourAreaRef.current = selectedTourArea;
-      return;
-    }
-
-    // Only clear if the values actually changed
-    if (prevUserIdRef.current !== selectedUserId || prevTourAreaRef.current !== selectedTourArea) {
-      clearAllCompletedStops();
-      prevUserIdRef.current = selectedUserId;
-      prevTourAreaRef.current = selectedTourArea;
-    }
-  }, [selectedUserId, selectedTourArea, clearAllCompletedStops]);
-
-  // Update current weekday in store and auto-reset when switching days
-  useEffect(() => {
-    setCurrentWeekday(selectedWeekday);
-  }, [selectedWeekday, setCurrentWeekday]);
-
-  // Route für ausgewählten Mitarbeiter oder AW-Bereich anzeigen
-  const visibleRoutes = useMemo(() => {
-    if (selectedTourArea) {
-      // Für AW-Touren: Route des ausgewählten Bereichs
-      return routes.filter(
-        (route) => route.area === selectedTourArea && route.weekday === selectedWeekday
-      );
-    } else {
-      // Für Mitarbeiter: Route des ausgewählten Mitarbeiters
-      return routes.filter(
-        (route) => route.employee_id === selectedUserId && route.weekday === selectedWeekday
-      );
-    }
-  }, [routes, selectedUserId, selectedTourArea, selectedWeekday]);
+  const ownRoute = useMemo(
+    () => findEmployeeDayRoute(routes, selectedUserId, selectedWeekday, isAreaTourDay),
+    [routes, selectedUserId, selectedWeekday, isAreaTourDay]
+  );
+  const visibleRoutes = useMemo(() => (ownRoute ? [ownRoute] : []), [ownRoute]);
 
   // Create route stops for all visible routes
   const routeStops = useMemo(() => {
     const stops: RouteStop[] = [];
 
-    if (!selectedUserId && !selectedTourArea) return stops;
+    if (!selectedUserId) return stops;
 
     visibleRoutes.forEach((route) => {
-      const routeOrder = parseRouteOrder(route.route_order);
+      const routeOrder = getOwnRouteOrder(route);
 
       routeOrder.forEach((appointmentId, index) => {
         const appointment = appointments.find((a) => a.id === appointmentId);
@@ -233,7 +193,6 @@ export const RouteList: React.FC = () => {
               phone1: patient.phone1,
               phone2: patient.phone2,
               info: appointment.info,
-              isCompleted: isStopCompleted(appointmentId),
               responsibleEmployeeName: responsibleEmployee
                 ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
                 : undefined,
@@ -260,20 +219,23 @@ export const RouteList: React.FC = () => {
     patients,
     appointments,
     selectedUserId,
-    selectedTourArea,
-    isStopCompleted,
+    selectedWeekday,
   ]);
+
+  const displayedStops = useMemo(() => {
+    return routeStops.map((stop, idx) => ({ ...stop, position: idx + 1 }));
+  }, [routeStops]);
 
   // Get tour employee stops (appointments where tour_employee_id matches but not in route)
   const tourEmployeeStops = useMemo(() => {
     const stops: RouteStop[] = [];
 
-    if (!selectedUserId || selectedTourArea) return stops; // Only for employee routes
+    if (!selectedUserId || isAreaTourDay) return stops;
 
     // Get all appointment IDs that are in routes
     const routeAppointmentIds = new Set<number>();
     visibleRoutes.forEach((route) => {
-      const routeOrder = parseRouteOrder(route.route_order);
+      const routeOrder = getOwnRouteOrder(route);
       routeOrder.forEach((appointmentId) => {
         routeAppointmentIds.add(appointmentId);
       });
@@ -282,7 +244,7 @@ export const RouteList: React.FC = () => {
     // Get all patient IDs that are in normal routes (to filter out duplicates)
     const normalRoutePatientIds = new Set<number>();
     visibleRoutes.forEach((route) => {
-      const routeOrder = parseRouteOrder(route.route_order);
+      const routeOrder = getOwnRouteOrder(route);
       routeOrder.forEach((appointmentId) => {
         const appointment = appointments.find((a) => a.id === appointmentId);
         if (appointment && appointment.patient_id) {
@@ -373,7 +335,6 @@ export const RouteList: React.FC = () => {
         phone1: patient.phone1,
         phone2: patient.phone2,
         info: appointment.info,
-        isCompleted: isStopCompleted(appointment.id || 0),
         responsibleEmployeeName: responsibleEmployee
           ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
           : undefined,
@@ -395,36 +356,34 @@ export const RouteList: React.FC = () => {
     selectedUserId,
     selectedWeekday,
     visibleRoutes,
-    isStopCompleted,
   ]);
 
   // Get TK appointments (phone calls) for the selected employee/area and day
   const tkAppointments = useMemo(() => {
-    if (!selectedUserId && !selectedTourArea) return [];
+    if (!selectedUserId) return [];
 
     const allTkApps = appointments.filter((a) => {
-      if (selectedTourArea) {
-        // Für AW-Touren: TK-Termine für den ausgewählten Bereich und Wochentag
-        return (
-          a.weekday === selectedWeekday && a.area === selectedTourArea && a.visit_type === 'TK'
-        );
-      } else {
-        // Für Mitarbeiter: TK-Termine des ausgewählten Mitarbeiters (employee_id ODER tour_employee_id)
+      if (isAreaTourDay) {
         return (
           a.weekday === selectedWeekday &&
-          a.visit_type === 'TK' &&
-          (a.employee_id === selectedUserId || a.tour_employee_id === selectedUserId)
+          Boolean(ownRoute?.area) &&
+          a.area === ownRoute?.area &&
+          a.visit_type === 'TK'
         );
       }
+      return (
+        a.weekday === selectedWeekday &&
+        a.visit_type === 'TK' &&
+        (a.employee_id === selectedUserId || a.tour_employee_id === selectedUserId)
+      );
     });
 
-    // Separate normal TK appointments and tour employee TK appointments
     const normalTkApps = allTkApps.filter((a) => {
-      if (selectedTourArea) return true; // All are normal for AW/tour-area mode
+      if (isAreaTourDay) return true;
       return !(a.tour_employee_id === selectedUserId && a.employee_id !== selectedUserId);
     });
 
-    const tourEmployeeTkApps = selectedTourArea
+    const tourEmployeeTkApps = isAreaTourDay
       ? []
       : allTkApps.filter(
           (a) => a.tour_employee_id === selectedUserId && a.employee_id !== selectedUserId
@@ -472,7 +431,6 @@ export const RouteList: React.FC = () => {
       phone2?: string;
       time?: string;
       info?: string;
-      isCompleted: boolean;
       responsibleEmployeeName?: string;
       responsibleEmployeeId?: number;
       tourEmployeeName?: string;
@@ -542,7 +500,6 @@ export const RouteList: React.FC = () => {
           phone2: patient.phone2,
           time: appointment.time,
           info: appointment.info,
-          isCompleted: isStopCompleted(appointment.id || 0),
           responsibleEmployeeName: undefined,
           tourEmployeeName: tourEmployee
             ? `${tourEmployee.first_name} ${tourEmployee.last_name}`
@@ -611,7 +568,6 @@ export const RouteList: React.FC = () => {
           phone2: patient.phone2,
           time: appointment.time,
           info: appointment.info,
-          isCompleted: isStopCompleted(appointment.id || 0),
           responsibleEmployeeName: responsibleEmployee
             ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
             : undefined,
@@ -636,89 +592,45 @@ export const RouteList: React.FC = () => {
   }, [
     appointments,
     selectedUserId,
-    selectedTourArea,
+    isAreaTourDay,
+    ownRoute?.area,
     selectedWeekday,
     patients,
     employees,
-    isStopCompleted,
   ]);
 
-  // Calculate completion percentage - now using store state directly
-  const completionPercentage = useMemo(() => {
-    if (routeStops.length === 0) return 0;
-    const completed = routeStops.filter((stop) => completedStops.has(stop.id)).length;
-    return (completed / routeStops.length) * 100;
-  }, [routeStops, completedStops]);
-
-  if (!selectedUserId && !selectedTourArea) {
+  if (!selectedUserId) {
     return (
-      <Box sx={{ px: 2, pb: 2 }}>
+      <Box sx={{ px: 3, pb: 2 }}>
         <Box
           sx={{
             p: 2,
-            bgcolor: 'rgba(0, 0, 0, 0.02)',
             borderRadius: 2,
             border: '1px solid rgba(0, 0, 0, 0.08)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
             textAlign: 'center',
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            Bitte wählen Sie einen Mitarbeiter oder eine AW-Tour aus
+            Bitte wählen Sie einen Mitarbeiter aus
           </Typography>
         </Box>
       </Box>
     );
   }
 
-  const handleStopToggle = (stopId: number) => {
-    toggleStop(stopId);
-  };
-
-  const handleTKToggle = (appointmentId: number) => {
-    toggleStop(appointmentId);
-  };
-
-  // Move stop function for react-dnd
-  const moveStop = (dragIndex: number, hoverIndex: number) => {
-    const draggedStop = routeStops[dragIndex];
-    if (!draggedStop) return;
-
-    // Find the route that contains this appointment
-    const route = visibleRoutes.find((r) => {
-      const routeOrder = parseRouteOrder(r.route_order);
-      return routeOrder.includes(draggedStop.id);
-    });
-
-    if (!route) return;
-
-    // Use mutation without await to keep it synchronous for react-dnd
-    reorderMutation.mutate(
-      {
-        routeId: route.id,
-        appointmentId: draggedStop.id,
-        index: hoverIndex,
-      },
-      {
-        onError: (error) => {
-          console.error('Failed to reorder appointment:', error);
-        },
-      }
-    );
-  };
-
-  // Check if there's anything to display
   const hasContent =
-    routeStops.length > 0 || tourEmployeeStops.length > 0 || tkAppointments.length > 0;
+    displayedStops.length > 0 || tourEmployeeStops.length > 0 || tkAppointments.length > 0;
 
   if (!hasContent) {
     return (
-      <Box sx={{ px: 2, pb: 2 }}>
+      <Box sx={{ px: 3, pb: 2 }}>
         <Box
           sx={{
             p: 2,
-            bgcolor: 'rgba(0, 0, 0, 0.02)',
             borderRadius: 2,
             border: '1px solid rgba(0, 0, 0, 0.08)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
             textAlign: 'center',
           }}
         >
@@ -731,79 +643,29 @@ export const RouteList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ px: 2, pb: 2 }}>
-      {/* Route Stops with Progress Header */}
-      {(routeStops.length > 0 || tourEmployeeStops.length > 0) && (
+    <Box sx={{ px: 3, pb: 2 }}>
+      {(displayedStops.length > 0 || tourEmployeeStops.length > 0) && (
         <Box
           sx={{
-            bgcolor: 'rgba(0, 0, 0, 0.02)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
             borderRadius: 2,
             border: '1px solid rgba(0, 0, 0, 0.08)',
             overflow: 'hidden',
           }}
         >
-          {/* Route Progress Header - only show if there are route stops */}
-          {routeStops.length > 0 && (
-            <Box
-              sx={{
-                p: 1.5,
-                borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 500, color: '#1d1d1f' }}>
-                  Fortschritt
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#007AFF' }}>
-                  {Math.round(completionPercentage)}%
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={completionPercentage}
-                sx={{
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                  '& .MuiLinearProgress-bar': {
-                    backgroundColor: '#007AFF',
-                    borderRadius: 3,
-                  },
-                }}
-              />
-            </Box>
-          )}
-          {routeStops.map((stop, index) => (
+          {displayedStops.map((stop, index) => (
             <React.Fragment key={stop.id}>
-              <RouteStopItem
-                stop={stop}
-                index={index}
-                moveStop={moveStop}
-                onToggle={handleStopToggle}
-              />
-              {index < routeStops.length - 1 && <Divider sx={{ mx: 1.5 }} />}
+              <RouteStopItem stop={stop} onShowAdditionalRoute={onShowAdditionalRoute} />
+              {index < displayedStops.length - 1 && <Divider sx={{ mx: 1.5 }} />}
             </React.Fragment>
           ))}
 
-          {/* Tour Employee Stops (shown but not in route) */}
           {tourEmployeeStops.length > 0 && (
             <>
-              {routeStops.length > 0 && <Divider sx={{ mx: 1.5, my: 1 }} />}
+              {displayedStops.length > 0 && <Divider sx={{ mx: 1.5, my: 1 }} />}
               {tourEmployeeStops.map((stop, index) => (
                 <React.Fragment key={`tour-${stop.id}`}>
-                  <RouteStopItem
-                    stop={stop}
-                    index={routeStops.length + index}
-                    moveStop={() => {}} // Disable drag & drop for tour employee stops
-                    onToggle={handleStopToggle}
-                  />
+                  <RouteStopItem stop={stop} onShowAdditionalRoute={onShowAdditionalRoute} />
                   {index < tourEmployeeStops.length - 1 && <Divider sx={{ mx: 1.5 }} />}
                 </React.Fragment>
               ))}
@@ -812,20 +674,17 @@ export const RouteList: React.FC = () => {
         </Box>
       )}
 
-      {/* TK Appointments (Phone Calls) */}
       {tkAppointments.length > 0 && (
         <Box sx={{ mt: 2 }}>
           <Box
             sx={{
-              bgcolor: 'rgba(0, 0, 0, 0.02)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
               borderRadius: 2,
               border: '1px solid rgba(0, 0, 0, 0.08)',
               overflow: 'hidden',
             }}
           >
-            {tkAppointments.map((tkApp, index) => {
-              const tkAppCompleted = completedStops.has(tkApp.id);
-              return (
+            {tkAppointments.map((tkApp, index) => (
                 <Box
                   key={tkApp.id}
                   sx={{
@@ -836,44 +695,40 @@ export const RouteList: React.FC = () => {
                   <Box
                     sx={{
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: 'stretch',
                       p: { xs: 1.25, sm: 1.5 },
-                      transition: 'all 0.2s ease',
                       mx: 0.5,
                       my: 0.25,
                       borderRadius: 1,
                     }}
                   >
-                    {/* Phone Icon */}
                     <Box
                       sx={{
                         width: { xs: 32, sm: 36 },
                         height: { xs: 32, sm: 36 },
                         borderRadius: '50%',
-                        bgcolor: tkAppCompleted ? '#34C759' : '#4CAF50',
+                        bgcolor: '#4CAF50',
                         color: 'white',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
                         mr: { xs: 1.5, sm: 2 },
                         flexShrink: 0,
+                        alignSelf: 'flex-start',
                         boxShadow: '0 2px 8px rgba(76, 175, 80, 0.25)',
-                        transition: 'all 0.2s ease',
                       }}
                     >
                       <PhoneIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
                     </Box>
 
-                    {/* TK Info */}
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.75 }}>
                         <Typography
                           variant="body2"
                           sx={{
                             fontWeight: 600,
-                            color: tkAppCompleted ? '#8E8E93' : '#1d1d1f',
-                            textDecoration: tkAppCompleted ? 'line-through' : 'none',
+                            color: '#1d1d1f',
                             flex: 1,
                             fontSize: { xs: '0.875rem', sm: '1rem' },
                             lineHeight: 1.3,
@@ -881,27 +736,14 @@ export const RouteList: React.FC = () => {
                         >
                           {tkApp.patientName}
                         </Typography>
-                        <Chip
-                          label="TK"
-                          size="small"
-                          sx={{
-                            bgcolor: 'rgba(76, 175, 80, 0.15)',
-                            color: '#4CAF50',
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            height: { xs: 18, sm: 20 },
-                            ml: { xs: 0.75, sm: 1 },
-                            fontWeight: 600,
-                            border: '1px solid rgba(76, 175, 80, 0.3)',
-                          }}
-                        />
                       </Box>
 
-                      {/* Zuständig anzeigen (nur beim tour_employee) */}
+
                       {tkApp.responsibleEmployeeName && (
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                           <Typography
                             variant="caption"
-                            onClick={() => switchToEmployee(tkApp.responsibleEmployeeId)}
+                            onClick={() => showAsAdditionalRoute(tkApp.responsibleEmployeeId)}
                             sx={employeeLinkSx}
                           >
                             Zuständig: {tkApp.responsibleEmployeeName}
@@ -909,12 +751,11 @@ export const RouteList: React.FC = () => {
                         </Box>
                       )}
 
-                      {/* Ursprungstour anzeigen (nur beim zuständigen Mitarbeiter) */}
                       {tkApp.tourEmployeeName && (
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                           <Typography
                             variant="caption"
-                            onClick={() => switchToEmployee(tkApp.tourEmployeeId)}
+                            onClick={() => showAsAdditionalRoute(tkApp.tourEmployeeId)}
                             sx={employeeLinkSx}
                           >
                             Ursprungstour: {tkApp.tourEmployeeName}
@@ -922,7 +763,6 @@ export const RouteList: React.FC = () => {
                         </Box>
                       )}
 
-                      {/* Ursprünglich (Vertretung) anzeigen */}
                       {tkApp.originEmployeeName && (
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                           <Typography
@@ -974,12 +814,8 @@ export const RouteList: React.FC = () => {
                                   color: '#8E8E93',
                                   fontSize: { xs: '0.7rem', sm: '0.75rem' },
                                   cursor: 'pointer',
-                                  transition: 'color 0.2s ease',
                                 }}
-                                onClick={() => {
-                                  const cleanPhone = tkApp.phone1!.replace(/\s+/g, '');
-                                  window.location.href = `tel:${cleanPhone}`;
-                                }}
+                                onClick={() => callPhone(tkApp.phone1!)}
                               >
                                 {tkApp.phone1}
                               </Typography>
@@ -1000,12 +836,8 @@ export const RouteList: React.FC = () => {
                                   color: '#8E8E93',
                                   fontSize: { xs: '0.7rem', sm: '0.75rem' },
                                   cursor: 'pointer',
-                                  transition: 'color 0.2s ease',
                                 }}
-                                onClick={() => {
-                                  const cleanPhone = tkApp.phone2!.replace(/\s+/g, '');
-                                  window.location.href = `tel:${cleanPhone}`;
-                                }}
+                                onClick={() => callPhone(tkApp.phone2!)}
                               >
                                 {tkApp.phone2}
                               </Typography>
@@ -1034,30 +866,32 @@ export const RouteList: React.FC = () => {
                           </Typography>
                         </Box>
                       )}
+                      </Box>
+                      <Box sx={{ ml: 1, flexShrink: 0 }}>
+                        <StopActionButtons showMaps={false} phone1={tkApp.phone1} phone2={tkApp.phone2} />
+                      </Box>
                     </Box>
 
-                    {/* Checkbox */}
-                    {!tkApp.isTourEmployeeAppointment && (
-                      <Checkbox
-                        checked={tkAppCompleted}
-                        icon={<UncheckedIcon sx={{ color: '#C7C7CC' }} />}
-                        checkedIcon={<CheckCircleIcon sx={{ color: '#34C759' }} />}
-                        sx={{
-                          ml: 1,
-                          '&:hover': {
-                            bgcolor: 'transparent',
-                          },
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={() => handleTKToggle(tkApp.id)}
-                      />
-                    )}
+                    <Chip
+                      label="TK"
+                      size="small"
+                      sx={{
+                        alignSelf: 'flex-start',
+                        flexShrink: 0,
+                        ml: 0.75,
+                        bgcolor: 'rgba(76, 175, 80, 0.15)',
+                        color: '#4CAF50',
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        height: { xs: 18, sm: 20 },
+                        fontWeight: 600,
+                        border: '1px solid rgba(76, 175, 80, 0.3)',
+                      }}
+                    />
                   </Box>
 
                   {index < tkAppointments.length - 1 && <Divider sx={{ mx: 2 }} />}
                 </Box>
-              );
-            })}
+            ))}
           </Box>
         </Box>
       )}

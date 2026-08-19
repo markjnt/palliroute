@@ -1,94 +1,93 @@
-import React, { useMemo } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Box, Typography, Button, IconButton } from '@mui/material';
 import {
   DirectionsCar as DirectionsCarIcon,
-  AccessTime as AccessTimeIcon,
-  Route as RouteIcon,
+  Sort as SortIcon,
   Refresh as RefreshIcon,
+  Close as CloseIcon,
+  Check as CheckIcon,
 } from '@mui/icons-material';
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
-import {
-  useRoutes,
-  useOptimizeRoutes,
-  useOptimizeTourAreaRoutes,
-} from '../../services/queries/useRoutes';
-import { useEmployees } from '../../services/queries/useEmployees';
-import { useRouteCompletionStore } from '../../stores/useRouteCompletionStore';
-import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
-import { useRefresh } from '../../services/queries/useRefresh';
-import { Weekday } from '../../types/models';
+import { useApplyOptimizedOrder, useRoutes } from '../../services/queries/useRoutes';
+import { Weekday, VisitType } from '../../types/models';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
+import CustomOrderSheet from './CustomOrderSheet';
+import { findEmployeeDayRoute } from '../../utils/mapUtils';
+import { getOwnRouteDistance, getOwnRouteOrder } from '@palliroute/shared';
+import { usePatients } from '../../services/queries/usePatients';
+import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
 
 export const RouteInfo: React.FC = () => {
-  const { selectedUserId, selectedTourArea } = useUserStore();
+  const { selectedUserId } = useUserStore();
   const { selectedWeekday } = useWeekdayStore();
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
-  const { clearCompletedStops } = useRouteCompletionStore();
-  const { lastUpdateTime } = useLastUpdateStore();
-  const { refreshData } = useRefresh();
+  const [customOrderOpen, setCustomOrderOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: routes = [] } = useRoutes({
+  const { data: routes = [], refetch: refetchRoutes } = useRoutes({
     weekday: selectedWeekday as Weekday,
-    ...(selectedTourArea ? { tour_area_day: isAreaTourDay } : {}),
   });
-  const { data: employees = [] } = useEmployees();
-  const optimizeRoutesMutation = useOptimizeRoutes();
-  const optimizeTourAreaRoutesMutation = useOptimizeTourAreaRoutes();
+  const { data: patients = [], refetch: refetchPatients } = usePatients();
+  const { data: appointments = [], refetch: refetchAppointments } = useAppointmentsByWeekday(
+    selectedWeekday as Weekday
+  );
+  const applyOptimizedOrder = useApplyOptimizedOrder();
 
-  // Get German weekday name
-  const getGermanWeekday = (weekday: string): string => {
-    const weekdayMap: Record<string, string> = {
-      monday: 'Montag',
-      tuesday: 'Dienstag',
-      wednesday: 'Mittwoch',
-      thursday: 'Donnerstag',
-      friday: 'Freitag',
-      saturday: 'Samstag',
-      sunday: 'Sonntag',
-    };
-    return weekdayMap[weekday] || weekday;
+  const selectedRoute = useMemo(
+    () => findEmployeeDayRoute(routes, selectedUserId, selectedWeekday, isAreaTourDay),
+    [routes, selectedUserId, selectedWeekday, isAreaTourDay]
+  );
+
+  const customOrderStops = useMemo(() => {
+    if (!selectedRoute) return [];
+    return getOwnRouteOrder(selectedRoute)
+      .map((appointmentId) => {
+        const appointment = appointments.find((a) => a.id === appointmentId);
+        if (!appointment) return null;
+        const patient = patients.find((p) => p.id === appointment.patient_id);
+        if (!patient) return null;
+        return {
+          id: appointmentId,
+          patientName: `${patient.first_name} ${patient.last_name}`,
+          visitType: appointment.visit_type,
+        };
+      })
+      .filter((stop): stop is { id: number; patientName: string; visitType: VisitType } =>
+        Boolean(stop)
+      );
+  }, [selectedRoute, appointments, patients]);
+
+  const pullFromDatabase = async () => {
+    await Promise.all([refetchRoutes(), refetchAppointments(), refetchPatients()]);
   };
 
-  // Immer nur die Route des ausgewählten Mitarbeiters oder AW-Bereichs anzeigen
-  const selectedRoute = useMemo(() => {
-    if (selectedTourArea) {
-      return routes.find(
-        (route) => route.area === selectedTourArea && route.weekday === selectedWeekday
-      );
-    } else {
-      return routes.find(
-        (route) => route.employee_id === selectedUserId && route.weekday === selectedWeekday
-      );
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const customActive = Boolean(selectedRoute?.custom_order_active);
+      if (selectedRoute && !customActive) {
+        await applyOptimizedOrder.mutateAsync(selectedRoute.id);
+      }
+      await pullFromDatabase();
+    } catch (error) {
+      console.error('Failed to refresh route:', error);
+    } finally {
+      setIsRefreshing(false);
     }
-  }, [routes, selectedUserId, selectedTourArea, selectedWeekday]);
+  };
 
-  // Get selected employee for work_hours (only for employee routes)
-  const selectedEmployee = useMemo(() => {
-    return employees.find((emp) => emp.id === selectedUserId);
-  }, [employees, selectedUserId]);
+  const handleResetCustomOrder = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!selectedRoute) return;
+    try {
+      await applyOptimizedOrder.mutateAsync(selectedRoute.id);
+    } catch (error) {
+      console.error('Failed to reset custom order:', error);
+    }
+  };
 
-  if (!selectedRoute) {
-    return (
-      <Box sx={{ px: 2, pb: 2 }}>
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: 'rgba(0, 0, 0, 0.02)',
-            borderRadius: 2,
-            border: '1px solid rgba(0, 0, 0, 0.08)',
-            textAlign: 'center',
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            Keine Route für {getGermanWeekday(selectedWeekday)} verfügbar
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  // Format distance (backend already provides distance in km, format with German locale)
   const formatDistance = (distance: number): string => {
     return (
       distance.toLocaleString('de-DE', {
@@ -98,188 +97,146 @@ export const RouteInfo: React.FC = () => {
     );
   };
 
-  // Calculate utilization percentage with color logic
-  const calculateUtilization = (duration: number) => {
-    let targetMinutes: number;
+  const customActive = Boolean(selectedRoute?.custom_order_active);
+  const isBusy = isRefreshing || applyOptimizedOrder.isPending;
+  const accent = isAreaTourDay ? '#ff9800' : '#007AFF';
+  const accentBg = isAreaTourDay ? 'rgba(255, 152, 0, 0.12)' : 'rgba(0, 122, 255, 0.1)';
+  const accentBorder = isAreaTourDay ? 'rgba(255, 152, 0, 0.35)' : 'rgba(0, 122, 255, 0.2)';
 
-    if (selectedTourArea) {
-      // For AW/tour-area tours: 75% of 420 minutes = 315 minutes target
-      targetMinutes = 315;
-    } else {
-      // For employees: based on work_hours percentage
-      targetMinutes = Math.round(420 * ((selectedEmployee?.work_hours || 0) / 100));
-    }
-
-    // Calculate utilization percentage
-    const utilizationPercent = targetMinutes > 0 ? Math.round((duration / targetMinutes) * 100) : 0;
-
-    // Determine color based on utilization
-    let utilizationColor = 'success.main'; // Green by default
-    if (utilizationPercent > 100) {
-      utilizationColor = 'error.main'; // Red if over 100%
-    } else if (utilizationPercent > 90) {
-      utilizationColor = 'warning.main'; // Orange if over 90%
-    } else if (utilizationPercent > 70) {
-      utilizationColor = 'success.light'; // Light green if over 70%
-    }
-
-    return {
-      utilizationPercent,
-      utilizationColor,
-    };
-  };
-
-  const durationMinutes = selectedRoute.total_duration ?? 0;
-  const distanceKm = selectedRoute.total_distance ?? 0;
-  const utilizationInfo = calculateUtilization(durationMinutes);
-
-  // Format last update time for display
-  const formatLastUpdateTime = (time: Date | null): string => {
-    if (!time) return 'Noch nicht aktualisiert';
-
-    return (
-      'zuletzt ' +
-      time.toLocaleDateString('de-DE') +
-      ' ' +
-      time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-    );
-  };
-
-  const handleOptimize = async () => {
-    if (!selectedWeekday) return;
-
-    try {
-      if (selectedTourArea) {
-        // Optimize AW/tour-area route
-        await optimizeTourAreaRoutesMutation.mutateAsync({
-          weekday: selectedWeekday,
-          area: selectedTourArea,
-        });
-      } else if (selectedUserId) {
-        // Optimize employee route
-        await optimizeRoutesMutation.mutateAsync({
-          weekday: selectedWeekday,
-          employeeId: selectedUserId,
-        });
-      }
-
-      // Reset route completion status after optimization
-      clearCompletedStops();
-    } catch (error) {
-      console.error('Failed to optimize routes:', error);
-    }
+  const buttonSx = {
+    borderRadius: 1.5,
+    textTransform: 'none' as const,
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    py: 1,
+    px: 1.25,
+    minHeight: 'unset',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0.75,
+    justifyContent: 'center',
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box
-        sx={{
-          p: 2,
-          bgcolor: 'rgba(0, 0, 0, 0.02)',
-          borderRadius: 2,
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1, // Uniform spacing between all elements
-        }}
-      >
-        {/* Route Stats Grid */}
+    <Box sx={{ px: 3, pb: 2 }}>
+      {selectedRoute ? (
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 1, // Consistent gap matching the container gap
-          }}
-        >
-          {/* Distance */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              p: 1.5, // Slightly more padding for better visual balance
-              bgcolor: 'rgba(0, 122, 255, 0.1)',
-              borderRadius: 1.5,
-              border: '1px solid rgba(0, 122, 255, 0.2)',
-            }}
-          >
-            <DirectionsCarIcon sx={{ color: '#007AFF', fontSize: 18 }} />
-            <Box>
-              <Typography
-                variant="caption"
-                sx={{ color: '#007AFF', fontWeight: 500, display: 'block' }}
-              >
-                Distanz
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#1d1d1f' }}>
-                {formatDistance(distanceKm)}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Utilization with color logic */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              p: 1.5, // Consistent padding with distance box
-              bgcolor: 'rgba(255, 149, 0, 0.1)',
-              borderRadius: 1.5,
-              border: '1px solid rgba(255, 149, 0, 0.2)',
-            }}
-          >
-            <AccessTimeIcon sx={{ color: '#FF9500', fontSize: 18 }} />
-            <Box>
-              <Typography
-                variant="caption"
-                sx={{ color: '#FF9500', fontWeight: 500, display: 'block' }}
-              >
-                Auslastung
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, color: utilizationInfo.utilizationColor }}
-              >
-                {utilizationInfo.utilizationPercent}%
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Optimize Button */}
-        <Button
-          variant="contained"
-          onClick={handleOptimize}
-          disabled={optimizeRoutesMutation.isPending || optimizeTourAreaRoutesMutation.isPending}
-          sx={{
-            bgcolor: '#4CAF50',
-            borderRadius: 1.5,
-            textTransform: 'none',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            p: 1.5,
-            minHeight: 'unset',
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            justifyContent: 'flex-start',
+            px: 1.5,
+            py: 0.85,
+            mb: 1,
+            bgcolor: accentBg,
+            borderRadius: 1.5,
+            border: `1px solid ${accentBorder}`,
+          }}
+        >
+          <DirectionsCarIcon sx={{ color: accent, fontSize: 18 }} />
+          <Typography variant="body2" sx={{ color: accent, fontWeight: 600 }}>
+            Distanz
+          </Typography>
+          <Typography variant="body2" sx={{ ml: 'auto', fontWeight: 700, color: '#1d1d1f' }}>
+            {formatDistance(getOwnRouteDistance(selectedRoute))}
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ pb: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            Keine Route verfügbar
+          </Typography>
+        </Box>
+      )}
+
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'stretch',
+            bgcolor: customOrderStops.length === 0 ? 'rgba(0, 122, 255, 0.4)' : '#007AFF',
+            borderRadius: 1.5,
+            overflow: 'hidden',
+            minHeight: 44,
+          }}
+        >
+          <Button
+            variant="contained"
+            onClick={() => setCustomOrderOpen(true)}
+            disabled={customOrderStops.length === 0}
+            sx={{
+              ...buttonSx,
+              flex: 1,
+              bgcolor: 'transparent',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: 'transparent', boxShadow: 'none' },
+              '&.Mui-disabled': { bgcolor: 'transparent', color: 'white' },
+            }}
+          >
+            {customActive ? (
+              <Box
+                sx={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  bgcolor: '#34C759',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <CheckIcon sx={{ fontSize: 14, color: 'white' }} />
+              </Box>
+            ) : (
+              <SortIcon sx={{ fontSize: 18 }} />
+            )}
+            Eigene Reihenfolge
+          </Button>
+          {customActive ? (
+            <IconButton
+              aria-label="Eigene Reihenfolge zurücksetzen"
+              disabled={isBusy}
+              onClick={handleResetCustomOrder}
+              sx={{
+                width: 44,
+                color: 'white',
+                borderRadius: 0,
+                '&:hover': { bgcolor: 'transparent' },
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          ) : null}
+        </Box>
+        <IconButton
+          aria-label="Daten aktualisieren"
+          disabled={isBusy}
+          onClick={handleRefresh}
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 1.5,
+            bgcolor: 'rgba(0, 122, 255, 0.12)',
+            color: '#007AFF',
             '&:hover': {
-              bgcolor: '#388E3C',
-            },
-            '&:disabled': {
-              bgcolor: 'rgba(76, 175, 80, 0.5)',
+              bgcolor: 'rgba(0, 122, 255, 0.12)',
             },
           }}
         >
-          <RouteIcon sx={{ fontSize: 18 }} />
-          <Typography variant="caption" sx={{ fontWeight: 500 }}>
-            {optimizeRoutesMutation.isPending || optimizeTourAreaRoutesMutation.isPending
-              ? 'Optimiere...'
-              : 'Optimieren'}
-          </Typography>
-        </Button>
+          <RefreshIcon sx={{ fontSize: 20 }} />
+        </IconButton>
       </Box>
+
+      {selectedRoute ? (
+        <CustomOrderSheet
+          open={customOrderOpen}
+          onClose={() => setCustomOrderOpen(false)}
+          stops={customOrderStops}
+          routeId={selectedRoute.id}
+        />
+      ) : null}
     </Box>
   );
 };

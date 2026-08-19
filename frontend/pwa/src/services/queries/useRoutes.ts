@@ -2,6 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Route, Weekday } from '../../types/models';
 import { routesApi } from '../api/routes';
 
+export const PWA_LIVE_REFETCH_INTERVAL_MS = 60_000;
+
+export const liveListQueryOptions = {
+  refetchOnWindowFocus: true,
+  refetchOnMount: true,
+  refetchInterval: PWA_LIVE_REFETCH_INTERVAL_MS,
+  refetchIntervalInBackground: false,
+};
+
 // Keys for React Query cache
 export const routeKeys = {
   all: ['routes'] as const,
@@ -24,6 +33,7 @@ export const useRoutes = (params?: {
   return useQuery({
     queryKey: routeKeys.list(params),
     queryFn: () => routesApi.getRoutes(params),
+    ...liveListQueryOptions,
   });
 };
 
@@ -80,6 +90,28 @@ export const useOptimizeTourAreaRoutes = () => {
   });
 };
 
+export const useAssignAwTourEmployee = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ routeId, employeeId }: { routeId: number; employeeId: number | null }) =>
+      routesApi.assignAwTourEmployee(routeId, employeeId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.detail(result.route.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.lists(),
+        exact: false,
+      });
+      queryClient.invalidateQueries({
+        queryKey: routeKeys.byDay(),
+        exact: false,
+      });
+    },
+  });
+};
+
 // Hook to reorder an appointment in a route using direction or index
 export const useReorderAppointment = () => {
   const queryClient = useQueryClient();
@@ -107,6 +139,29 @@ export const useReorderAppointment = () => {
         queryKey: routeKeys.lists(),
         exact: false,
       });
+    },
+  });
+};
+
+export const useSetCustomOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ routeId, appointmentIds }: { routeId: number; appointmentIds: number[] }) =>
+      routesApi.setCustomOrder(routeId, appointmentIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: routeKeys.all });
+    },
+  });
+};
+
+export const useApplyOptimizedOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (routeId: number) => routesApi.applyOptimizedOrder(routeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: routeKeys.all });
     },
   });
 };

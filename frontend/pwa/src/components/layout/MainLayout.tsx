@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { MapView } from './MainViewMap';
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { MainBottomSheet } from './MainBottomSheet';
-import UserSearchDrawer from '../user/UserSelectSheet';
+import AdditionalRoutesSheet from '../user/AdditionalRoutesSheet';
+import AdminEmployeeSelectSheet from '../user/AdminEmployeeSelectSheet';
 import { TopOverviewBar } from './TopOverviewBar';
-import StaleRefreshDialog from '../refresh/StaleRefreshDialog';
+import { useAuthMe } from '../../services/queries/useAuthMe';
 
 declare global {
   interface Window {
@@ -17,39 +18,25 @@ declare global {
 const WEEKDAY_STORAGE_KEY = 'pwa-weekday-storage';
 
 const MainLayout: React.FC = () => {
-  const { selectedUserId, selectedTourArea } = useUserStore();
-  const { resetToCurrentDay, resetToCurrentAreaDay } = useWeekdayStore();
-  const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
+  const { selectedUserId } = useUserStore();
+  const { resetToCurrentDay } = useWeekdayStore();
+  const { data: me } = useAuthMe();
+  const [isAdditionalRoutesOpen, setIsAdditionalRoutesOpen] = useState(false);
+  const [isAdminSelectOpen, setIsAdminSelectOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const previousTourTypeRef = useRef<'employee' | 'tour_area' | null>(null);
+  const isAdmin = Boolean(me?.is_admin);
 
-  // Aktuellen Tag setzen, sobald der User-Store geladen ist (neue Session oder Tour-Wechsel)
   useEffect(() => {
     const applyCurrentDay = () => {
-      const currentTourType: 'employee' | 'tour_area' | null = selectedTourArea
-        ? 'tour_area'
-        : selectedUserId
-          ? 'employee'
-          : null;
-
-      if (!currentTourType) {
+      if (!selectedUserId) {
         return;
       }
 
-      const isTourTypeChange =
-        previousTourTypeRef.current !== null && previousTourTypeRef.current !== currentTourType;
       const isNewSession = sessionStorage.getItem(WEEKDAY_STORAGE_KEY) === null;
-
-      if (isNewSession || isTourTypeChange) {
-        if (currentTourType === 'tour_area') {
-          resetToCurrentAreaDay();
-        } else {
-          resetToCurrentDay();
-        }
+      if (isNewSession) {
+        resetToCurrentDay();
       }
-
-      previousTourTypeRef.current = currentTourType;
     };
 
     if (useUserStore.persist.hasHydrated()) {
@@ -58,41 +45,36 @@ const MainLayout: React.FC = () => {
     }
 
     return useUserStore.persist.onFinishHydration(applyCurrentDay);
-  }, [selectedUserId, selectedTourArea, resetToCurrentDay, resetToCurrentAreaDay]);
+  }, [selectedUserId, resetToCurrentDay]);
 
-  // Redirect to user selection if no user is selected
   useEffect(() => {
-    if (!selectedUserId) {
-      setIsUserDrawerOpen(true);
+    if (isAdmin && !selectedUserId) {
+      setIsAdminSelectOpen(true);
     }
-  }, [selectedUserId]);
+  }, [isAdmin, selectedUserId]);
 
   const handleUserSwitch = () => {
-    const nextIsUserDrawerOpen = !isUserDrawerOpen;
-
-    // Wenn der User-Selector geöffnet wird, MainBottomSheet schließen
-    if (nextIsUserDrawerOpen) {
+    const nextOpen = !isAdditionalRoutesOpen;
+    if (nextOpen) {
       setIsSheetOpen(false);
     }
-
-    setIsUserDrawerOpen(nextIsUserDrawerOpen);
+    setIsAdditionalRoutesOpen(nextOpen);
   };
 
   const handleDrawerClose = () => {
-    setIsUserDrawerOpen(false);
+    setIsAdditionalRoutesOpen(false);
   };
 
   const handleSheetToggle = () => {
     if (!isSheetOpen) {
-      setIsUserDrawerOpen(false); // User-Sheet schließen beim Öffnen des MainBottomSheet
+      setIsAdditionalRoutesOpen(false);
     }
     setIsSheetOpen(!isSheetOpen);
   };
 
   const handleSheetClose = () => {
     setIsSheetOpen(false);
-    setIsUserDrawerOpen(false); // Also close user select sheet when map/outside is clicked
-    // Also close weekday selector when map is clicked
+    setIsAdditionalRoutesOpen(false);
     window.__closeWeekdaySelector?.();
   };
 
@@ -103,7 +85,7 @@ const MainLayout: React.FC = () => {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        position: 'fixed', // Fix position to prevent viewport issues
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
@@ -113,23 +95,30 @@ const MainLayout: React.FC = () => {
       <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         <MapView onMapClick={handleSheetClose} />
 
-        {/* Top Overview Bar */}
         <TopOverviewBar
           onUserSwitch={handleUserSwitch}
           onSheetToggle={handleSheetToggle}
           onCloseWeekdaySelector={() => {}}
           onWeekdayButtonClick={() => {
             setIsSheetOpen(false);
-            setIsUserDrawerOpen(false);
+            setIsAdditionalRoutesOpen(false);
           }}
         />
 
         <MainBottomSheet isOpen={isSheetOpen} onClose={handleSheetClose} />
 
-        <UserSearchDrawer open={isUserDrawerOpen} onClose={handleDrawerClose} />
+        <AdditionalRoutesSheet open={isAdditionalRoutesOpen} onClose={handleDrawerClose} />
+        <AdminEmployeeSelectSheet
+          open={isAdminSelectOpen}
+          onClose={() => {
+            if (!useUserStore.getState().selectedUserId && isAdmin) {
+              setIsAdminSelectOpen(true);
+              return;
+            }
+            setIsAdminSelectOpen(false);
+          }}
+        />
       </Box>
-
-      <StaleRefreshDialog />
     </Box>
   );
 };

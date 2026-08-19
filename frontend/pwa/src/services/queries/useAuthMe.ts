@@ -10,6 +10,7 @@ export function useAuthMe() {
     queryFn: fetchAuthMe,
     enabled: !configured || isAuthenticated,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
     retry: 1,
   });
 }

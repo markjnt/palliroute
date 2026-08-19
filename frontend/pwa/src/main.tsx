@@ -1,22 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@palliroute/auth';
 import { registerSW } from 'virtual:pwa-register';
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: Infinity, // Daten nie als stale betrachten
-      refetchOnWindowFocus: false, // Nicht beim Fenster-Fokus refetchen
-      refetchOnReconnect: false, // Nicht bei Netzwerk-Wiederherstellung refetchen
-      refetchOnMount: false, // Nicht beim Mount refetchen
-      retry: 1,
-    },
-  },
-});
+import { queryClient } from './query/client';
 
 if ('serviceWorker' in navigator) {
   let updateToast: HTMLDivElement | null = null;
@@ -66,6 +54,7 @@ if ('serviceWorker' in navigator) {
   });
 
   const triggerUpdate = registerSW({
+    immediate: true,
     onNeedRefresh() {
       showUpdateToast();
       triggerUpdate(true);
@@ -73,12 +62,20 @@ if ('serviceWorker' in navigator) {
     onOfflineReady() {
       console.log('App ist jetzt offlinefähig!');
     },
-    onRegisteredSW(swUrl, registration) {
-      // Beim Öffnen der App sofort auf neue Version prüfen,
-      // damit ein einfaches Neuöffnen reicht (ohne PWA neu zu installieren).
-      if (registration) {
-        registration.update();
-      }
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+
+      const checkForUpdate = () => {
+        void registration.update();
+      };
+
+      checkForUpdate();
+      setInterval(checkForUpdate, 30 * 60 * 1000);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          checkForUpdate();
+        }
+      });
     },
   });
 }
