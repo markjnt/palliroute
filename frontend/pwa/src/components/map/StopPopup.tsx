@@ -30,6 +30,7 @@ import { useEmployees } from '../../services/queries/useEmployees';
 import { useRoutes } from '../../services/queries/useRoutes';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 import { useCloseOnMapClick } from '@palliroute/ui';
+import { openMaps, callPhone } from '../route/StopActionButtons';
 
 const dialogPaperSx = {
   borderRadius: 3,
@@ -95,11 +96,13 @@ export const StopPopup: React.FC<StopPopupProps> = ({
   };
 
   const accent = isAreaTourDay ? '#ff9800' : '#007AFF';
+  const areaLabel = marker.area || appointment.area || 'Bereich';
+  const employeeName = employee ? `${employee.first_name} ${employee.last_name}` : null;
   const overlayLabel = isAreaTourDay
-    ? `AW ${marker.area || appointment.area || 'Bereich'}`
-    : employee
-      ? `${employee.first_name} ${employee.last_name}`
-      : `AW ${marker.area || 'Bereich'}`;
+    ? employeeName
+      ? `AW ${areaLabel} · ${employeeName}`
+      : `AW ${areaLabel}`
+    : employeeName || `AW ${areaLabel}`;
   const overlayColor = isAreaTourDay
     ? getTourAreaColor(marker.area || appointment.area)
     : employee
@@ -292,7 +295,10 @@ export const StopPopup: React.FC<StopPopupProps> = ({
               onClick={() => openMaps(address)}
             >
               {patient.street}
-              <Box component="span" sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}>
+              <Box
+                component="span"
+                sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}
+              >
                 {patient.zip_code} {patient.city}
               </Box>
             </Typography>
@@ -427,10 +433,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
             </Typography>
           </Box>
           {moveError ? (
-            <Alert
-              severity="error"
-              sx={{ mt: 2, borderRadius: 2 }}
-            >
+            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
               {moveError}
             </Alert>
           ) : null}
