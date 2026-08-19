@@ -10,9 +10,9 @@ import {
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { useApplyOptimizedOrder, useRoutes } from '../../services/queries/useRoutes';
-import { Weekday, VisitType } from '../../types/models';
+import { Weekday } from '../../types/models';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
-import CustomOrderSheet from './CustomOrderSheet';
+import CustomOrderSheet, { type CustomOrderStop } from './CustomOrderSheet';
 import { findEmployeeDayRoute } from '../../utils/mapUtils';
 import { getOwnRouteDistance, getOwnRouteOrder } from '@palliroute/shared';
 import { usePatients } from '../../services/queries/usePatients';
@@ -47,25 +47,18 @@ export const RouteInfo: React.FC = () => {
         if (!appointment) return null;
         const patient = patients.find((p) => p.id === appointment.patient_id);
         if (!patient) return null;
-        return {
+        const stop: CustomOrderStop = {
           id: appointmentId,
           patientName: `${patient.first_name} ${patient.last_name}`,
           visitType: appointment.visit_type,
           address: `${patient.street}, ${patient.zip_code} ${patient.city}`,
-          info: appointment.info || undefined,
         };
+        if (appointment.info) {
+          stop.info = appointment.info;
+        }
+        return stop;
       })
-      .filter(
-        (
-          stop
-        ): stop is {
-          id: number;
-          patientName: string;
-          visitType: VisitType;
-          address: string;
-          info?: string;
-        } => Boolean(stop)
-      );
+      .filter((stop): stop is CustomOrderStop => stop != null);
   }, [selectedRoute, appointments, patients]);
 
   const pullFromDatabase = async () => {

@@ -12,7 +12,7 @@ import { getColorForVisitType } from '../../utils/mapUtils';
 import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
 import { useSetCustomOrder } from '../../services/queries/useRoutes';
 
-interface CustomOrderStop {
+export interface CustomOrderStop {
   id: number;
   patientName: string;
   visitType: string;
