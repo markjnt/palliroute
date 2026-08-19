@@ -1,7 +1,12 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Button, IconButton, Typography, Chip } from '@mui/material';
-import { Done as DoneIcon, Close as CloseIcon } from '@mui/icons-material';
+import {
+  Done as DoneIcon,
+  Close as CloseIcon,
+  LocationOn as LocationIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
 import { Sheet } from 'react-modal-sheet';
 import { getColorForVisitType } from '../../utils/mapUtils';
 import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
@@ -11,6 +16,8 @@ interface CustomOrderStop {
   id: number;
   patientName: string;
   visitType: string;
+  address: string;
+  info?: string;
 }
 
 interface CustomOrderSheetProps {
@@ -191,7 +198,7 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
                     onClick={() => handleClickStop(stop.id)}
                     sx={{
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: 'flex-start',
                       gap: 1.5,
                       p: 1.5,
                       borderRadius: 2,
@@ -214,6 +221,7 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
                         justifyContent: 'center',
                         fontWeight: 700,
                         flexShrink: 0,
+                        alignSelf: 'center',
                       }}
                     >
                       {selected ? order : ''}
@@ -222,6 +230,36 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {stop.patientName}
                       </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                        <LocationIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: '#8E8E93',
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          {stop.address}
+                        </Typography>
+                      </Box>
+                      {stop.info ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                          <InfoIcon sx={{ fontSize: 14, color: '#007AFF', mr: 0.5 }} />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: '#007AFF',
+                              fontSize: '0.75rem',
+                              bgcolor: 'rgba(0, 122, 255, 0.1)',
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: 1,
+                            }}
+                          >
+                            {stop.info}
+                          </Typography>
+                        </Box>
+                      ) : null}
                     </Box>
                     <Chip
                       label={stop.visitType}
