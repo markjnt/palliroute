@@ -11,7 +11,11 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Home as HomeIcon, Phone as PhoneIcon, AddCircle as AddCircleIcon } from '@mui/icons-material';
+import {
+  Home as HomeIcon,
+  Phone as PhoneIcon,
+  AddCircle as AddCircleIcon,
+} from '@mui/icons-material';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 import { usePatients, patientKeys } from '../../services/queries/usePatients';
@@ -24,11 +28,15 @@ import {
   useCalendarWeeks,
   calendarWeekKeys,
 } from '../../services/queries/useCalendarWeek';
-import { Weekday } from '../../types/models';
+import { Route, Weekday } from '../../types/models';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentCalendarWeek, getTourAreaColor, isAwTourArea } from '@palliroute/shared';
 import { useNrwpHolidayLookupForSelectedKw } from '../../hooks/useNrwpHolidayForTourDay';
 import { findEmployeeDayRoute } from '../../utils/mapUtils';
+import {
+  isAwCalendarDay,
+  resolveWeekdayAfterWeekChange,
+} from '../../utils/resolveWeekdayAfterWeekChange';
 import { AreaPickCard } from '../user/EmployeePickCard';
 
 const AW_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
@@ -46,11 +54,8 @@ interface WeekdaySelectorProps {
   onWeekdaySelect: (weekday: string) => void;
 }
 
-export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
-  isOpen,
-  onWeekdaySelect,
-}) => {
-  const { selectedWeekday } = useWeekdayStore();
+export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeekdaySelect }) => {
+  const { selectedWeekday, setSelectedWeekday } = useWeekdayStore();
   const selectedCalendarWeek = useCalendarWeekStore((state) => state.selectedCalendarWeek);
   const setSelectedCalendarWeek = useCalendarWeekStore((state) => state.setSelectedCalendarWeek);
   const availableCalendarWeeks = useCalendarWeekStore((state) => state.availableCalendarWeeks);
@@ -95,14 +100,6 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     return weeks;
   }, [availableCalendarWeeks]);
 
-  const handleCalendarWeekChange = (week: number) => {
-    setSelectedCalendarWeek(week);
-    queryClient.setQueryData(calendarWeekKeys.best(), week);
-    queryClient.invalidateQueries({ queryKey: patientKeys.all, exact: false });
-    queryClient.invalidateQueries({ queryKey: appointmentKeys.all, exact: false });
-    queryClient.invalidateQueries({ queryKey: routeKeys.all, exact: false });
-  };
-
   const getGermanWeekday = (weekday: string): string => {
     const weekdayMap: Record<string, string> = {
       monday: 'Mo',
@@ -130,6 +127,31 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     return weekdayMap[today] as Weekday;
   };
 
+  const handleCalendarWeekChange = async (week: number) => {
+    setSelectedCalendarWeek(week);
+    queryClient.setQueryData(calendarWeekKeys.best(), week);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: patientKeys.all, exact: false }),
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all, exact: false }),
+      queryClient.invalidateQueries({ queryKey: routeKeys.all, exact: false }),
+    ]);
+
+    const freshRoutes = (queryClient.getQueryData<Route[]>(routeKeys.list(undefined)) ?? []).filter(
+      (route) => route.calendar_week == null || route.calendar_week === week
+    );
+    const currentSelected = useWeekdayStore.getState().selectedWeekday;
+    const nextWeekday = resolveWeekdayAfterWeekChange({
+      selectedWeekday: currentSelected,
+      today: getCurrentWeekday(),
+      isAwDay: (day) => isAwCalendarDay(day, getHolidayName(day, week)),
+      hasAssignedAwTour: (day) =>
+        Boolean(findEmployeeDayRoute(freshRoutes, selectedUserId, day, true)),
+    });
+    if (nextWeekday !== currentSelected) {
+      setSelectedWeekday(nextWeekday);
+    }
+  };
+
   const currentWeekday = getCurrentWeekday();
 
   const weekdays = useMemo(() => {
@@ -145,8 +167,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 
     return defs.map((d) => {
       const holidayName = getHolidayName(d.value);
-      const isWeekend = d.value === 'saturday' || d.value === 'sunday';
-      const isAwDay = isWeekend || Boolean(holidayName);
+      const isAwDay = isAwCalendarDay(d.value, holidayName);
       const assignedRoute = isAwDay
         ? findEmployeeDayRoute(allRoutes, selectedUserId, d.value, true)
         : undefined;
@@ -168,7 +189,10 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     return allAppointments.filter((a) => a.employee_id === selectedUserId && a.weekday === weekday);
   };
 
-  const getPatientsByVisitType = (appointments: typeof allAppointments, visitType: 'HB' | 'NA' | 'TK') => {
+  const getPatientsByVisitType = (
+    appointments: typeof allAppointments,
+    visitType: 'HB' | 'NA' | 'TK'
+  ) => {
     const typeAppointments = appointments.filter((a) => a.visit_type === visitType);
     const patientIds = Array.from(new Set(typeAppointments.map((a) => a.patient_id)));
     return patientIds.map((id) => patients.find((p) => p.id === id)).filter((p) => p !== undefined);
@@ -197,7 +221,9 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   const handleClaimConfirm = async () => {
     if (!claimWeekday || !selectedUserId || !claimRoute?.id) {
       setFeedback({
-        message: claimRoute ? 'Bitte wählen Sie einen Mitarbeiter' : 'Keine AW-Tour für diesen Bereich',
+        message: claimRoute
+          ? 'Bitte wählen Sie einen Mitarbeiter'
+          : 'Keine AW-Tour für diesen Bereich',
         severity: 'error',
       });
       return;
@@ -285,7 +311,11 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                   overflow: 'hidden',
                   borderRadius: 2,
                   cursor: 'pointer',
-                  bgcolor: isSelected ? `${accent}1A` : weekday.isAwDay ? 'rgba(255, 152, 0, 0.08)' : 'transparent',
+                  bgcolor: isSelected
+                    ? `${accent}1A`
+                    : weekday.isAwDay
+                      ? 'rgba(255, 152, 0, 0.08)'
+                      : 'transparent',
                   border: isSelected ? `1px solid ${accent}33` : '1px solid transparent',
                   position: 'relative',
                   px: 0.65,
@@ -462,45 +492,46 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
         </Box>
 
         <Box sx={{ px: 1, pt: 0.25, pb: 1, display: 'flex', gap: 1, alignItems: 'stretch' }}>
-          {(sortedCalendarWeeks.length > 0 ? sortedCalendarWeeks : [selectedCalendarWeek].filter(Boolean)).map(
-            (week) => {
-              const isCurrent = week === currentCalendarWeek;
-              const isSelected = week === selectedCalendarWeek;
-              return (
-                <Button
-                  key={week}
-                  variant="text"
-                  onClick={() => handleCalendarWeekChange(week as number)}
-                  sx={{
-                    flex: 1,
-                    color: isCurrent ? '#2e7d32' : '#007AFF',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    textTransform: 'none',
-                    minWidth: 0,
-                    borderRadius: 1.5,
-                    border: isCurrent
-                      ? '1px solid rgba(76, 175, 80, 0.4)'
-                      : '1px solid rgba(0, 122, 255, 0.2)',
-                    bgcolor: isSelected
-                      ? isCurrent
-                        ? 'rgba(76, 175, 80, 0.22)'
-                        : 'rgba(0, 122, 255, 0.18)'
-                      : isCurrent
-                        ? 'rgba(76, 175, 80, 0.12)'
-                        : 'rgba(0, 122, 255, 0.08)',
-                    '&:hover': {
-                      backgroundColor: isCurrent
-                        ? 'rgba(56, 142, 60, 0.2)'
-                        : 'rgba(0, 122, 255, 0.15)',
-                    },
-                  }}
-                >
-                  KW {week}
-                </Button>
-              );
-            }
-          )}
+          {(sortedCalendarWeeks.length > 0
+            ? sortedCalendarWeeks
+            : [selectedCalendarWeek].filter(Boolean)
+          ).map((week) => {
+            const isCurrent = week === currentCalendarWeek;
+            const isSelected = week === selectedCalendarWeek;
+            return (
+              <Button
+                key={week}
+                variant="text"
+                onClick={() => handleCalendarWeekChange(week as number)}
+                sx={{
+                  flex: 1,
+                  color: isCurrent ? '#2e7d32' : '#007AFF',
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  textTransform: 'none',
+                  minWidth: 0,
+                  borderRadius: 1.5,
+                  border: isCurrent
+                    ? '1px solid rgba(76, 175, 80, 0.4)'
+                    : '1px solid rgba(0, 122, 255, 0.2)',
+                  bgcolor: isSelected
+                    ? isCurrent
+                      ? 'rgba(76, 175, 80, 0.22)'
+                      : 'rgba(0, 122, 255, 0.18)'
+                    : isCurrent
+                      ? 'rgba(76, 175, 80, 0.12)'
+                      : 'rgba(0, 122, 255, 0.08)',
+                  '&:hover': {
+                    backgroundColor: isCurrent
+                      ? 'rgba(56, 142, 60, 0.2)'
+                      : 'rgba(0, 122, 255, 0.15)',
+                  },
+                }}
+              >
+                KW {week}
+              </Button>
+            );
+          })}
         </Box>
       </Box>
 
@@ -536,9 +567,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
         </DialogTitle>
         <DialogContent sx={{ px: 2.5, pb: 1 }}>
           <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            {claimWeekday
-              ? `Möchten Sie die AW-Tour am ${claimDayLabel} übernehmen?`
-              : ''}
+            {claimWeekday ? `Möchten Sie die AW-Tour am ${claimDayLabel} übernehmen?` : ''}
           </Typography>
           {claimOwner && claimOwner.id !== selectedUserId && (
             <Alert
@@ -577,9 +606,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                 <AreaPickCard
                   key={area}
                   area={area}
-                  assignedName={
-                    owner ? `${owner.first_name} ${owner.last_name}` : null
-                  }
+                  assignedName={owner ? `${owner.first_name} ${owner.last_name}` : null}
                   selected={claimArea === area}
                   onClick={() => setClaimArea(area)}
                 />
