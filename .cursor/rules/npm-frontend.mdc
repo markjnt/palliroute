@@ -1,0 +1,12 @@
+---
+description: Run npm only inside the frontend workspace
+alwaysApply: true
+---
+
+# npm only in `frontend/`
+
+The npm workspace lives in `frontend/` (`frontend/package.json`). There is no package.json at the repo root.
+
+- Always run `npm`, `npx`, and `npm install`/`uninstall` with working directory `frontend/` (or a subdirectory such as `frontend/web`).
+- Never run npm at the repository root. That creates a stray `package.json`, lockfile, and `node_modules/` next to `backend/` and `frontend/`.
+- Local scripts: `cd frontend && npm install`, then `npm run dev:web` / `npm run dev:pwa`.
