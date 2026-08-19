@@ -497,26 +497,33 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
                 onClick={() => handleCalendarWeekChange(week as number)}
                 sx={{
                   flex: 1,
-                  color: isCurrent ? '#2e7d32' : '#007AFF',
-                  fontWeight: 600,
+                  color: isSelected ? '#ffffff' : isCurrent ? '#2e7d32' : '#007AFF',
+                  fontWeight: isSelected ? 700 : 600,
                   fontSize: '0.75rem',
                   textTransform: 'none',
                   minWidth: 0,
                   borderRadius: 1.5,
-                  border: isCurrent
-                    ? '1px solid rgba(76, 175, 80, 0.4)'
-                    : '1px solid rgba(0, 122, 255, 0.2)',
+                  border: isSelected
+                    ? '1px solid transparent'
+                    : isCurrent
+                      ? '1px solid rgba(76, 175, 80, 0.4)'
+                      : '1px solid rgba(0, 122, 255, 0.2)',
                   bgcolor: isSelected
                     ? isCurrent
-                      ? 'rgba(76, 175, 80, 0.22)'
-                      : 'rgba(0, 122, 255, 0.18)'
+                      ? '#2e7d32'
+                      : '#007AFF'
                     : isCurrent
                       ? 'rgba(76, 175, 80, 0.12)'
                       : 'rgba(0, 122, 255, 0.08)',
+                  boxShadow: isSelected ? '0 1px 4px rgba(0, 0, 0, 0.18)' : 'none',
                   '&:hover': {
-                    backgroundColor: isCurrent
-                      ? 'rgba(56, 142, 60, 0.2)'
-                      : 'rgba(0, 122, 255, 0.15)',
+                    backgroundColor: isSelected
+                      ? isCurrent
+                        ? '#1b5e20'
+                        : '#0066d6'
+                      : isCurrent
+                        ? 'rgba(56, 142, 60, 0.2)'
+                        : 'rgba(0, 122, 255, 0.15)',
                   },
                 }}
               >
