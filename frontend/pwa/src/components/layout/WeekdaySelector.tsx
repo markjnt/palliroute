@@ -28,15 +28,12 @@ import {
   useCalendarWeeks,
   calendarWeekKeys,
 } from '../../services/queries/useCalendarWeek';
-import { Route, Weekday } from '../../types/models';
+import { Weekday } from '../../types/models';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentCalendarWeek, getTourAreaColor, isAwTourArea } from '@palliroute/shared';
 import { useNrwpHolidayLookupForSelectedKw } from '../../hooks/useNrwpHolidayForTourDay';
 import { findEmployeeDayRoute } from '../../utils/mapUtils';
-import {
-  isAwCalendarDay,
-  resolveWeekdayAfterWeekChange,
-} from '../../utils/resolveWeekdayAfterWeekChange';
+import { isAwCalendarDay } from '../../utils/resolveWeekdayAfterWeekChange';
 import { AreaPickCard } from '../user/EmployeePickCard';
 
 const AW_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
@@ -101,7 +98,7 @@ interface WeekdaySelectorProps {
 }
 
 export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeekdaySelect }) => {
-  const { selectedWeekday, setSelectedWeekday } = useWeekdayStore();
+  const { selectedWeekday } = useWeekdayStore();
   const selectedCalendarWeek = useCalendarWeekStore((state) => state.selectedCalendarWeek);
   const setSelectedCalendarWeek = useCalendarWeekStore((state) => state.setSelectedCalendarWeek);
   const availableCalendarWeeks = useCalendarWeekStore((state) => state.availableCalendarWeeks);
@@ -181,21 +178,6 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all, exact: false }),
       queryClient.invalidateQueries({ queryKey: routeKeys.all, exact: false }),
     ]);
-
-    const freshRoutes = (queryClient.getQueryData<Route[]>(routeKeys.list(undefined)) ?? []).filter(
-      (route) => route.calendar_week == null || route.calendar_week === week
-    );
-    const currentSelected = useWeekdayStore.getState().selectedWeekday;
-    const nextWeekday = resolveWeekdayAfterWeekChange({
-      selectedWeekday: currentSelected,
-      today: getCurrentWeekday(),
-      isAwDay: (day) => isAwCalendarDay(day, getHolidayName(day, week)),
-      hasAssignedAwTour: (day) =>
-        Boolean(findEmployeeDayRoute(freshRoutes, selectedUserId, day, true)),
-    });
-    if (nextWeekday !== currentSelected) {
-      setSelectedWeekday(nextWeekday);
-    }
   };
 
   const currentWeekday = getCurrentWeekday();
