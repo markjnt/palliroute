@@ -108,6 +108,11 @@ export interface Route {
   total_duration: number;
   total_distance: number;
   polyline: string;
+  custom_order: number[];
+  custom_order_active: boolean;
+  custom_polyline?: string | null;
+  custom_distance?: number | null;
+  custom_duration?: number | null;
   area: RouteArea | string;
   calendar_week?: number;
   created_at: string;
