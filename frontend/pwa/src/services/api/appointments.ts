@@ -61,15 +61,33 @@ export const appointmentsApi = {
 
   async moveAppointment(
     appointmentId: number,
-    sourceEmployeeId: number,
-    targetEmployeeId: number
+    sourceEmployeeId?: number,
+    targetEmployeeId?: number,
+    sourceArea?: string,
+    targetArea?: string
   ): Promise<void> {
     try {
-      await api.post('/appointments/move', {
+      const payload: {
+        appointment_id: number;
+        source_employee_id?: number;
+        target_employee_id?: number;
+        source_area?: string;
+        target_area?: string;
+      } = {
         appointment_id: appointmentId,
-        source_employee_id: sourceEmployeeId,
-        target_employee_id: targetEmployeeId,
-      });
+      };
+
+      if (sourceEmployeeId !== undefined && targetEmployeeId !== undefined) {
+        payload.source_employee_id = sourceEmployeeId;
+        payload.target_employee_id = targetEmployeeId;
+      } else if (sourceArea && targetArea) {
+        payload.source_area = sourceArea;
+        payload.target_area = targetArea;
+      } else {
+        throw new Error('Either employee IDs or areas must be provided');
+      }
+
+      await api.post('/appointments/move', payload);
     } catch (error) {
       console.error('Fehler beim Verschieben des Termins:', error);
       throw error;

@@ -59,9 +59,11 @@ export const routesApi = {
   // Optimize routes for a specific day and employee
   async optimizeRoutes(weekday: string, employeeId: number): Promise<void> {
     try {
+      const calendar_week = await calendarWeekService.getBestWeek();
       const response = await api.post(`/routes/optimize`, {
         weekday: weekday.toLowerCase(),
         employee_id: employeeId,
+        calendar_week,
       });
       return response.data;
     } catch (error) {
@@ -91,6 +93,24 @@ export const routesApi = {
     }
   },
 
+  async assignAwTourEmployee(
+    routeId: number,
+    employeeId: number | null
+  ): Promise<{ route: Route; planning_failed?: boolean }> {
+    try {
+      const response = await api.put(`/routes/${routeId}/assign-employee`, {
+        employee_id: employeeId,
+      });
+      return {
+        route: response.data.route,
+        planning_failed: Boolean(response.data.planning_failed),
+      };
+    } catch (error) {
+      console.error(`Failed to assign employee to AW tour ${routeId}:`, error);
+      throw error;
+    }
+  },
+
   // Reorder an appointment in a route using direction or index
   async reorderAppointment(
     routeId: number,
@@ -116,5 +136,17 @@ export const routesApi = {
       console.error(`Failed to reorder appointment in route ${routeId}:`, error);
       throw error;
     }
+  },
+
+  async setCustomOrder(routeId: number, appointmentIds: number[]): Promise<Route> {
+    const response = await api.put(`/routes/${routeId}/custom-order`, {
+      appointment_ids: appointmentIds,
+    });
+    return response.data.route;
+  },
+
+  async applyOptimizedOrder(routeId: number): Promise<Route> {
+    const response = await api.post(`/routes/${routeId}/apply-optimized-order`);
+    return response.data.route;
   },
 };

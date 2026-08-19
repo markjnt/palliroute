@@ -1,25 +1,24 @@
-import React, { MouseEvent, useEffect, useMemo, useState } from 'react';
-import { Box, Typography, Chip, Button, Menu, MenuItem } from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Home as HomeIcon,
-  Phone as PhoneIcon,
-  AddCircle as AddCircleIcon,
-  Route as RouteIcon,
-  ExpandMore as ExpandMoreIcon,
-} from '@mui/icons-material';
+  Box,
+  Typography,
+  Chip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+import { Home as HomeIcon, Phone as PhoneIcon, AddCircle as AddCircleIcon } from '@mui/icons-material';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 import { usePatients, patientKeys } from '../../services/queries/usePatients';
 import { useAppointments, appointmentKeys } from '../../services/queries/useAppointments';
-import {
-  useRoutes,
-  useOptimizeRoutes,
-  useOptimizeTourAreaRoutes,
-  routeKeys,
-} from '../../services/queries/useRoutes';
+import { useRoutes, useAssignAwTourEmployee, routeKeys } from '../../services/queries/useRoutes';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { useUserStore } from '../../stores/useUserStore';
-import { useRouteCompletionStore } from '../../stores/useRouteCompletionStore';
 import {
   useCalendarWeek,
   useCalendarWeeks,
@@ -27,8 +26,19 @@ import {
 } from '../../services/queries/useCalendarWeek';
 import { Weekday } from '../../types/models';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentCalendarWeek } from '@palliroute/shared';
+import { getCurrentCalendarWeek, getTourAreaColor, isAwTourArea } from '@palliroute/shared';
 import { useNrwpHolidayLookupForSelectedKw } from '../../hooks/useNrwpHolidayForTourDay';
+import { findEmployeeDayRoute } from '../../utils/mapUtils';
+import { AreaPickCard } from '../user/EmployeePickCard';
+
+const AW_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
+
+const getAwAreaLetter = (area?: string | null): 'N' | 'M' | 'S' | null => {
+  if (area === 'Nord') return 'N';
+  if (area === 'Mitte') return 'M';
+  if (area === 'Süd') return 'S';
+  return null;
+};
 
 interface WeekdaySelectorProps {
   isOpen: boolean;
@@ -38,7 +48,6 @@ interface WeekdaySelectorProps {
 
 export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   isOpen,
-  onClose,
   onWeekdaySelect,
 }) => {
   const { selectedWeekday } = useWeekdayStore();
@@ -48,12 +57,8 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   const setAvailableCalendarWeeks = useCalendarWeekStore(
     (state) => state.setAvailableCalendarWeeks
   );
-  const { selectedUserId, selectedTourArea } = useUserStore();
-  const { clearAllCompletedStops } = useRouteCompletionStore();
+  const { selectedUserId } = useUserStore();
   const queryClient = useQueryClient();
-  const [calendarWeekMenuAnchorEl, setCalendarWeekMenuAnchorEl] = useState<null | HTMLElement>(
-    null
-  );
 
   const { data: patients = [] } = usePatients();
   const { data: allAppointments = [] } = useAppointments();
@@ -61,26 +66,22 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   const { data: employees = [] } = useEmployees();
   const { data: bestCalendarWeek } = useCalendarWeek();
   const { data: fetchedCalendarWeeks = [] } = useCalendarWeeks();
-  const optimizeRoutesMutation = useOptimizeRoutes();
-  const optimizeTourAreaRoutesMutation = useOptimizeTourAreaRoutes();
+  const assignAwTourEmployee = useAssignAwTourEmployee();
   const currentCalendarWeek = useMemo(() => getCurrentCalendarWeek(), []);
   const getHolidayName = useNrwpHolidayLookupForSelectedKw();
 
-  const selectedEmployee = employees.find((emp) => emp.id === selectedUserId);
+  const [claimWeekday, setClaimWeekday] = useState<Weekday | null>(null);
+  const [claimArea, setClaimArea] = useState<(typeof AW_AREAS)[number]>('Nord');
+  const [feedback, setFeedback] = useState<{
+    message: string;
+    severity: 'success' | 'warning' | 'error';
+  } | null>(null);
 
-  // Set calendar week when data is loaded
   useEffect(() => {
     if (bestCalendarWeek && !selectedCalendarWeek) {
       setSelectedCalendarWeek(bestCalendarWeek);
     }
   }, [bestCalendarWeek, selectedCalendarWeek, setSelectedCalendarWeek]);
-
-  // Clear completion stops when calendar week changes
-  useEffect(() => {
-    if (selectedCalendarWeek !== null) {
-      clearAllCompletedStops();
-    }
-  }, [selectedCalendarWeek, clearAllCompletedStops]);
 
   useEffect(() => {
     if (fetchedCalendarWeeks.length > 0) {
@@ -96,24 +97,12 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 
   const handleCalendarWeekChange = (week: number) => {
     setSelectedCalendarWeek(week);
-    setCalendarWeekMenuAnchorEl(null);
     queryClient.setQueryData(calendarWeekKeys.best(), week);
     queryClient.invalidateQueries({ queryKey: patientKeys.all, exact: false });
     queryClient.invalidateQueries({ queryKey: appointmentKeys.all, exact: false });
     queryClient.invalidateQueries({ queryKey: routeKeys.all, exact: false });
-    // Clear all completed stops when calendar week changes
-    clearAllCompletedStops();
   };
 
-  const handleCalendarWeekMenuOpen = (event: MouseEvent<HTMLElement>) => {
-    setCalendarWeekMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleCalendarWeekMenuClose = () => {
-    setCalendarWeekMenuAnchorEl(null);
-  };
-
-  // Get German weekday name
   const getGermanWeekday = (weekday: string): string => {
     const weekdayMap: Record<string, string> = {
       monday: 'Mo',
@@ -127,9 +116,8 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     return weekdayMap[weekday] || weekday;
   };
 
-  // Get current weekday
   const getCurrentWeekday = () => {
-    const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const today = new Date().getDay();
     const weekdayMap = [
       'sunday',
       'monday',
@@ -139,13 +127,13 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
       'friday',
       'saturday',
     ];
-    return weekdayMap[today] as any;
+    return weekdayMap[today] as Weekday;
   };
 
   const currentWeekday = getCurrentWeekday();
 
-  const weekdayDefs: Array<{ value: Weekday; label: string }> = useMemo(
-    () => [
+  const weekdays = useMemo(() => {
+    const defs: Array<{ value: Weekday; label: string }> = [
       { value: 'monday', label: 'Montag' },
       { value: 'tuesday', label: 'Dienstag' },
       { value: 'wednesday', label: 'Mittwoch' },
@@ -153,518 +141,496 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
       { value: 'friday', label: 'Freitag' },
       { value: 'saturday', label: 'Samstag' },
       { value: 'sunday', label: 'Sonntag' },
-    ],
-    []
-  );
+    ];
 
-  const weekdays = useMemo(() => {
-    if (selectedTourArea) {
-      // AW/TourArea: area-tour days are selectable (Sa/So + weekday holidays).
-      return weekdayDefs
-        .filter((d) => {
-          const isSaturdayOrSunday = d.value === 'saturday' || d.value === 'sunday';
-          return isSaturdayOrSunday || Boolean(getHolidayName(d.value));
-        })
-        .map((d) => ({
-          ...d,
-          holidayName: getHolidayName(d.value),
-          disabled: false,
-        }));
+    return defs.map((d) => {
+      const holidayName = getHolidayName(d.value);
+      const isWeekend = d.value === 'saturday' || d.value === 'sunday';
+      const isAwDay = isWeekend || Boolean(holidayName);
+      const assignedRoute = isAwDay
+        ? findEmployeeDayRoute(allRoutes, selectedUserId, d.value, true)
+        : undefined;
+      return {
+        ...d,
+        holidayName,
+        isAwDay,
+        assigned: Boolean(assignedRoute),
+        assignedArea: assignedRoute?.area,
+      };
+    });
+  }, [getHolidayName, allRoutes, selectedUserId]);
+
+  const getEmployeeAppointments = (weekday: Weekday, isAwDay: boolean, assignedArea?: string) => {
+    if (isAwDay) {
+      if (!assignedArea) return [];
+      return allAppointments.filter((a) => a.weekday === weekday && a.area === assignedArea);
     }
-
-    // Employee mode: weekday holidays are shown but not selectable.
-    return weekdayDefs
-      .filter((d) => !['saturday', 'sunday'].includes(d.value))
-      .map((d) => {
-        const holidayName = getHolidayName(d.value);
-        return {
-          ...d,
-          holidayName,
-          disabled: Boolean(holidayName),
-        };
-      });
-  }, [selectedTourArea, weekdayDefs, getHolidayName]);
-
-  useEffect(() => {
-    if (weekdays.length === 0) return;
-    const selected = weekdays.find((d) => d.value === selectedWeekday);
-    if (selected?.disabled) {
-      const firstEnabled = weekdays.find((d) => !d.disabled);
-      if (firstEnabled) onWeekdaySelect(firstEnabled.value);
-    }
-  }, [weekdays, selectedWeekday, onWeekdaySelect]);
-
-  // Get appointments for a specific employee and day
-  const getEmployeeAppointments = (weekday: string) => {
-    if (selectedTourArea) {
-      // For AW/tour-area mode, get appointments for the selected tour area
-      return allAppointments.filter((a) => a.weekday === weekday && a.area === selectedTourArea);
-    } else {
-      // For employees, get appointments with the selected employee
-      return allAppointments.filter(
-        (a) => a.employee_id === selectedUserId && a.weekday === weekday
-      );
-    }
+    return allAppointments.filter((a) => a.employee_id === selectedUserId && a.weekday === weekday);
   };
 
-  // Group patients by visit type
-  const getPatientsByVisitType = (appointments: any[], visitType: 'HB' | 'NA' | 'TK') => {
+  const getPatientsByVisitType = (appointments: typeof allAppointments, visitType: 'HB' | 'NA' | 'TK') => {
     const typeAppointments = appointments.filter((a) => a.visit_type === visitType);
     const patientIds = Array.from(new Set(typeAppointments.map((a) => a.patient_id)));
     return patientIds.map((id) => patients.find((p) => p.id === id)).filter((p) => p !== undefined);
   };
 
-  // Calculate utilization percentage
-  const calculateUtilization = (duration: number) => {
-    let targetMinutes: number;
+  const claimRoute = claimWeekday
+    ? allRoutes.find(
+        (route) =>
+          route.weekday === claimWeekday && isAwTourArea(route.area) && route.area === claimArea
+      )
+    : undefined;
+  const claimOwner = claimRoute?.employee_id
+    ? employees.find((emp) => emp.id === claimRoute.employee_id)
+    : undefined;
+  const claimDayLabel = weekdays.find((day) => day.value === claimWeekday)?.label ?? '';
 
-    if (selectedTourArea) {
-      // For AW/tour-area tours: 75% of 420 minutes = 315 minutes target
-      targetMinutes = 315;
-    } else {
-      // For employees: based on work_hours percentage
-      targetMinutes = Math.round(420 * ((selectedEmployee?.work_hours || 0) / 100));
+  const handleDayClick = (weekday: (typeof weekdays)[number]) => {
+    if (weekday.isAwDay && !weekday.assigned) {
+      setClaimArea('Nord');
+      setClaimWeekday(weekday.value);
+      return;
     }
-
-    const utilizationPercent = targetMinutes > 0 ? Math.round((duration / targetMinutes) * 100) : 0;
-
-    let utilizationColor = 'success.main';
-    if (utilizationPercent > 100) {
-      utilizationColor = 'error.main';
-    } else if (utilizationPercent > 90) {
-      utilizationColor = 'warning.main';
-    } else if (utilizationPercent > 70) {
-      utilizationColor = 'success.light';
-    }
-
-    return {
-      utilizationPercent,
-      utilizationColor,
-    };
+    onWeekdaySelect(weekday.value);
   };
 
-  const handleOptimizeAll = async () => {
-    try {
-      // Optimize only the days that are shown in the weekday selector
-      await Promise.all(
-        weekdays.map((weekday) => {
-          if (selectedTourArea) {
-            // For AW/tour-area tours: optimize each visible area-tour day
-            return optimizeTourAreaRoutesMutation.mutateAsync({
-              weekday: weekday.value,
-              area: selectedTourArea,
-            });
-          } else if (selectedUserId) {
-            // For employees: optimize each visible weekday
-            return optimizeRoutesMutation.mutateAsync({
-              weekday: weekday.value,
-              employeeId: selectedUserId,
-            });
-          }
-        })
-      );
+  const handleClaimConfirm = async () => {
+    if (!claimWeekday || !selectedUserId || !claimRoute?.id) {
+      setFeedback({
+        message: claimRoute ? 'Bitte wählen Sie einen Mitarbeiter' : 'Keine AW-Tour für diesen Bereich',
+        severity: 'error',
+      });
+      return;
+    }
 
-      // Reset route completion status after optimization
-      clearAllCompletedStops();
+    try {
+      const result = await assignAwTourEmployee.mutateAsync({
+        routeId: claimRoute.id,
+        employeeId: selectedUserId,
+      });
+      if (result.planning_failed) {
+        setFeedback({
+          message:
+            'Tour übernommen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.',
+          severity: 'warning',
+        });
+      } else {
+        setFeedback({ message: 'AW-Tour übernommen', severity: 'success' });
+      }
+      onWeekdaySelect(claimWeekday);
+      setClaimWeekday(null);
     } catch (error) {
-      console.error('Failed to optimize all routes:', error);
+      console.error('Failed to claim AW tour:', error);
+      setFeedback({ message: 'Tour konnte nicht übernommen werden', severity: 'error' });
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: 58,
-        left: 28,
-        right: 28,
-        height: 200, // Increased height to accommodate the button
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        borderRadius: 2,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 10000,
-      }}
-    >
-      {/* Weekdays Grid */}
+    <>
       <Box
         sx={{
-          flex: 1,
-          display: 'grid',
-          gridTemplateColumns: `repeat(${Math.max(weekdays.length, 1)}, 1fr)`,
-          gap: 0.5,
-          p: 0.75,
-          pb: 0,
+          position: 'absolute',
+          top: 58,
+          left: 28,
+          right: 28,
+          height: 'auto',
+          bgcolor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 10000,
         }}
       >
-        {weekdays.map((weekday) => {
-          const dayAppointments = getEmployeeAppointments(weekday.value);
-          const hbPatients = getPatientsByVisitType(dayAppointments, 'HB');
-          const tkPatients = getPatientsByVisitType(dayAppointments, 'TK');
-          const naPatients = getPatientsByVisitType(dayAppointments, 'NA');
-          const totalAppointments = hbPatients.length + tkPatients.length + naPatients.length;
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: 0.5,
+            px: 0.75,
+            pt: 1.5,
+            pb: 0.5,
+          }}
+        >
+          {weekdays.map((weekday) => {
+            const dayAppointments = getEmployeeAppointments(
+              weekday.value,
+              weekday.isAwDay,
+              weekday.assignedArea
+            );
+            const hbPatients = getPatientsByVisitType(dayAppointments, 'HB');
+            const tkPatients = getPatientsByVisitType(dayAppointments, 'TK');
+            const naPatients = getPatientsByVisitType(dayAppointments, 'NA');
+            const areaLetter = weekday.isAwDay ? getAwAreaLetter(weekday.assignedArea) : null;
 
-          const dayRoute = selectedTourArea
-            ? allRoutes.find(
-                (route) => route.area === selectedTourArea && route.weekday === weekday.value
-              )
-            : allRoutes.find(
-                (route) => route.employee_id === selectedUserId && route.weekday === weekday.value
-              );
-          const utilization = dayRoute
-            ? calculateUtilization(dayRoute.total_duration ?? 0)
-            : { utilizationPercent: 0, utilizationColor: 'success.main' };
+            const isSelected = selectedWeekday === weekday.value;
+            const isUnassignedAw = weekday.isAwDay && !weekday.assigned;
+            const accent = weekday.isAwDay ? '#ff9800' : '#007AFF';
 
-          return (
-            <Box
-              key={weekday.value}
-              onClick={() => {
-                if (!weekday.disabled) onWeekdaySelect(weekday.value);
-              }}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                minWidth: 0,
-                overflow: 'hidden',
-                borderRadius: 2,
-                cursor: weekday.disabled ? 'not-allowed' : 'pointer',
-                bgcolor:
-                  selectedWeekday === weekday.value ? 'rgba(0, 122, 255, 0.1)' : 'transparent',
-                border:
-                  selectedWeekday === weekday.value
-                    ? '1px solid rgba(0, 122, 255, 0.2)'
-                    : '1px solid transparent',
-                position: 'relative',
-                p: 0.65,
-                opacity: weekday.disabled ? 0.45 : 1,
-                '&:active': {
-                  bgcolor:
-                    selectedWeekday === weekday.value
-                      ? 'rgba(0, 122, 255, 0.15)'
-                      : 'rgba(0, 0, 0, 0.05)',
-                  transform: 'scale(0.95)',
-                },
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            >
-              {/* Weekday */}
-              <Typography
-                variant="caption"
-                sx={{
-                  fontWeight: currentWeekday === weekday.value ? 700 : 600,
-                  fontSize: '0.7rem',
-                  color: selectedWeekday === weekday.value ? '#007AFF' : '#1d1d1f',
-                  mb: 0.35,
-                }}
-              >
-                {getGermanWeekday(weekday.value)}
-              </Typography>
-
-              {weekday.holidayName && (
-                <Box
-                  title={`Feiertag: ${weekday.holidayName}`}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 0.35,
-                    mb: 0.25,
-                    width: '100%',
-                    maxWidth: '100%',
-                    minWidth: 0,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      backgroundColor: 'warning.main',
-                      flexShrink: 0,
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: 'inline-block',
-                      fontSize: '0.52rem',
-                      lineHeight: 1,
-                      color: 'warning.dark',
-                      width: 'auto',
-                      minWidth: 0,
-                      maxWidth: 'calc(100% - 10px)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      textAlign: 'left',
-                    }}
-                  >
-                    {weekday.holidayName}
-                  </Typography>
-                </Box>
-              )}
-
-              {/* Appointments with Icons */}
+            return (
               <Box
+                key={weekday.value}
+                onClick={() => handleDayClick(weekday)}
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 0.2,
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
                   width: '100%',
-                  mb: 0.35,
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  bgcolor: isSelected ? `${accent}1A` : weekday.isAwDay ? 'rgba(255, 152, 0, 0.08)' : 'transparent',
+                  border: isSelected ? `1px solid ${accent}33` : '1px solid transparent',
+                  position: 'relative',
+                  px: 0.65,
+                  pt: 0.75,
+                  pb: 0.75,
+                  opacity: isUnassignedAw ? 0.45 : 1,
+                  filter: isUnassignedAw ? 'grayscale(0.7)' : 'none',
+                  '&:active': {
+                    bgcolor: isSelected ? `${accent}26` : 'rgba(0, 0, 0, 0.05)',
+                    transform: 'scale(0.95)',
+                  },
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                <Chip
-                  size="small"
-                  icon={<HomeIcon fontSize="small" />}
-                  label={hbPatients.length}
-                  color="primary"
-                  variant="outlined"
-                  sx={{
-                    height: 15,
-                    fontSize: '0.55rem',
-                    borderColor: 'rgba(25, 118, 210, 0.3)',
-                    bgcolor: 'rgba(25, 118, 210, 0.05)',
-                    flex: 1,
-                    minWidth: 0,
-                    '& .MuiChip-label': {
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    },
-                  }}
-                />
-                <Chip
-                  size="small"
-                  icon={<PhoneIcon fontSize="small" />}
-                  label={tkPatients.length}
-                  color="success"
-                  variant="outlined"
-                  sx={{
-                    height: 15,
-                    fontSize: '0.55rem',
-                    borderColor: 'rgba(76, 175, 80, 0.3)',
-                    bgcolor: 'rgba(76, 175, 80, 0.05)',
-                    flex: 1,
-                    minWidth: 0,
-                    '& .MuiChip-label': {
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    },
-                  }}
-                />
-                <Chip
-                  size="small"
-                  icon={<AddCircleIcon fontSize="small" />}
-                  label={naPatients.length}
-                  color="secondary"
-                  variant="outlined"
-                  sx={{
-                    height: 15,
-                    fontSize: '0.55rem',
-                    borderColor: 'rgba(156, 39, 176, 0.3)',
-                    bgcolor: 'rgba(156, 39, 176, 0.05)',
-                    flex: 1,
-                    minWidth: 0,
-                    '& .MuiChip-label': {
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    },
-                  }}
-                />
-              </Box>
-
-              {/* Utilization */}
-              <Typography
-                variant="caption"
-                sx={{
-                  fontSize: '0.6rem',
-                  color: utilization.utilizationColor,
-                  fontWeight: 500,
-                }}
-              >
-                {utilization.utilizationPercent}%
-              </Typography>
-
-              {/* Current day indicator */}
-              {currentWeekday === weekday.value && (
                 <Box
                   sx={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    backgroundColor: '#007AFF',
-                    position: 'absolute',
-                    top: 2,
-                    border: '1px solid rgba(0, 122, 255, 0.2)',
-                    boxShadow: '0 1px 2px rgba(0, 122, 255, 0.3)',
+                    height: 8,
+                    mb: 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                />
-              )}
-            </Box>
-          );
-        })}
-      </Box>
+                >
+                  {currentWeekday === weekday.value ? (
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: accent,
+                        border: `1px solid ${accent}33`,
+                        boxShadow: `0 1px 2px ${accent}4D`,
+                      }}
+                    />
+                  ) : null}
+                </Box>
 
-      {/* Optimize All Button and Calendar Week */}
-      <Box sx={{ p: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
-        <Button
-          variant="contained"
-          onClick={handleOptimizeAll}
-          disabled={
-            optimizeRoutesMutation.isPending ||
-            optimizeTourAreaRoutesMutation.isPending ||
-            (!selectedUserId && !selectedTourArea)
-          }
-          sx={{
-            bgcolor: '#4CAF50',
-            borderRadius: 1.5,
-            textTransform: 'none',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            p: 1.5,
-            minHeight: 'unset',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            justifyContent: 'flex-start',
-            flex: 1,
-            '&:hover': {
-              bgcolor: '#388E3C',
-            },
-            '&:disabled': {
-              bgcolor: 'rgba(76, 175, 80, 0.5)',
-            },
-          }}
-        >
-          <RouteIcon sx={{ fontSize: 18 }} />
-          <Typography variant="caption" sx={{ fontWeight: 500 }}>
-            {optimizeRoutesMutation.isPending || optimizeTourAreaRoutesMutation.isPending
-              ? 'Optimiere alle...'
-              : 'Alle Routen optimieren'}
-          </Typography>
-        </Button>
-
-        {/* Calendar Week Display */}
-        <Button
-          variant="text"
-          onClick={handleCalendarWeekMenuOpen}
-          endIcon={<ExpandMoreIcon sx={{ fontSize: 16 }} />}
-          sx={{
-            color: selectedCalendarWeek === currentCalendarWeek ? '#2e7d32' : '#007AFF',
-            fontWeight: 600,
-            fontSize: '0.7rem',
-            textTransform: 'none',
-            px: 1.5,
-            minWidth: 'fit-content',
-            height: '100%',
-            borderRadius: 1.5,
-            border:
-              selectedCalendarWeek === currentCalendarWeek
-                ? '1px solid rgba(76, 175, 80, 0.4)'
-                : '1px solid rgba(0, 122, 255, 0.2)',
-            bgcolor:
-              selectedCalendarWeek === currentCalendarWeek
-                ? 'rgba(76, 175, 80, 0.15)'
-                : 'rgba(0, 122, 255, 0.1)',
-            '&:hover': {
-              backgroundColor:
-                selectedCalendarWeek === currentCalendarWeek
-                  ? 'rgba(56, 142, 60, 0.2)'
-                  : 'rgba(0, 122, 255, 0.15)',
-            },
-          }}
-        >
-          KW {selectedCalendarWeek ?? '--'}
-        </Button>
-      </Box>
-
-      <Menu
-        anchorEl={calendarWeekMenuAnchorEl}
-        open={Boolean(calendarWeekMenuAnchorEl)}
-        onClose={handleCalendarWeekMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        MenuListProps={{
-          dense: true,
-        }}
-      >
-        {sortedCalendarWeeks.length === 0 ? (
-          <MenuItem disabled>Keine Kalenderwochen verfügbar</MenuItem>
-        ) : (
-          sortedCalendarWeeks.map((week) => (
-            <MenuItem
-              key={week}
-              selected={week === selectedCalendarWeek}
-              onClick={() => handleCalendarWeekChange(week)}
-              sx={{
-                borderRadius: 1,
-                mb: 0.5,
-                backgroundColor:
-                  week === currentCalendarWeek ? 'rgba(76, 175, 80, 0.12)' : 'transparent',
-                '&.Mui-selected': {
-                  backgroundColor: week === currentCalendarWeek ? 'success.main' : 'primary.main',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: week === currentCalendarWeek ? 'success.dark' : 'primary.dark',
-                  },
-                },
-                '&:hover': {
-                  backgroundColor:
-                    week === currentCalendarWeek
-                      ? 'rgba(56, 142, 60, 0.18)'
-                      : 'rgba(0, 122, 255, 0.1)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
-                  variant="body2"
+                  variant="caption"
                   sx={{
-                    fontWeight: week === selectedCalendarWeek ? 600 : 400,
-                    color:
-                      week === selectedCalendarWeek
-                        ? 'inherit'
-                        : week === currentCalendarWeek
-                          ? 'success.dark'
-                          : 'inherit',
+                    fontWeight: currentWeekday === weekday.value ? 700 : 600,
+                    fontSize: '0.7rem',
+                    color: isSelected ? accent : '#1d1d1f',
+                    mb: 0.2,
+                  }}
+                >
+                  {getGermanWeekday(weekday.value)}
+                </Typography>
+
+                <Box
+                  sx={{
+                    height: 12,
+                    mb: 0.35,
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {weekday.holidayName ? (
+                    <Typography
+                      title={`Feiertag: ${weekday.holidayName}`}
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        fontSize: '0.5rem',
+                        lineHeight: 1.15,
+                        color: 'warning.dark',
+                        width: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {weekday.holidayName}
+                    </Typography>
+                  ) : null}
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.2,
+                    width: '100%',
+                    mb: 0.35,
+                  }}
+                >
+                  <Chip
+                    size="small"
+                    icon={<HomeIcon fontSize="small" />}
+                    label={hbPatients.length}
+                    color="primary"
+                    variant="outlined"
+                    sx={{
+                      height: 15,
+                      fontSize: '0.55rem',
+                      borderColor: 'rgba(25, 118, 210, 0.3)',
+                      bgcolor: 'rgba(25, 118, 210, 0.05)',
+                      flex: 1,
+                      minWidth: 0,
+                      '& .MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      },
+                    }}
+                  />
+                  <Chip
+                    size="small"
+                    icon={<PhoneIcon fontSize="small" />}
+                    label={tkPatients.length}
+                    color="success"
+                    variant="outlined"
+                    sx={{
+                      height: 15,
+                      fontSize: '0.55rem',
+                      borderColor: 'rgba(76, 175, 80, 0.3)',
+                      bgcolor: 'rgba(76, 175, 80, 0.05)',
+                      flex: 1,
+                      minWidth: 0,
+                      '& .MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      },
+                    }}
+                  />
+                  <Chip
+                    size="small"
+                    icon={<AddCircleIcon fontSize="small" />}
+                    label={naPatients.length}
+                    color="secondary"
+                    variant="outlined"
+                    sx={{
+                      height: 15,
+                      fontSize: '0.55rem',
+                      borderColor: 'rgba(156, 39, 176, 0.3)',
+                      bgcolor: 'rgba(156, 39, 176, 0.05)',
+                      flex: 1,
+                      minWidth: 0,
+                      '& .MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      },
+                    }}
+                  />
+                </Box>
+
+                {areaLetter ? (
+                  <Box
+                    title={`AW ${weekday.assignedArea}`}
+                    aria-label={`AW-Bereich ${weekday.assignedArea}`}
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      bgcolor: getTourAreaColor(weekday.assignedArea),
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.55rem',
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {areaLetter}
+                  </Box>
+                ) : null}
+              </Box>
+            );
+          })}
+        </Box>
+
+        <Box sx={{ px: 1, pt: 0.25, pb: 1, display: 'flex', gap: 1, alignItems: 'stretch' }}>
+          {(sortedCalendarWeeks.length > 0 ? sortedCalendarWeeks : [selectedCalendarWeek].filter(Boolean)).map(
+            (week) => {
+              const isCurrent = week === currentCalendarWeek;
+              const isSelected = week === selectedCalendarWeek;
+              return (
+                <Button
+                  key={week}
+                  variant="text"
+                  onClick={() => handleCalendarWeekChange(week as number)}
+                  sx={{
+                    flex: 1,
+                    color: isCurrent ? '#2e7d32' : '#007AFF',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    textTransform: 'none',
+                    minWidth: 0,
+                    borderRadius: 1.5,
+                    border: isCurrent
+                      ? '1px solid rgba(76, 175, 80, 0.4)'
+                      : '1px solid rgba(0, 122, 255, 0.2)',
+                    bgcolor: isSelected
+                      ? isCurrent
+                        ? 'rgba(76, 175, 80, 0.22)'
+                        : 'rgba(0, 122, 255, 0.18)'
+                      : isCurrent
+                        ? 'rgba(76, 175, 80, 0.12)'
+                        : 'rgba(0, 122, 255, 0.08)',
+                    '&:hover': {
+                      backgroundColor: isCurrent
+                        ? 'rgba(56, 142, 60, 0.2)'
+                        : 'rgba(0, 122, 255, 0.15)',
+                    },
                   }}
                 >
                   KW {week}
-                </Typography>
-                {week === currentCalendarWeek && (
-                  <Box
-                    sx={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      backgroundColor: week === selectedCalendarWeek ? 'white' : 'success.main',
-                      border:
-                        week === selectedCalendarWeek
-                          ? '1px solid rgba(255, 255, 255, 0.6)'
-                          : 'none',
-                    }}
-                  />
-                )}
-              </Box>
-            </MenuItem>
-          ))
-        )}
-      </Menu>
-    </Box>
+                </Button>
+              );
+            }
+          )}
+        </Box>
+      </Box>
+
+      <Dialog
+        open={Boolean(claimWeekday)}
+        onClose={() => setClaimWeekday(null)}
+        fullWidth
+        maxWidth="xs"
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              bgcolor: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.35)',
+              mx: 2,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 600,
+            color: '#1d1d1f',
+            pb: 0.5,
+            pt: 2.5,
+            px: 2.5,
+          }}
+        >
+          Tour übernehmen?
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.5, pb: 1 }}>
+          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+            {claimWeekday
+              ? `Möchten Sie die AW-Tour am ${claimDayLabel} übernehmen?`
+              : ''}
+          </Typography>
+          {claimOwner && claimOwner.id !== selectedUserId && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 2,
+                borderRadius: 2,
+                bgcolor: 'rgba(255, 152, 0, 0.12)',
+                color: '#e65100',
+                '& .MuiAlert-icon': { color: '#ff9800' },
+              }}
+            >
+              Diese Tour gehört derzeit {claimOwner.first_name} {claimOwner.last_name}.
+            </Alert>
+          )}
+          <Typography
+            variant="caption"
+            sx={{ display: 'block', mb: 1, fontWeight: 600, color: '#1d1d1f' }}
+          >
+            Bereich
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {AW_AREAS.map((area) => {
+              const areaRoute = claimWeekday
+                ? allRoutes.find(
+                    (route) =>
+                      route.weekday === claimWeekday &&
+                      isAwTourArea(route.area) &&
+                      route.area === area
+                  )
+                : undefined;
+              const owner = areaRoute?.employee_id
+                ? employees.find((emp) => emp.id === areaRoute.employee_id)
+                : undefined;
+              return (
+                <AreaPickCard
+                  key={area}
+                  area={area}
+                  assignedName={
+                    owner ? `${owner.first_name} ${owner.last_name}` : null
+                  }
+                  selected={claimArea === area}
+                  onClick={() => setClaimArea(area)}
+                />
+              );
+            })}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 1.5, gap: 1 }}>
+          <Button
+            onClick={() => setClaimWeekday(null)}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 1.5,
+              color: '#1d1d1f',
+              fontWeight: 600,
+              '&:hover': { bgcolor: 'transparent' },
+            }}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleClaimConfirm}
+            disabled={assignAwTourEmployee.isPending || !claimRoute}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 1.5,
+              fontWeight: 600,
+              bgcolor: '#ff9800',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#ff9800', boxShadow: 'none' },
+              '&.Mui-disabled': { bgcolor: 'rgba(255, 152, 0, 0.4)', color: 'white' },
+            }}
+          >
+            {assignAwTourEmployee.isPending ? 'Übernehme…' : 'Übernehmen'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={Boolean(feedback)}
+        autoHideDuration={5000}
+        onClose={() => setFeedback(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        {feedback ? (
+          <Alert severity={feedback.severity} onClose={() => setFeedback(null)} variant="filled">
+            {feedback.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
+    </>
   );
 };

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Weekday } from '../../types/models';
 import { appointmentsApi } from '../api/appointments';
-import { routeKeys } from './useRoutes';
+import { liveListQueryOptions, routeKeys } from './useRoutes';
 import { patientKeys } from './usePatients';
 
 // Keys für React Query Cache
@@ -28,7 +28,8 @@ export const useAppointmentsByWeekday = (weekday: Weekday) => {
   return useQuery({
     queryKey: appointmentKeys.byWeekday(weekday),
     queryFn: () => appointmentsApi.getByWeekday(weekday),
-    enabled: !!weekday, // Nur ausführen, wenn ein Wochentag angegeben ist
+    enabled: !!weekday,
+    ...liveListQueryOptions,
   });
 };
 
@@ -59,11 +60,22 @@ export const useMoveAppointment = () => {
       appointmentId,
       sourceEmployeeId,
       targetEmployeeId,
+      sourceArea,
+      targetArea,
     }: {
       appointmentId: number;
-      sourceEmployeeId: number;
-      targetEmployeeId: number;
-    }) => appointmentsApi.moveAppointment(appointmentId, sourceEmployeeId, targetEmployeeId),
+      sourceEmployeeId?: number;
+      targetEmployeeId?: number;
+      sourceArea?: string;
+      targetArea?: string;
+    }) =>
+      appointmentsApi.moveAppointment(
+        appointmentId,
+        sourceEmployeeId,
+        targetEmployeeId,
+        sourceArea,
+        targetArea
+      ),
     onSuccess: () => {
       // Invalidate all appointment queries to refetch data
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });

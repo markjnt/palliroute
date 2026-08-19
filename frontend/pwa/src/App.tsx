@@ -1,9 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme, Box, Typography } from '@mui/material';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import { TouchBackend } from 'react-dnd-touch-backend';
 import { ProtectedRoute, useAuth, LogoutButton, isAuthConfigured } from '@palliroute/auth';
 import InstallPrompt from './components/install/InstallPrompt';
 import MainLayout from './components/layout/MainLayout';
@@ -234,17 +231,12 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const isTouchDevice = 'ontouchstart' in window;
-  const backend = isTouchDevice ? TouchBackend : HTML5Backend;
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <DndProvider backend={backend}>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </DndProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
     </ThemeProvider>
   );
 };

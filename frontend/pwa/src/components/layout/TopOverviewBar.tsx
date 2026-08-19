@@ -11,9 +11,12 @@ import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { usePatients } from '../../services/queries/usePatients';
 import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
+import { useRoutes } from '../../services/queries/useRoutes';
 import { employeeTypeColors } from '@palliroute/shared';
 import { Weekday } from '../../types/models';
 import { WeekdaySelector } from './WeekdaySelector';
+import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
+import { findEmployeeDayRoute } from '../../utils/mapUtils';
 
 interface TopOverviewBarProps {
   onUserSwitch: () => void;
@@ -30,7 +33,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
   onWeekdayButtonClick,
 }) => {
   const barRef = useRef<HTMLDivElement | null>(null);
-  const { selectedUserId, selectedTourArea } = useUserStore();
+  const { selectedUserId } = useUserStore();
   const { selectedWeekday, setSelectedWeekday } = useWeekdayStore();
   const [isWeekdayMenuOpen, setIsWeekdayMenuOpen] = useState(false);
 
@@ -51,8 +54,11 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
   const { data: employees = [] } = useEmployees();
   const { data: patients = [] } = usePatients();
   const { data: appointments = [] } = useAppointmentsByWeekday(selectedWeekday as Weekday);
+  const { data: routes = [] } = useRoutes({ weekday: selectedWeekday as Weekday });
+  const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
 
   const selectedEmployee = employees.find((emp) => emp.id === selectedUserId);
+  const ownRoute = findEmployeeDayRoute(routes, selectedUserId, selectedWeekday, isAreaTourDay);
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -92,6 +98,10 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
   };
 
   const currentWeekday = getCurrentWeekday();
+  const weekdayAccent = isAreaTourDay ? '#ff9800' : '#007AFF';
+  const weekdayAccentSoft = isAreaTourDay ? 'rgba(255, 152, 0, 0.12)' : 'rgba(0, 122, 255, 0.1)';
+  const weekdayAccentBorder = isAreaTourDay ? 'rgba(255, 152, 0, 0.35)' : 'rgba(0, 122, 255, 0.2)';
+  const weekdayAccentActive = isAreaTourDay ? 'rgba(255, 152, 0, 0.2)' : 'rgba(0, 122, 255, 0.15)';
 
   const handleWeekdayButtonClick = () => {
     onWeekdayButtonClick?.(); // Zuerst alle Sheets schließen
@@ -108,8 +118,10 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
   };
 
   // Get appointments for the selected employee and day
-  const employeeAppointments = selectedTourArea
-    ? appointments.filter((a) => a.weekday === selectedWeekday && a.area === selectedTourArea) // For AW/tour-area tours, show only appointments for the selected area
+  const employeeAppointments = isAreaTourDay
+    ? appointments.filter(
+        (a) => a.weekday === selectedWeekday && ownRoute?.area && a.area === ownRoute.area
+      )
     : appointments.filter((a) => a.employee_id === selectedUserId && a.weekday === selectedWeekday);
 
   // Group patients by visit type
@@ -182,16 +194,16 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
           sx={{
             width: 48,
             height: 48,
-            bgcolor: 'rgba(0, 122, 255, 0.1)',
-            border: '1px solid rgba(0, 122, 255, 0.2)',
-            color: '#007AFF',
+            bgcolor: weekdayAccentSoft,
+            border: `1px solid ${weekdayAccentBorder}`,
+            color: weekdayAccent,
             position: 'relative',
             flexShrink: 0,
             ml: 1,
             '&:active': {
-              bgcolor: 'rgba(0, 122, 255, 0.15)',
+              bgcolor: weekdayAccentActive,
               transform: 'scale(0.95)',
-              boxShadow: '0 4px 12px rgba(0, 122, 255, 0.2)',
+              boxShadow: `0 4px 12px ${weekdayAccent}33`,
             },
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
@@ -202,6 +214,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
               fontWeight: currentWeekday === selectedWeekday ? 700 : 600,
               fontSize: currentWeekday === selectedWeekday ? '1rem' : '0.9rem',
               lineHeight: 1,
+              color: weekdayAccent,
             }}
           >
             {getGermanWeekday(selectedWeekday)}
@@ -214,11 +227,11 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
                 width: 4,
                 height: 4,
                 borderRadius: '50%',
-                backgroundColor: '#007AFF',
+                backgroundColor: weekdayAccent,
                 position: 'absolute',
                 bottom: 4,
-                border: '1px solid rgba(0, 122, 255, 0.2)',
-                boxShadow: '0 1px 2px rgba(0, 122, 255, 0.3)',
+                border: `1px solid ${weekdayAccentBorder}`,
+                boxShadow: `0 1px 2px ${weekdayAccent}4D`,
               }}
             />
           )}
@@ -321,11 +334,9 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
           sx={{
             width: 48,
             height: 48,
-            bgcolor: selectedTourArea
-              ? '#ff9800'
-              : selectedEmployee
-                ? getEmployeeColor(selectedEmployee.function)
-                : '#007AFF',
+            bgcolor: selectedEmployee
+              ? getEmployeeColor(selectedEmployee.function)
+              : '#007AFF',
             color: 'white',
             fontSize: '1rem',
             fontWeight: 600,
@@ -340,17 +351,9 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          {selectedTourArea
-            ? selectedTourArea === 'Nord'
-              ? 'N'
-              : selectedTourArea === 'Mitte'
-                ? 'M'
-                : selectedTourArea === 'Süd'
-                  ? 'S'
-                  : selectedTourArea.charAt(0)
-            : selectedEmployee
-              ? getInitials(selectedEmployee.first_name, selectedEmployee.last_name)
-              : '?'}
+          {selectedEmployee
+            ? getInitials(selectedEmployee.first_name, selectedEmployee.last_name)
+            : '?'}
         </Avatar>
       </Box>
 

@@ -1,14 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { Marker } from '@react-google-maps/api';
-import { Box } from '@mui/material';
+import { AdvancedMapMarker, CircleStopMarker } from '@palliroute/ui';
+import {
+  getColorForAdditionalTour,
+  getMarkerFillColor,
+  getMarkerLabelText,
+  getTourAreaColor,
+  groupMarkersByLatLng,
+  offsetOverlappingLatLng,
+} from '@palliroute/shared';
 import { MarkerData } from '../../types/mapTypes';
-import { Appointment, Employee, Patient } from '../../types/models';
-import { createMarkerIcon, createMarkerLabel } from '../../utils/markerConfig';
+import { Appointment, Employee, Patient, Route } from '../../types/models';
 import { StopPopup } from './StopPopup';
-import { useRouteCompletionStore, useCompletedStops } from '../../stores/useRouteCompletionStore';
-import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
-import { getColorForTour } from '@palliroute/shared';
 import { useUserStore } from '../../stores/useUserStore';
 
 interface MapMarkersProps {
@@ -16,33 +19,7 @@ interface MapMarkersProps {
   patients: Patient[];
   employees: Employee[];
   appointments: Appointment[];
-  routes: any[];
-}
-
-// Group markers by rounded lat/lng
-function groupMarkersByLatLng(markers: MarkerData[]) {
-  const map = new Map<string, MarkerData[]>();
-  for (const marker of markers) {
-    const lat = marker.position.lat();
-    const lng = marker.position.lng();
-    const key = `${lat.toFixed(5)}|${lng.toFixed(5)}`;
-    if (!map.has(key)) {
-      map.set(key, []);
-    }
-    map.get(key)!.push(marker);
-  }
-  return Array.from(map.values()); // Array of marker groups
-}
-
-// Offset marker positions in a circle if overlapping
-function offsetLatLng(lat: number, lng: number, index: number, total: number) {
-  if (total === 1) return { lat, lng };
-  const offset = 0.0001;
-  const angle = ((2 * Math.PI) / total) * index;
-  return {
-    lat: lat + Math.sin(angle) * offset,
-    lng: lng + Math.cos(angle) * offset,
-  };
+  routes: Route[];
 }
 
 export const MapMarkers: React.FC<MapMarkersProps> = ({
@@ -53,16 +30,11 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
   routes,
 }) => {
   const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
-  const { setCurrentWeekday } = useRouteCompletionStore();
-  const completedStops = useCompletedStops();
-  const { selectedWeekday } = useWeekdayStore();
-  const { selectedEmployeeIds } = useAdditionalRoutesStore();
-  const { selectedUserId, selectedTourArea } = useUserStore();
+  const { selectedEmployeeIds, selectedAreas } = useAdditionalRoutesStore();
+  const { selectedUserId } = useUserStore();
 
-  // Gruppiere alle Marker
   const markerGroups = useMemo(() => groupMarkersByLatLng(markers), [markers]);
 
-  // Find patient and appointment data for selected marker
   const selectedPatient = useMemo(() => {
     if (!selectedMarker || selectedMarker.type !== 'patient' || !selectedMarker.patientId) {
       return undefined;
@@ -77,84 +49,54 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
     return appointments.find((a) => a.id === selectedMarker.appointmentId);
   }, [selectedMarker, appointments]);
 
-  // Check if marker belongs to additional route (not main user route)
+  const isAdditionalEmployee = (employeeId: number | string | null | undefined) => {
+    if (employeeId == null) return false;
+    const numericId = Number(employeeId);
+    return selectedEmployeeIds.some((id) => Number(id) === numericId);
+  };
+
+  const isAdditionalArea = (area: string | null | undefined) => {
+    if (!area) return false;
+    return selectedAreas.includes(area);
+  };
+
   const isAdditionalRouteMarker = (marker: MarkerData): boolean => {
     if (marker.type === 'tour_area') {
-      // Tour-area start marker is never additional
-      return false;
+      return isAdditionalArea(marker.area);
     }
     if (!marker.routeId) return false;
     const route = routes.find((r) => r.id === marker.routeId);
     if (!route) return false;
+    if (Number(route.employee_id) === Number(selectedUserId)) return false;
 
-    // For AW/tour-area routes, check if it's an additional area
-    if (selectedTourArea || !route.employee_id) {
-      return route.area !== selectedTourArea && selectedEmployeeIds.includes(route.area);
-    }
-
-    // For employee routes, check if it's an additional employee
-    return route.employee_id !== selectedUserId && selectedEmployeeIds.includes(route.employee_id);
+    return isAdditionalEmployee(route.employee_id) || isAdditionalArea(String(route.area));
   };
 
-  // Get route color for a marker
   const getMarkerRouteColor = (marker: MarkerData): string | null => {
     if (marker.type === 'tour_area') {
-      // Tour-area start marker uses orange color
-      return '#ff9800';
+      return getTourAreaColor(marker.area);
     }
 
     if (!marker.routeId) return null;
     const route = routes.find((r) => r.id === marker.routeId);
     if (!route) return null;
 
-    // For AW/tour-area routes, use area-based colors
-    if (selectedTourArea || !route.employee_id) {
-      const getTourAreaColor = (area: string) => {
-        switch (area) {
-          case 'Nord':
-            return '#1976d2'; // Blue
-          case 'Mitte':
-            return '#7b1fa2'; // Purple
-          case 'Süd':
-            return '#388e3c'; // Green
-          default:
-            return '#ff9800'; // Orange fallback
-        }
-      };
-
-      // Main tour-area route (selected area) is always blue
-      if (route.area === selectedTourArea) {
-        return '#2196F3';
-      }
-
-      // Additional tour-area routes get their area color
-      if (selectedEmployeeIds.includes(route.area)) {
-        return getTourAreaColor(route.area);
-      }
-
-      return null;
-    }
-
-    // For employee routes
-    // Main user route is always blue
-    if (route.employee_id === selectedUserId) {
+    if (Number(route.employee_id) === Number(selectedUserId)) {
       return '#2196F3';
     }
 
-    // Additional routes get their assigned color
-    if (selectedEmployeeIds.includes(route.employee_id)) {
-      return getColorForTour(route.employee_id);
+    if (isAdditionalArea(String(route.area))) {
+      return getTourAreaColor(String(route.area));
+    }
+
+    if (isAdditionalEmployee(route.employee_id)) {
+      return getColorForAdditionalTour(route.employee_id ?? undefined);
     }
 
     return null;
   };
 
-  // Handle marker click and set current weekday for completion tracking
   const handleMarkerClick = (marker: MarkerData, displayPosition: google.maps.LatLng) => {
-    // Only set current weekday for main user route markers (not additional routes)
-    if (marker.type === 'patient' && !isAdditionalRouteMarker(marker)) {
-      setCurrentWeekday(selectedWeekday);
-    }
     setSelectedMarker({ ...marker, displayPosition });
   };
 
@@ -164,75 +106,46 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
         group.map((marker, idx) => {
           const origLat = marker.position.lat();
           const origLng = marker.position.lng();
-          const { lat, lng } = offsetLatLng(origLat, origLng, idx, group.length);
+          const { lat, lng } = offsetOverlappingLatLng(origLat, origLng, idx, group.length);
           const displayPosition = new google.maps.LatLng(lat, lng);
 
-          // Check if this is an additional route marker
           const isAdditionalRoute = isAdditionalRouteMarker(marker);
-
-          // Get route color for this marker
           const routeColor = getMarkerRouteColor(marker);
 
-          // Check if this marker's appointment is completed
-          const isCompleted = marker.appointmentId
-            ? completedStops.has(marker.appointmentId)
-            : false;
-
-          // Area-based styling
           let opacity = 1;
 
-          // For main user route: use standard colors (HB=blue, NA=red, etc.)
-          // For additional routes: use route color
-          let icon: google.maps.Symbol | undefined;
-          if (isAdditionalRoute && routeColor) {
-            // Additional route: use route color
-            icon = createMarkerIcon(
-              marker.type,
-              marker.employeeType,
-              marker.visitType,
-              marker.isInactive || false,
-              routeColor
-            );
-          } else {
-            // Main route: use standard colors
-            icon = createMarkerIcon(
-              marker.type,
-              marker.employeeType,
-              marker.visitType,
-              marker.isInactive || false
-            );
-          }
-
-          // If completed, reduce opacity only (keep original color)
-          if (isCompleted) {
-            opacity = 0.4; // Reduced opacity for completed markers
-          }
+          const color = getMarkerFillColor({
+            type: marker.type,
+            employeeType: marker.employeeType,
+            visitType: marker.visitType,
+            area: marker.area,
+            isInactive: marker.isInactive || false,
+            routeColor: isAdditionalRoute ? routeColor : null,
+          });
 
           const label = marker.isInactive
             ? undefined
-            : createMarkerLabel(marker.routePosition, marker.visitType, marker.label);
+            : getMarkerLabelText(marker.routePosition, marker.visitType, marker.label);
 
           if (marker.isInactive) {
             opacity = 0.6;
           }
 
-          // Include completion status in key to force re-render when status changes
-          const markerKey = `marker-${groupIdx}-${idx}-${marker.appointmentId || 'none'}-${isCompleted ? 'completed' : 'active'}`;
+          const markerKey = `marker-${groupIdx}-${idx}-${marker.appointmentId || marker.employeeId || 'none'}`;
 
           return (
-            <Marker
+            <AdvancedMapMarker
               key={markerKey}
               position={displayPosition}
-              icon={icon}
-              label={label}
+              title={marker.title}
               onClick={() => handleMarkerClick(marker, displayPosition)}
-              opacity={opacity}
-            />
+            >
+              <CircleStopMarker color={color} label={label} opacity={opacity} />
+            </AdvancedMapMarker>
           );
         })
       )}
 
-      {/* Stop Popup */}
       {selectedMarker && selectedMarker.type === 'patient' && selectedMarker.displayPosition && (
         <StopPopup
           marker={selectedMarker}

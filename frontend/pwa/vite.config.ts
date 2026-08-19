@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => {
           clientsClaim: true,
         },
         devOptions: {
-          enabled: true,
+          enabled: false,
         },
       }),
       tsconfigPaths(),
@@ -75,9 +75,8 @@ export default defineConfig(({ mode }) => {
       dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
-      include: [
-        'react',
-        'react-dom',
+      include: ['react', 'react-dom'],
+      exclude: [
         '@palliroute/shared',
         '@palliroute/models',
         '@palliroute/api',

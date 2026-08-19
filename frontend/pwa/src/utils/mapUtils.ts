@@ -9,6 +9,12 @@ import {
   getColorForVisitType,
   getColorForEmployeeType,
   getTourAreaStartLocation,
+  isAwTourArea,
+  GOOGLE_MAPS_MAP_ID,
+  GOOGLE_MAPS_LIBRARIES,
+  MAP_CONTAINER_STYLE,
+  MAP_DEFAULT_CENTER,
+  MAP_DEFAULT_ZOOM,
 } from '@palliroute/shared';
 
 export {
@@ -20,25 +26,39 @@ export {
   getColorForVisitType,
   getColorForEmployeeType,
   getTourAreaStartLocation,
+  isAwTourArea,
+  GOOGLE_MAPS_MAP_ID,
 };
 
-export const libraries: ('places' | 'geocoding' | 'geometry')[] = [
-  'places',
-  'geocoding',
-  'geometry',
-];
+export function findEmployeeDayRoute(
+  routes: Route[],
+  employeeId: number | null | undefined,
+  weekday: string,
+  isAwDay: boolean
+): Route | undefined {
+  if (!employeeId) return undefined;
+  return routes.find((route) => {
+    if (route.weekday !== weekday || route.employee_id !== employeeId) return false;
+    return isAwDay ? isAwTourArea(route.area) : !isAwTourArea(route.area);
+  });
+}
 
-export const containerStyle = {
-  width: '100%',
-  height: '100%',
-};
+export const AW_TOUR_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
 
-export const defaultCenter = {
-  lat: 51.0267,
-  lng: 7.5683,
-};
+export function findAwAreaRoute(
+  routes: Route[],
+  area: string,
+  weekday: string
+): Route | undefined {
+  return routes.find(
+    (route) => route.weekday === weekday && route.area === area && isAwTourArea(route.area)
+  );
+}
 
-export const defaultZoom = 10;
+export const libraries = GOOGLE_MAPS_LIBRARIES;
+export const containerStyle = MAP_CONTAINER_STYLE;
+export const defaultCenter = MAP_DEFAULT_CENTER;
+export const defaultZoom = MAP_DEFAULT_ZOOM;
 
 export const mapOptions: google.maps.MapOptions = {
   disableDefaultUI: true,
@@ -48,13 +68,7 @@ export const mapOptions: google.maps.MapOptions = {
   fullscreenControl: false,
   gestureHandling: 'greedy',
   clickableIcons: false,
-  styles: [
-    {
-      featureType: 'poi',
-      elementType: 'labels',
-      stylers: [{ visibility: 'off' }],
-    },
-  ],
+  mapId: GOOGLE_MAPS_MAP_ID,
 };
 
 export const createEmployeeMarkerData = (
@@ -76,7 +90,10 @@ export const createEmployeeMarkerData = (
   return null;
 };
 
-export const createTourAreaMarkerData = (area: string): MarkerData | null => {
+export const createTourAreaMarkerData = (
+  area: string,
+  routeId?: number | null
+): MarkerData | null => {
   const start = getTourAreaStartLocation(area);
   const position = new google.maps.LatLng(start.lat, start.lng);
   return {
@@ -85,7 +102,7 @@ export const createTourAreaMarkerData = (area: string): MarkerData | null => {
     type: 'tour_area',
     area,
     employeeId: null,
-    routeId: null,
+    routeId: routeId ?? null,
   };
 };
 
@@ -148,8 +165,11 @@ export const calculateRouteBounds = (
         hasValidPoints = true;
       }
 
-      if (route.route_order) {
-        const routeOrder = parseRouteOrder(route.route_order);
+      if (route.route_order || route.custom_order) {
+        const routeOrder = [
+          ...parseRouteOrder(route.route_order),
+          ...parseRouteOrder(route.custom_order),
+        ];
         for (const appointmentId of routeOrder) {
           const appointment = appointments.find((a) => a.id === appointmentId);
           if (appointment) {

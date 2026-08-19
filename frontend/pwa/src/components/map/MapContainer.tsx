@@ -8,20 +8,29 @@ import {
   defaultZoom,
   mapOptions,
   libraries,
+  GOOGLE_MAPS_MAP_ID,
   createEmployeeMarkerData,
   createPatientMarkerData,
   createTourAreaMarkerData,
   parseRouteOrder,
   calculateRouteBounds,
+  findEmployeeDayRoute,
+  findAwAreaRoute,
 } from '../../utils/mapUtils';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { usePatients } from '../../services/queries/usePatients';
 import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
 import { useRoutes } from '../../services/queries/useRoutes';
 import { MapMarkers } from './MapMarkers';
-import { RoutePolylines } from './RoutePolylines';
-import { FloatingRefreshButton } from './FloatingRefreshButton';
-import { routeLineColors, getColorForTour } from '@palliroute/shared';
+import { RoutePolylines } from '@palliroute/ui';
+import {
+  getColorForAdditionalTour,
+  getTourAreaColor,
+  getOwnRouteOrder,
+  getOwnRoutePolyline,
+  getOwnRouteDistance,
+  getOwnRouteDuration,
+} from '@palliroute/shared';
 import { Weekday } from '../../types/models';
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
@@ -37,6 +46,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
     id: 'google-map-script',
     googleMapsApiKey: apiKey,
     libraries,
+    mapIds: [GOOGLE_MAPS_MAP_ID],
     language: 'de',
     region: 'DE',
   });
@@ -46,9 +56,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
   const [mapError, setMapError] = useState<string | null>(null);
 
   // Get selected user and weekday from stores
-  const { selectedUserId, selectedTourArea } = useUserStore();
+  const { selectedUserId } = useUserStore();
   const { selectedWeekday } = useWeekdayStore();
-  const { selectedEmployeeIds } = useAdditionalRoutesStore();
+  const { selectedEmployeeIds, selectedAreas } = useAdditionalRoutesStore();
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
 
   // Data hooks
@@ -76,76 +86,71 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
     refetch: refetchRoutes,
   } = useRoutes({
     weekday: selectedWeekday as Weekday,
-    ...(selectedTourArea ? { tour_area_day: isAreaTourDay } : {}),
   });
 
-  // Routen basierend auf Sichtbarkeit filtern
+  const mainRoute = useMemo(
+    () => findEmployeeDayRoute(routes, selectedUserId, selectedWeekday, isAreaTourDay),
+    [routes, selectedUserId, selectedWeekday, isAreaTourDay]
+  );
+
   const visibleRoutes = useMemo(() => {
-    if (selectedTourArea) {
-      // Für AW-Bereiche: Hauptroute des ausgewählten Bereichs
-      const mainRoute = routes.filter(
-        (route) => route.area === selectedTourArea && route.weekday === selectedWeekday
-      );
+    const additionalRoutes = isAreaTourDay
+      ? selectedAreas
+          .map((area) => findAwAreaRoute(routes, area, selectedWeekday))
+          .filter((route): route is NonNullable<typeof route> =>
+            Boolean(route && route.id !== mainRoute?.id)
+          )
+      : selectedEmployeeIds
+          .map((id) => findEmployeeDayRoute(routes, Number(id), selectedWeekday, isAreaTourDay))
+          .filter((route): route is NonNullable<typeof route> =>
+            Boolean(route && route.id !== mainRoute?.id)
+          );
 
-      // Zusätzliche Routen der anderen AW-Bereiche
-      const additionalRoutes = routes.filter(
-        (route) => selectedEmployeeIds.includes(route.area) && route.weekday === selectedWeekday
-      );
-
-      return [...mainRoute, ...additionalRoutes];
-    } else {
-      // Für Mitarbeiter: Hauptroute des ausgewählten Mitarbeiters
-      const mainRoute = routes.filter(
-        (route) => route.employee_id === selectedUserId && route.weekday === selectedWeekday
-      );
-
-      // Zusätzliche Routen der ausgewählten Mitarbeiter
-      const additionalRoutes = routes.filter(
-        (route) =>
-          route.employee_id &&
-          selectedEmployeeIds.includes(route.employee_id) &&
-          route.weekday === selectedWeekday
-      );
-
-      return [...mainRoute, ...additionalRoutes];
-    }
-  }, [routes, selectedUserId, selectedTourArea, selectedWeekday, selectedEmployeeIds]);
+    return [...(mainRoute ? [mainRoute] : []), ...additionalRoutes];
+  }, [
+    routes,
+    mainRoute,
+    selectedWeekday,
+    selectedEmployeeIds,
+    selectedAreas,
+    isAreaTourDay,
+  ]);
 
   // Marker-Berechnung mit useMemo
   const markers = useMemo(() => {
     if (!isLoaded) return [];
     const newMarkers = [];
 
-    if (selectedTourArea) {
-      const areaRoute = visibleRoutes.find((r) => r.area === selectedTourArea);
-      const assignedEmployee = areaRoute?.employee_id
-        ? employees.find((e) => e.id === areaRoute.employee_id)
-        : undefined;
-      const employeeMarker = assignedEmployee
-        ? createEmployeeMarkerData(assignedEmployee, areaRoute?.id)
-        : null;
-      if (employeeMarker) {
-        newMarkers.push({ ...employeeMarker, isInactive: false });
-      } else {
-        const tourAreaStartMarker = createTourAreaMarkerData(selectedTourArea);
-        if (tourAreaStartMarker) {
-          newMarkers.push({ ...tourAreaStartMarker, isInactive: false });
-        }
+    const selectedEmployee = employees.find((e) => e.id === selectedUserId);
+    if (selectedEmployee && selectedEmployee.latitude && selectedEmployee.longitude) {
+      const route = visibleRoutes.find((r) => r.employee_id === selectedEmployee.id);
+      const marker = createEmployeeMarkerData(selectedEmployee, route?.id);
+      if (marker) {
+        newMarkers.push({ ...marker, isInactive: false });
       }
-    } else {
-      // Für Mitarbeiter: Hauptmitarbeiter anzeigen
-      const selectedEmployee = employees.find((e) => e.id === selectedUserId);
-      if (selectedEmployee && selectedEmployee.latitude && selectedEmployee.longitude) {
-        const route = visibleRoutes.find((r) => r.employee_id === selectedEmployee.id);
-        const marker = createEmployeeMarkerData(selectedEmployee, route?.id);
-        if (marker) {
-          newMarkers.push({ ...marker, isInactive: false });
-        }
-      }
+    }
 
-      // Zusätzliche Mitarbeiter anzeigen
+    if (isAreaTourDay) {
+      selectedAreas.forEach((area) => {
+        const route = visibleRoutes.find((r) => r.area === area);
+        const assignedEmployee = route?.employee_id
+          ? employees.find((e) => e.id === route.employee_id)
+          : undefined;
+        if (assignedEmployee?.latitude && assignedEmployee?.longitude) {
+          const marker = createEmployeeMarkerData(assignedEmployee, route?.id);
+          if (marker) {
+            newMarkers.push({ ...marker, isInactive: false, area });
+          }
+          return;
+        }
+        const areaMarker = createTourAreaMarkerData(area, route?.id);
+        if (areaMarker) {
+          newMarkers.push({ ...areaMarker, isInactive: false });
+        }
+      });
+    } else {
       selectedEmployeeIds.forEach((employeeId) => {
-        const employee = employees.find((e) => e.id === employeeId);
+        const employee = employees.find((e) => e.id === Number(employeeId));
         if (employee && employee.latitude && employee.longitude) {
           const route = visibleRoutes.find((r) => r.employee_id === employee.id);
           const marker = createEmployeeMarkerData(employee, route?.id);
@@ -162,7 +167,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
 
       // Positionen für alle Termine in allen sichtbaren Routen setzen
       visibleRoutes.forEach((route) => {
-        const routeOrder = parseRouteOrder(route.route_order);
+        const isOwn = mainRoute != null && route.id === mainRoute.id;
+        const routeOrder = isOwn ? getOwnRouteOrder(route) : parseRouteOrder(route.route_order);
         routeOrder.forEach((appointmentId, idx) => {
           appointmentPositions.set(appointmentId, { position: idx + 1, routeId: route.id });
         });
@@ -208,87 +214,48 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
     selectedWeekday,
     selectedUserId,
     selectedEmployeeIds,
+    selectedAreas,
+    isAreaTourDay,
+    mainRoute,
   ]);
 
   // Route-Polylines für alle sichtbaren Routen
   const routePaths = useMemo(() => {
     return visibleRoutes.map((route) => {
-      if (selectedTourArea) {
-        // Für AW-Routen: Verwende die gleichen Farben wie bei Mitarbeitern
-        const getTourAreaColor = (area: string) => {
-          switch (area) {
-            case 'Nord':
-              return '#1976d2'; // Blue
-            case 'Mitte':
-              return '#7b1fa2'; // Purple
-            case 'Süd':
-              return '#388e3c'; // Green
-            default:
-              return '#ff9800'; // Orange fallback
-          }
-        };
-
-        // Hauptroute (ausgewählter Bereich) bekommt die Standard-Blaue Farbe
-        const isMainRoute = route.area === selectedTourArea;
-        const color = isMainRoute ? '#2196F3' : getTourAreaColor(route.area);
-
-        return {
-          employeeId: route.employee_id || null,
-          routeId: route.id,
-          routeOrder: parseRouteOrder(route.route_order),
-          color,
-          polyline: route.polyline,
-          totalDistance: route.total_distance || 0,
-          totalDuration: route.total_duration || 0,
-          employeeName: (() => {
-            const employee = employees.find((e) => e.id === route.employee_id);
-            return employee
-              ? `AW ${route.area}: ${employee.first_name} ${employee.last_name}`
-              : `AW ${route.area}`;
-          })(),
-        };
-      } else {
-        // Für Mitarbeiter-Routen: Bestehende Logik
-        const employee = employees.find((e) => e.id === route.employee_id);
-        const isMainRoute = route.employee_id === selectedUserId;
-        const color = isMainRoute
-          ? '#2196F3'
+      const employee = employees.find((e) => e.id === route.employee_id);
+      const isOwn = mainRoute != null && route.id === mainRoute.id;
+      const isAdditionalArea =
+        isAreaTourDay && Boolean(route.area) && selectedAreas.includes(String(route.area));
+      const color = isOwn
+        ? '#2196F3'
+        : isAdditionalArea
+          ? getTourAreaColor(String(route.area))
           : employee?.id
-            ? getColorForTour(employee.id)
+            ? getColorForAdditionalTour(employee.id)
             : '#9E9E9E';
 
-        return {
-          employeeId: route.employee_id,
-          routeId: route.id,
-          routeOrder: parseRouteOrder(route.route_order),
-          color,
-          polyline: route.polyline,
-          totalDistance: route.total_distance || 0,
-          totalDuration: route.total_duration || 0,
-          employeeName: employee
-            ? `${employee.first_name} ${employee.last_name}`
+      return {
+        employeeId: route.employee_id ?? null,
+        routeId: route.id,
+        routeOrder: isOwn ? getOwnRouteOrder(route) : parseRouteOrder(route.route_order),
+        color,
+        polyline: isOwn ? getOwnRoutePolyline(route) : route.polyline,
+        totalDistance: isOwn ? getOwnRouteDistance(route) : route.total_distance || 0,
+        totalDuration: isOwn ? getOwnRouteDuration(route) : route.total_duration || 0,
+        employeeName: employee
+          ? `${employee.first_name} ${employee.last_name}`
+          : route.area
+            ? `AW ${route.area}`
             : 'Unknown Employee',
-        };
-      }
+      };
     });
-  }, [visibleRoutes, employees, selectedTourArea, selectedUserId]);
+  }, [visibleRoutes, employees, selectedUserId, isAreaTourDay, selectedAreas, mainRoute]);
 
-  // Auto-center map on route when routes change
   useEffect(() => {
     if (map && employees.length > 0 && patients.length > 0 && appointments.length > 0) {
-      // For AW/tour-area mode, we need to zoom even if no routes are present
-      const shouldZoom = visibleRoutes.length > 0 || selectedTourArea;
-
-      if (shouldZoom) {
-        const bounds = calculateRouteBounds(
-          visibleRoutes,
-          employees,
-          patients,
-          appointments,
-          selectedTourArea
-        );
+      if (visibleRoutes.length > 0) {
+        const bounds = calculateRouteBounds(visibleRoutes, employees, patients, appointments);
         if (bounds) {
-          // Add some padding around the bounds for better visibility
           map.fitBounds(bounds, {
             top: 50,
             right: 50,
@@ -298,7 +265,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
         }
       }
     }
-  }, [map, visibleRoutes, employees, patients, appointments, selectedTourArea]);
+  }, [map, visibleRoutes, employees, patients, appointments]);
 
   // Fehler- und Ladezustände
   const isLoading =
@@ -350,12 +317,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
           patients={patients}
           employees={employees}
           appointments={appointments}
-          routes={routes}
+          routes={visibleRoutes}
         />
       </GoogleMap>
-
-      {/* Floating Refresh Button */}
-      <FloatingRefreshButton />
     </Box>
   );
 };

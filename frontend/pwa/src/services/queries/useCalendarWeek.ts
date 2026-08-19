@@ -14,17 +14,12 @@ export const useCalendarWeek = () => {
   return useQuery({
     queryKey: calendarWeekKeys.best(),
     queryFn: () => calendarWeekService.getBestWeek(),
-    staleTime: 5 * 60 * 1000, // 5 minutes - same as cache duration
-    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
   });
 };
 
-// Hook zum Laden aller verfügbaren Kalenderwochen
 export const useCalendarWeeks = () => {
   return useQuery({
     queryKey: calendarWeekKeys.list(),
     queryFn: () => patientsApi.getCalendarWeeks(),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
   });
 };

@@ -51,7 +51,7 @@ export const useWeekdayStore = create<WeekdayState>()(
       // Actions
       setSelectedWeekday: (day) => set({ selectedWeekday: day }),
       resetToCurrentDay: () => {
-        set({ selectedWeekday: getCurrentBusinessWeekday() });
+        set({ selectedWeekday: WEEKDAYS[new Date().getDay()] });
       },
       resetToCurrentAreaDay: () => {
         set({ selectedWeekday: getCurrentAreaWeekday() });
