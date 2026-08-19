@@ -199,7 +199,6 @@ export const ToursView: React.FC<ToursViewProps> = ({
               <TourContainer
                 key={`pflege-${employee.id}`}
                 employee={employee}
-                employees={filteredEmployees}
                 patients={patients}
                 appointments={appointments}
                 selectedDay={selectedDay}
@@ -264,7 +263,6 @@ export const ToursView: React.FC<ToursViewProps> = ({
               <TourContainer
                 key={`doctor-${employee.id}`}
                 employee={employee}
-                employees={filteredEmployees}
                 patients={patients}
                 appointments={appointments}
                 selectedDay={selectedDay}
@@ -329,7 +327,6 @@ export const ToursView: React.FC<ToursViewProps> = ({
               <TourContainer
                 key={`empty-pflege-${employee.id}`}
                 employee={employee}
-                employees={filteredEmployees}
                 patients={patients}
                 appointments={appointments}
                 selectedDay={selectedDay}
@@ -394,7 +391,6 @@ export const ToursView: React.FC<ToursViewProps> = ({
               <TourContainer
                 key={`empty-doctor-${employee.id}`}
                 employee={employee}
-                employees={filteredEmployees}
                 patients={patients}
                 appointments={appointments}
                 selectedDay={selectedDay}

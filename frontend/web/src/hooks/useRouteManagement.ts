@@ -1,10 +1,6 @@
 import { useCallback } from 'react';
-import { Route, Weekday } from '../types/models';
-import {
-  useOptimizeRoutes,
-  useOptimizeTourAreaRoutes,
-  useReorderAppointment,
-} from '../services/queries/useRoutes';
+import { Weekday } from '../types/models';
+import { useOptimizeRoutes, useOptimizeTourAreaRoutes } from '../services/queries/useRoutes';
 import { useNotificationStore } from '../stores/useNotificationStore';
 
 interface UseRouteManagementProps {
@@ -16,10 +12,7 @@ interface UseRouteManagementProps {
 interface RouteManagementReturn {
   optimizeRoute: () => Promise<void>;
   optimizeTourAreaRoute: () => Promise<void>;
-  movePatientUp: (routeId: number, appointmentId: number) => Promise<void>;
-  movePatientDown: (routeId: number, appointmentId: number) => Promise<void>;
   isOptimizing: boolean;
-  isReordering: boolean;
 }
 
 export const useRouteManagement = ({
@@ -30,7 +23,6 @@ export const useRouteManagement = ({
   const { setNotification, setLoading, resetLoading } = useNotificationStore();
   const optimizeRoutes = useOptimizeRoutes();
   const optimizeTourAreaRoutes = useOptimizeTourAreaRoutes();
-  const reorderAppointment = useReorderAppointment();
 
   const optimizeRoute = useCallback(async () => {
     if (!employeeId) {
@@ -74,52 +66,9 @@ export const useRouteManagement = ({
     }
   }, [area, selectedDay, optimizeTourAreaRoutes, setNotification, setLoading, resetLoading]);
 
-  const movePatientUp = useCallback(
-    async (routeId: number, appointmentId: number) => {
-      try {
-        setLoading('Patient wird verschoben...');
-        await reorderAppointment.mutateAsync({
-          routeId,
-          appointmentId,
-          direction: 'up',
-        });
-        setNotification('Patient verschoben', 'success');
-      } catch (error) {
-        console.error('Fehler beim Verschieben des Patienten:', error);
-        setNotification('Fehler beim Verschieben des Patienten', 'error');
-      } finally {
-        resetLoading();
-      }
-    },
-    [reorderAppointment, setNotification, setLoading, resetLoading]
-  );
-
-  const movePatientDown = useCallback(
-    async (routeId: number, appointmentId: number) => {
-      try {
-        setLoading('Patient wird verschoben...');
-        await reorderAppointment.mutateAsync({
-          routeId,
-          appointmentId,
-          direction: 'down',
-        });
-        setNotification('Patient verschoben', 'success');
-      } catch (error) {
-        console.error('Fehler beim Verschieben des Patienten:', error);
-        setNotification('Fehler beim Verschieben des Patienten', 'error');
-      } finally {
-        resetLoading();
-      }
-    },
-    [reorderAppointment, setNotification, setLoading, resetLoading]
-  );
-
   return {
     optimizeRoute,
     optimizeTourAreaRoute,
-    movePatientUp,
-    movePatientDown,
     isOptimizing: optimizeRoutes.isPending || optimizeTourAreaRoutes.isPending,
-    isReordering: reorderAppointment.isPending,
   };
 };

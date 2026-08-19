@@ -1,8 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { MainLayout } from './components/layout/MainLayout';
 import { MapView } from './components/layout/MainViewMap';
 import { OnCallPlanningView } from './components/oncall/OnCallPlanningView';
@@ -270,17 +268,15 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <DndProvider backend={HTML5Backend}>
-        <Router>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<MapView />} />
-              {/* Additional routes will be nested here */}
-            </Route>
-            <Route path="rbawplan" element={<OnCallPlanningView />} />
-          </Routes>
-        </Router>
-      </DndProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<MapView />} />
+            {/* Additional routes will be nested here */}
+          </Route>
+          <Route path="rbawplan" element={<OnCallPlanningView />} />
+        </Routes>
+      </Router>
     </ThemeProvider>
   );
 };

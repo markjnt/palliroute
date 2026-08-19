@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -10,15 +10,12 @@ import {
   Menu,
   MenuItem,
   ListItemText,
-  Divider,
 } from '@mui/material';
 import {
   Phone as PhoneIcon,
   Home as HomeIcon,
   Info as InfoIcon,
   SwapHoriz as SwapHorizIcon,
-  ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
 } from '@mui/icons-material';
 import { Patient, Appointment, Weekday } from '../../../types/models';
 import { useNotificationStore } from '../../../stores/useNotificationStore';
@@ -31,10 +28,6 @@ interface TourPatientCardProps {
   index?: number; // For numbered list of visits
   compact?: boolean; // For more compact display
   selectedDay: Weekday; // Der ausgewählte Wochentag
-  onMoveUp?: (patientId: number) => void; // New prop for moving patient up
-  onMoveDown?: (patientId: number) => void; // New prop for moving patient down
-  isFirst?: boolean; // New prop to indicate if this is the first patient in the list
-  isLast?: boolean; // New prop to indicate if this is the last patient in the list
   area: string; // AW tour area (Nord, Mitte, Süd)
 }
 
@@ -45,10 +38,6 @@ export const TourPatientCard: React.FC<TourPatientCardProps> = ({
   index,
   compact = false,
   selectedDay,
-  onMoveUp,
-  onMoveDown,
-  isFirst = false,
-  isLast = false,
   area,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -138,19 +127,6 @@ export const TourPatientCard: React.FC<TourPatientCardProps> = ({
     }
   };
 
-  // Handle move up/down actions
-  const handleMoveUp = () => {
-    if (onMoveUp && patient.id && !isFirst) {
-      onMoveUp(patient.id);
-    }
-  };
-
-  const handleMoveDown = () => {
-    if (onMoveDown && patient.id && !isLast) {
-      onMoveDown(patient.id);
-    }
-  };
-
   // Available weekend areas
   const tourAreaLabels = ['Nord', 'Mitte', 'Süd'];
 
@@ -169,7 +145,6 @@ export const TourPatientCard: React.FC<TourPatientCardProps> = ({
         },
       }}
     >
-      {/* Reordering arrows */}
       <Box
         sx={{
           position: 'absolute',
@@ -185,56 +160,6 @@ export const TourPatientCard: React.FC<TourPatientCardProps> = ({
           boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}
       >
-        {/* Up arrow - hidden for first patient */}
-        {!isFirst && onMoveUp && (
-          <Tooltip title="Nach oben verschieben" arrow placement="top">
-            <IconButton
-              size="small"
-              onClick={handleMoveUp}
-              sx={{
-                color: 'text.secondary',
-                width: 24,
-                height: 24,
-                minWidth: 24,
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                  color: 'primary.main',
-                },
-              }}
-            >
-              <ArrowUpwardIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-
-        {/* Down arrow - hidden for last patient */}
-        {!isLast && onMoveDown && (
-          <Tooltip title="Nach unten verschieben" arrow placement="top">
-            <IconButton
-              size="small"
-              onClick={handleMoveDown}
-              sx={{
-                color: 'text.secondary',
-                width: 24,
-                height: 24,
-                minWidth: 24,
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                  color: 'primary.main',
-                },
-              }}
-            >
-              <ArrowDownwardIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-
-        {/* Separator line when at least one arrow is visible and not first/last */}
-        {((onMoveUp && !isFirst) || (onMoveDown && !isLast)) && (
-          <Divider orientation="vertical" flexItem sx={{ height: 16, my: 'auto' }} />
-        )}
-
-        {/* Assign button that opens area menu */}
         <Tooltip title="Bereich zuweisen" arrow placement="top">
           <IconButton
             size="small"

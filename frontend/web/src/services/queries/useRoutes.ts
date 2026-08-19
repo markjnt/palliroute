@@ -154,35 +154,6 @@ export const useAssignAwTourEmployee = () => {
   });
 };
 
-// Hook to reorder an appointment up or down in a route
-export const useReorderAppointment = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      routeId,
-      appointmentId,
-      direction,
-    }: {
-      routeId: number;
-      appointmentId: number;
-      direction: 'up' | 'down';
-    }) => routesApi.reorderAppointment(routeId, appointmentId, direction),
-    onSuccess: (updatedRoute) => {
-      // Invalidate the specific route
-      queryClient.invalidateQueries({
-        queryKey: routeKeys.detail(updatedRoute.id),
-      });
-
-      // Also invalidate any lists that might contain this route
-      queryClient.invalidateQueries({
-        queryKey: routeKeys.lists(),
-        exact: false,
-      });
-    },
-  });
-};
-
 // Hook to download route PDF for a calendar week
 export const useDownloadRoutePdf = () => {
   return useMutation({
