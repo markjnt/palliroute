@@ -1,13 +1,11 @@
 import React, { useMemo, useState } from 'react';
+import { Box, Typography, TextField, InputAdornment, IconButton, Grid } from '@mui/material';
 import {
-  Box,
-  Typography,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Grid,
-} from '@mui/material';
-import { Search as SearchIcon, Done as DoneIcon, Person as PersonIcon, Close as CloseIcon } from '@mui/icons-material';
+  Search as SearchIcon,
+  Done as DoneIcon,
+  Person as PersonIcon,
+  Close as CloseIcon,
+} from '@mui/icons-material';
 import { Sheet } from 'react-modal-sheet';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { useUserStore } from '../../stores/useUserStore';

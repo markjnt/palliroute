@@ -94,7 +94,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
       'friday',
       'saturday',
     ];
-    return weekdayMap[today] as any;
+    return weekdayMap[today] as Weekday;
   };
 
   const currentWeekday = getCurrentWeekday();
@@ -113,7 +113,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
   };
 
   const handleWeekdaySelect = (weekday: string) => {
-    setSelectedWeekday(weekday as any);
+    setSelectedWeekday(weekday as Weekday);
     setIsWeekdayMenuOpen(false);
   };
 
@@ -140,25 +140,20 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
     const el = barRef.current;
     if (!el) return;
 
-    const preventGesture = (event: any) => {
-      if (typeof event.preventDefault === 'function') {
-        event.preventDefault();
-      }
-      if (typeof event.stopPropagation === 'function') {
-        event.stopPropagation();
-      }
+    const preventGesture = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
     };
 
-    el.addEventListener('gesturestart', preventGesture as any, { passive: false });
-    el.addEventListener('gesturechange', preventGesture as any, { passive: false });
-    el.addEventListener('gestureend', preventGesture as any, { passive: false });
-    el.addEventListener('touchmove', preventGesture as any, { passive: false });
+    const gestureEvents = ['gesturestart', 'gesturechange', 'gestureend', 'touchmove'];
+    for (const type of gestureEvents) {
+      el.addEventListener(type, preventGesture, { passive: false });
+    }
 
     return () => {
-      el.removeEventListener('gesturestart', preventGesture as any);
-      el.removeEventListener('gesturechange', preventGesture as any);
-      el.removeEventListener('gestureend', preventGesture as any);
-      el.removeEventListener('touchmove', preventGesture as any);
+      for (const type of gestureEvents) {
+        el.removeEventListener(type, preventGesture);
+      }
     };
   }, []);
 
@@ -334,9 +329,7 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
           sx={{
             width: 48,
             height: 48,
-            bgcolor: selectedEmployee
-              ? getEmployeeColor(selectedEmployee.function)
-              : '#007AFF',
+            bgcolor: selectedEmployee ? getEmployeeColor(selectedEmployee.function) : '#007AFF',
             color: 'white',
             fontSize: '1rem',
             fontWeight: 600,

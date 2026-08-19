@@ -45,11 +45,7 @@ export function findEmployeeDayRoute(
 
 export const AW_TOUR_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
 
-export function findAwAreaRoute(
-  routes: Route[],
-  area: string,
-  weekday: string
-): Route | undefined {
+export function findAwAreaRoute(routes: Route[], area: string, weekday: string): Route | undefined {
   return routes.find(
     (route) => route.weekday === weekday && route.area === area && isAwTourArea(route.area)
   );
