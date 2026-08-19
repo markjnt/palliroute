@@ -51,10 +51,20 @@ export const RouteInfo: React.FC = () => {
           id: appointmentId,
           patientName: `${patient.first_name} ${patient.last_name}`,
           visitType: appointment.visit_type,
+          address: `${patient.street}, ${patient.zip_code} ${patient.city}`,
+          info: appointment.info || undefined,
         };
       })
-      .filter((stop): stop is { id: number; patientName: string; visitType: VisitType } =>
-        Boolean(stop)
+      .filter(
+        (
+          stop
+        ): stop is {
+          id: number;
+          patientName: string;
+          visitType: VisitType;
+          address: string;
+          info?: string;
+        } => Boolean(stop)
       );
   }, [selectedRoute, appointments, patients]);
 
