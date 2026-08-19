@@ -1,8 +1,11 @@
 import json
 import os
 import re  # Modul für reguläre Ausdrücke hinzugefügt
+from collections import defaultdict, deque
 from datetime import datetime, time
 from typing import Any
+
+from sqlalchemy.orm import joinedload
 
 import googlemaps
 import pandas as pd
@@ -32,6 +35,7 @@ from .route_utils import AW_TOUR_AREAS, find_aw_tour_route, is_aw_tour_area
 class ExcelImportService:
     GEOCODE_CACHE_KEY = "geocode_address_cache"
     AW_TOUR_EMPLOYEE_SNAPSHOT_KEY = "aw_tour_employee_assignments"
+    CUSTOM_ORDER_SNAPSHOT_KEY = "route_custom_order_snapshots"
     # Class-level cache for geocoding to avoid redundant API calls
     _geocode_cache: dict[str, tuple[float, float]] = {}
 
@@ -299,6 +303,268 @@ class ExcelImportService:
         if restored:
             db.session.commit()
             print(f"    Restored {restored} AW tour employee assignments")
+        return restored
+
+    @staticmethod
+    def _normalize_stop_identity(
+        first_name: str | None,
+        last_name: str | None,
+        street: str | None,
+        zip_code: str | None,
+        visit_type: str | None,
+    ) -> tuple[str, str, str, str, str]:
+        return (
+            (first_name or "").strip().lower(),
+            (last_name or "").strip().lower(),
+            (street or "").strip().lower(),
+            (zip_code or "").strip(),
+            (visit_type or "").strip().upper(),
+        )
+
+    @staticmethod
+    def _stop_identity_from_appointment(appointment: Appointment) -> tuple[str, str, str, str, str] | None:
+        patient = appointment.patient
+        if not patient:
+            return None
+        return ExcelImportService._normalize_stop_identity(
+            patient.first_name,
+            patient.last_name,
+            patient.street,
+            patient.zip_code,
+            appointment.visit_type,
+        )
+
+    @staticmethod
+    def _stop_identity_from_dict(stop: dict) -> tuple[str, str, str, str, str]:
+        return ExcelImportService._normalize_stop_identity(
+            stop.get("first_name"),
+            stop.get("last_name"),
+            stop.get("street"),
+            stop.get("zip_code"),
+            stop.get("visit_type"),
+        )
+
+    @staticmethod
+    def _match_custom_order_ids(
+        current_ids: list[int],
+        identity_by_id: dict[int, tuple[str, str, str, str, str]],
+        snapshot_stops: list[dict],
+    ) -> list[int]:
+        """Keep snapshot order for stops still on this tour; append unmatched Excel stops."""
+        buckets: dict[tuple[str, str, str, str, str], deque[int]] = defaultdict(deque)
+        for appointment_id in current_ids:
+            identity = identity_by_id.get(appointment_id)
+            if identity:
+                buckets[identity].append(appointment_id)
+
+        matched: list[int] = []
+        used: set[int] = set()
+        for stop in snapshot_stops:
+            queue = buckets.get(ExcelImportService._stop_identity_from_dict(stop))
+            if not queue:
+                continue
+            appointment_id = queue.popleft()
+            matched.append(appointment_id)
+            used.add(appointment_id)
+
+        remaining = [appointment_id for appointment_id in current_ids if appointment_id not in used]
+        return matched + remaining
+
+    @staticmethod
+    def _snapshot_active_custom_orders() -> list[dict[str, Any]]:
+        """Preserve active PWA custom orders across patient re-import."""
+        routes = Route.query.filter_by(custom_order_active=True).all()
+        if not routes:
+            return []
+
+        appointment_ids: list[int] = []
+        for route in routes:
+            appointment_ids.extend(route.get_custom_order())
+        appointments_by_id: dict[int, Appointment] = {}
+        if appointment_ids:
+            appointments_by_id = {
+                appointment.id: appointment
+                for appointment in Appointment.query.options(joinedload(Appointment.patient))
+                .filter(Appointment.id.in_(appointment_ids))
+                .all()
+            }
+
+        snapshots: list[dict[str, Any]] = []
+        for route in routes:
+            if not route.calendar_week or not route.weekday:
+                continue
+            is_aw = is_aw_tour_area(route.area)
+            if is_aw and not route.area:
+                continue
+            if not is_aw and route.employee_id is None:
+                continue
+
+            stops: list[dict[str, str]] = []
+            for appointment_id in route.get_custom_order():
+                appointment = appointments_by_id.get(appointment_id)
+                if not appointment or not appointment.patient:
+                    continue
+                patient = appointment.patient
+                stops.append(
+                    {
+                        "first_name": patient.first_name or "",
+                        "last_name": patient.last_name or "",
+                        "street": patient.street or "",
+                        "zip_code": patient.zip_code or "",
+                        "visit_type": appointment.visit_type or "",
+                    }
+                )
+            snapshots.append(
+                {
+                    "calendar_week": int(route.calendar_week),
+                    "weekday": str(route.weekday),
+                    "employee_id": None if is_aw else int(route.employee_id),
+                    "area": str(route.area) if is_aw else None,
+                    "active": True,
+                    "stops": stops,
+                }
+            )
+        return snapshots
+
+    @staticmethod
+    def _serialize_custom_order_snapshot(snapshots: list[dict[str, Any]]) -> str:
+        return json.dumps(snapshots)
+
+    @staticmethod
+    def _deserialize_custom_order_snapshot(raw: str | None) -> list[dict[str, Any]]:
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(data, list):
+            return []
+        snapshots: list[dict[str, Any]] = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            calendar_week = item.get("calendar_week")
+            weekday = item.get("weekday")
+            if calendar_week is None or not weekday:
+                continue
+            stops_raw = item.get("stops")
+            stops: list[dict[str, str]] = []
+            if isinstance(stops_raw, list):
+                for stop in stops_raw:
+                    if not isinstance(stop, dict):
+                        continue
+                    stops.append(
+                        {
+                            "first_name": str(stop.get("first_name") or ""),
+                            "last_name": str(stop.get("last_name") or ""),
+                            "street": str(stop.get("street") or ""),
+                            "zip_code": str(stop.get("zip_code") or ""),
+                            "visit_type": str(stop.get("visit_type") or ""),
+                        }
+                    )
+            employee_id = item.get("employee_id")
+            snapshots.append(
+                {
+                    "calendar_week": int(calendar_week),
+                    "weekday": str(weekday),
+                    "employee_id": int(employee_id) if employee_id is not None else None,
+                    "area": str(item["area"]) if item.get("area") else None,
+                    "active": bool(item.get("active")),
+                    "stops": stops,
+                }
+            )
+        return snapshots
+
+    @staticmethod
+    def _load_persisted_custom_order_snapshot() -> list[dict[str, Any]]:
+        raw = SystemInfo.get_value(ExcelImportService.CUSTOM_ORDER_SNAPSHOT_KEY)
+        return ExcelImportService._deserialize_custom_order_snapshot(raw)
+
+    @staticmethod
+    def _persist_custom_order_snapshot(snapshots: list[dict[str, Any]]) -> None:
+        SystemInfo.set_value(
+            ExcelImportService.CUSTOM_ORDER_SNAPSHOT_KEY,
+            ExcelImportService._serialize_custom_order_snapshot(snapshots),
+        )
+
+    @staticmethod
+    def _clear_custom_order_snapshot() -> None:
+        SystemInfo.set_value(ExcelImportService.CUSTOM_ORDER_SNAPSHOT_KEY, "[]")
+
+    @staticmethod
+    def _prepare_custom_order_snapshot() -> list[dict[str, Any]]:
+        """
+        Live active custom orders win. If routes were already wiped by a failed import,
+        fall back to the last persisted snapshot.
+        """
+        live = ExcelImportService._snapshot_active_custom_orders()
+        stored = ExcelImportService._load_persisted_custom_order_snapshot()
+        merged = live if live else stored
+        if merged:
+            ExcelImportService._persist_custom_order_snapshot(merged)
+        return merged
+
+    @staticmethod
+    def _find_route_for_custom_order_snapshot(snapshot: dict[str, Any]) -> Route | None:
+        calendar_week = snapshot.get("calendar_week")
+        weekday = snapshot.get("weekday")
+        area = snapshot.get("area")
+        employee_id = snapshot.get("employee_id")
+        if not calendar_week or not weekday:
+            return None
+        if is_aw_tour_area(area):
+            return find_aw_tour_route(weekday, area, calendar_week)
+        if employee_id is None:
+            return None
+        return Route.query.filter(
+            Route.employee_id == employee_id,
+            Route.weekday == weekday,
+            Route.calendar_week == calendar_week,
+            ~Route.area.in_(AW_TOUR_AREAS),
+        ).first()
+
+    @staticmethod
+    def _restore_custom_orders(snapshots: list[dict[str, Any]]) -> int:
+        """Re-apply active custom orders after routes were recreated and optimized."""
+        from app.services.route_planner import RoutePlanner
+
+        restored = 0
+        planner = RoutePlanner()
+        for snapshot in snapshots:
+            if not snapshot.get("active"):
+                continue
+            route = ExcelImportService._find_route_for_custom_order_snapshot(snapshot)
+            if not route:
+                continue
+
+            current_ids = route.get_route_order()
+            identity_by_id: dict[int, tuple[str, str, str, str, str]] = {}
+            if current_ids:
+                appointments = (
+                    Appointment.query.options(joinedload(Appointment.patient))
+                    .filter(Appointment.id.in_(current_ids))
+                    .all()
+                )
+                for appointment in appointments:
+                    identity = ExcelImportService._stop_identity_from_appointment(appointment)
+                    if identity:
+                        identity_by_id[appointment.id] = identity
+
+            custom_ids = ExcelImportService._match_custom_order_ids(
+                current_ids, identity_by_id, snapshot.get("stops") or []
+            )
+            route.set_custom_order(custom_ids, active=True)
+            db.session.commit()
+            try:
+                planner.plan_custom_route(route)
+            except Exception as e:
+                print(f"    Warning: Failed to plan custom route {route.id}: {e}")
+            restored += 1
+
+        if restored:
+            db.session.commit()
+            print(f"    Restored {restored} active custom orders")
         return restored
 
     @staticmethod
@@ -1500,6 +1766,8 @@ class ExcelImportService:
                 employee_id=employee_id,
                 weekday=weekday,
                 route_order=json.dumps(appointment_ids),
+                custom_order=json.dumps(appointment_ids),
+                custom_order_active=False,
                 total_duration=0,
                 total_distance=0,
                 area=route_area,
@@ -1531,6 +1799,8 @@ class ExcelImportService:
                 employee_id=None,
                 weekday=weekday,
                 route_order=json.dumps(appointment_ids),
+                custom_order=json.dumps(appointment_ids),
+                custom_order_active=False,
                 total_duration=0,
                 total_distance=0,
                 area=area,
@@ -1576,6 +1846,8 @@ class ExcelImportService:
                             employee_id=employee.id,
                             weekday=weekday,
                             route_order=json.dumps([]),
+                            custom_order=json.dumps([]),
+                            custom_order_active=False,
                             total_duration=0,
                             total_distance=0,
                             area=employee.area or "",
@@ -1602,6 +1874,8 @@ class ExcelImportService:
                             employee_id=None,
                             weekday=weekday,
                             route_order=json.dumps([]),
+                            custom_order=json.dumps([]),
+                            custom_order_active=False,
                             total_duration=0,
                             total_distance=0,
                             area=area,
@@ -1629,6 +1903,8 @@ class ExcelImportService:
                             employee_id=None,
                             weekday=weekday,
                             route_order=json.dumps([]),
+                            custom_order=json.dumps([]),
+                            custom_order_active=False,
                             total_duration=0,
                             total_distance=0,
                             area=area,
@@ -1736,6 +2012,7 @@ class ExcelImportService:
 
             # Preserve AW tour employee assignments (survives delete + failed import retry)
             aw_tour_employee_snapshots = ExcelImportService._prepare_aw_tour_employee_snapshot()
+            custom_order_snapshots = ExcelImportService._prepare_custom_order_snapshot()
 
             # Step 1: Delete existing patient data (keep employees and their planning)
             print("Step 1: Deleting existing patient data...")
@@ -1813,11 +2090,16 @@ class ExcelImportService:
                 print("\nRestoring AW tour employee assignments...")
                 ExcelImportService._restore_aw_tour_employees(aw_tour_employee_snapshots)
 
-            # Step 6: Plan all routes
+            # Step 6: Plan all routes (web order / polyline)
             print("\nStep 6: Planning all routes...")
             ExcelImportService._plan_all_routes(all_routes)
 
+            if custom_order_snapshots:
+                print("\nRestoring active custom orders...")
+                ExcelImportService._restore_custom_orders(custom_order_snapshots)
+
             ExcelImportService._clear_aw_tour_employee_snapshot()
+            ExcelImportService._clear_custom_order_snapshot()
 
             # Calculate final statistics
             calendar_weeks_str = ", ".join(map(str, calendar_weeks)) if calendar_weeks else "None"

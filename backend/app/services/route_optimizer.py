@@ -23,11 +23,12 @@ class RouteOptimizer:
 
     def _create_route_order(
         self, route_result: dict[str, Any], appointments: list[Appointment]
-    ) -> str:
-        """Create JSON array of appointment IDs in optimized order"""
-        waypoint_order = route_result.get("waypoint_order", [])
-        ordered_appointments = [appointments[i].id for i in waypoint_order]
-        return str(ordered_appointments)
+    ) -> list[int]:
+        """Create appointment IDs in optimized order."""
+        waypoint_order = route_result.get("waypoint_order") or []
+        if not waypoint_order:
+            return [appointment.id for appointment in appointments if appointment.id is not None]
+        return [appointments[i].id for i in waypoint_order]
 
     def optimize_route(
         self, weekday: str, employee_id: int = None, area: str = None, calendar_week: int = None
@@ -79,12 +80,13 @@ class RouteOptimizer:
                 route.polyline = None
                 route.total_distance = 0
                 route.total_duration = 0
+                route.set_route_order([])
                 route.updated_at = datetime.utcnow()
                 db.session.commit()
                 return
 
             # Get appointments from route order
-            appointment_ids = eval(route.route_order)
+            appointment_ids = route.get_route_order()
             appointments = Appointment.query.filter(Appointment.id.in_(appointment_ids)).all()
 
             if not appointments:
@@ -146,7 +148,7 @@ class RouteOptimizer:
             route.polyline = route_info["overview_polyline"]["points"]
             route.total_distance = total_distance
             route.total_duration = total_duration + total_visit_duration
-            route.route_order = self._create_route_order(route_info, appointments)
+            route.set_route_order(self._create_route_order(route_info, appointments))
             route.updated_at = datetime.utcnow()
             db.session.commit()
 

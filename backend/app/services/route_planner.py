@@ -71,13 +71,22 @@ class RoutePlanner:
                 route.polyline = None
                 route.total_distance = 0
                 route.total_duration = 0
+                route.sync_custom_metrics_from_web()
                 route.updated_at = datetime.utcnow()
                 db.session.commit()
                 return
 
-            # Get appointments from route order
-            appointment_ids = eval(route.route_order)
-            appointments = Appointment.query.filter(Appointment.id.in_(appointment_ids)).all()
+            # Get appointments from route order, preserving sequence
+            appointment_ids = route.get_route_order()
+            appointments_by_id = {
+                appointment.id: appointment
+                for appointment in Appointment.query.filter(Appointment.id.in_(appointment_ids)).all()
+            }
+            appointments = [
+                appointments_by_id[appointment_id]
+                for appointment_id in appointment_ids
+                if appointment_id in appointments_by_id
+            ]
 
             if not appointments:
                 raise ValueError(
@@ -138,6 +147,7 @@ class RoutePlanner:
             route.polyline = route_info["overview_polyline"]["points"]
             route.total_distance = total_distance
             route.total_duration = total_duration + total_visit_duration
+            route.sync_custom_metrics_from_web()
             route.updated_at = datetime.utcnow()
             db.session.commit()
 
@@ -146,3 +156,75 @@ class RoutePlanner:
             if is_area_route:
                 raise Exception(f"Failed to plan area route for {area}: {str(e)}") from e
             raise Exception(f"Failed to plan route for employee {employee_id}: {str(e)}") from e
+
+    def plan_custom_route(self, route: Route) -> None:
+        """Plan polyline/distance for custom_order without changing route_order."""
+        try:
+            appointment_ids = route.get_custom_order()
+            if not appointment_ids:
+                route.custom_polyline = None
+                route.custom_distance = 0
+                route.custom_duration = 0
+                route.updated_at = datetime.utcnow()
+                db.session.commit()
+                return
+
+            is_area_route = bool(route.area) and (
+                route.employee_id is None or route.area in AW_TOUR_AREAS
+            )
+            appointments_by_id = {
+                appointment.id: appointment
+                for appointment in Appointment.query.filter(
+                    Appointment.id.in_(appointment_ids)
+                ).all()
+            }
+            ordered_appointments = [
+                appointments_by_id[appointment_id]
+                for appointment_id in appointment_ids
+                if appointment_id in appointments_by_id
+            ]
+            if not ordered_appointments:
+                raise ValueError(
+                    f"No appointments found for the IDs in custom order: {appointment_ids}"
+                )
+
+            if is_area_route:
+                assigned_employee = (
+                    Employee.query.filter_by(id=route.employee_id).first()
+                    if route.employee_id
+                    else None
+                )
+                start_location = get_aw_route_start_location(route.area, assigned_employee)
+            else:
+                employee = Employee.query.filter_by(id=route.employee_id).first()
+                if not employee:
+                    raise ValueError(f"Employee with ID {route.employee_id} not found")
+                start_location = {"lat": employee.latitude, "lng": employee.longitude}
+
+            waypoints = [
+                (appointment.patient.latitude, appointment.patient.longitude)
+                for appointment in ordered_appointments
+            ]
+            departure_time = get_departure_time(route.weekday, route.calendar_week)
+            result = self.gmaps.directions(
+                origin=start_location,
+                destination=start_location,
+                waypoints=waypoints,
+                optimize_waypoints=False,
+                departure_time=departure_time,
+                mode="driving",
+            )
+            if not result:
+                raise Exception("Failed to calculate custom route")
+
+            route_info = result[0]
+            total_distance, total_duration = calculate_route_duration(route_info["legs"])
+            total_visit_duration = calculate_visit_duration(ordered_appointments)
+            route.custom_polyline = route_info["overview_polyline"]["points"]
+            route.custom_distance = total_distance
+            route.custom_duration = total_duration + total_visit_duration
+            route.updated_at = datetime.utcnow()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Failed to plan custom route for route {route.id}: {str(e)}") from e

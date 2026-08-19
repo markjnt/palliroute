@@ -258,29 +258,25 @@ def update_replacement(employee_id, weekday):
                 ).first()
 
                 if route:
-                    route_order = route.get_route_order()
-
-                    # Update route order in one pass
                     for move in moved_appointments:
                         app_id = move["appointment"].id
-                        # Remove from old employee
-                        if move["old_employee_id"] == emp_id and app_id in route_order:
-                            route_order.remove(app_id)
-                        # Add to new employee (only HB/NA)
+                        if move["old_employee_id"] == emp_id:
+                            route.remove_appointment_id(app_id)
                         elif (
                             move["new_employee_id"] == emp_id
                             and move["appointment"].visit_type in ("HB", "NA")
-                            and app_id not in route_order
                         ):
-                            route_order.append(app_id)
+                            route.append_appointment_id(app_id)
 
-                    route.set_route_order(route_order)
-
-                    # Optimize route
                     try:
                         route_optimizer.optimize_route(
                             db_weekday, emp_id, calendar_week=calendar_week
                         )
+                        route = Route.query.get(route.id)
+                        if route and route.custom_order_active:
+                            from app.services.route_planner import RoutePlanner
+
+                            RoutePlanner().plan_custom_route(route)
                     except Exception as e:
                         print(f"Warning: Failed to optimize route for employee {emp_id}: {str(e)}")
 
