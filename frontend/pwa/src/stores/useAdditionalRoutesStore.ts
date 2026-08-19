@@ -12,7 +12,10 @@ interface AdditionalRoutesStore {
   resetForNewUser: () => void;
 }
 
-const emptySelection = { selectedEmployeeIds: [] as (number | string)[], selectedAreas: [] as string[] };
+const emptySelection = {
+  selectedEmployeeIds: [] as (number | string)[],
+  selectedAreas: [] as string[],
+};
 
 export const useAdditionalRoutesStore = create<AdditionalRoutesStore>((set) => ({
   selectedEmployeeIds: [],

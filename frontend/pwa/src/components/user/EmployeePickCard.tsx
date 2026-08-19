@@ -303,8 +303,8 @@ export const filterEmployees = (
   return [...filtered].sort((a, b) => {
     const orderDiff = getGroupOrder(a) - getGroupOrder(b);
     if (orderDiff !== 0) return orderDiff;
-    return `${a.last_name} ${a.first_name}`.toLowerCase().localeCompare(
-      `${b.last_name} ${b.first_name}`.toLowerCase()
-    );
+    return `${a.last_name} ${a.first_name}`
+      .toLowerCase()
+      .localeCompare(`${b.last_name} ${b.first_name}`.toLowerCase());
   });
 };

@@ -1,9 +1,6 @@
 import React from 'react';
 import { Box, IconButton } from '@mui/material';
-import {
-  Map as MapIcon,
-  Phone as PhoneIcon,
-} from '@mui/icons-material';
+import { Map as MapIcon, Phone as PhoneIcon } from '@mui/icons-material';
 
 const openMaps = (address: string) => {
   window.location.href = `https://maps.google.com/?q=${encodeURIComponent(address)}`;

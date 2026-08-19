@@ -107,169 +107,168 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({ stop, onShowAdditi
 
         <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.75 }}>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                color: '#1d1d1f',
-                flex: 1,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                lineHeight: 1.3,
-              }}
-            >
-              {stop.patientName}
-            </Typography>
-          </Box>
-
-
-          {stop.responsibleEmployeeName && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.75 }}>
               <Typography
-                variant="caption"
-                onClick={() => showAsAdditionalRoute(stop.responsibleEmployeeId)}
-                sx={employeeLinkSx}
-              >
-                Zuständig: {stop.responsibleEmployeeName}
-              </Typography>
-            </Box>
-          )}
-
-          {stop.tourEmployeeName && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <Typography
-                variant="caption"
-                onClick={() => showAsAdditionalRoute(stop.tourEmployeeId)}
-                sx={employeeLinkSx}
-              >
-                Ursprungstour: {stop.tourEmployeeName}
-              </Typography>
-            </Box>
-          )}
-
-          {stop.originEmployeeName && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <Typography
-                variant="caption"
+                variant="body2"
                 sx={{
-                  color: '#007AFF',
-                  fontSize: '0.75rem',
                   fontWeight: 600,
+                  color: '#1d1d1f',
+                  flex: 1,
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  lineHeight: 1.3,
                 }}
               >
-                Ursprünglich (Vertretung): {stop.originEmployeeName}
+                {stop.patientName}
               </Typography>
             </Box>
-          )}
 
-          {stop.otherResponsibleEmployees && stop.otherResponsibleEmployees.length > 0 && (
-            <>
-              {stop.otherResponsibleEmployees.map((item, idx) => (
-                <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                  <Typography
-                    variant="caption"
-                    onClick={() => showAsAdditionalRoute(item.employee.id)}
-                    sx={employeeLinkSx}
-                  >
-                    Gemeinsam mit: {item.employee.first_name} {item.employee.last_name}
-                  </Typography>
-                </Box>
-              ))}
-            </>
-          )}
+            {stop.responsibleEmployeeName && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  onClick={() => showAsAdditionalRoute(stop.responsibleEmployeeId)}
+                  sx={employeeLinkSx}
+                >
+                  Zuständig: {stop.responsibleEmployeeName}
+                </Typography>
+              </Box>
+            )}
 
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <LocationIcon
-              sx={{
-                fontSize: { xs: 13, sm: 14 },
-                color: '#8E8E93',
-                mr: 0.5,
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{
-                color: '#8E8E93',
-                fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                cursor: 'pointer',
-                transition: 'color 0.2s ease',
-              }}
-              onClick={() => openMaps(stop.address)}
-            >
-              {stop.address}
-            </Typography>
-          </Box>
+            {stop.tourEmployeeName && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  onClick={() => showAsAdditionalRoute(stop.tourEmployeeId)}
+                  sx={employeeLinkSx}
+                >
+                  Ursprungstour: {stop.tourEmployeeName}
+                </Typography>
+              </Box>
+            )}
 
-          {stop.time && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-              <TimeIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
+            {stop.originEmployeeName && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: '#007AFF',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Ursprünglich (Vertretung): {stop.originEmployeeName}
+                </Typography>
+              </Box>
+            )}
+
+            {stop.otherResponsibleEmployees && stop.otherResponsibleEmployees.length > 0 && (
+              <>
+                {stop.otherResponsibleEmployees.map((item, idx) => (
+                  <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      onClick={() => showAsAdditionalRoute(item.employee.id)}
+                      sx={employeeLinkSx}
+                    >
+                      Gemeinsam mit: {item.employee.first_name} {item.employee.last_name}
+                    </Typography>
+                  </Box>
+                ))}
+              </>
+            )}
+
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <LocationIcon
+                sx={{
+                  fontSize: { xs: 13, sm: 14 },
+                  color: '#8E8E93',
+                  mr: 0.5,
+                }}
+              />
               <Typography
                 variant="caption"
                 sx={{
                   color: '#8E8E93',
-                  fontSize: '0.75rem',
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                  cursor: 'pointer',
+                  transition: 'color 0.2s ease',
                 }}
+                onClick={() => openMaps(stop.address)}
               >
-                {stop.time}
+                {stop.address}
               </Typography>
             </Box>
-          )}
 
-          {stop.info && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-              <InfoIcon sx={{ fontSize: 14, color: '#007AFF', mr: 0.5 }} />
-              <Typography
-                variant="caption"
-                sx={{
-                  color: '#007AFF',
-                  fontSize: '0.75rem',
-                  bgcolor: 'rgba(0, 122, 255, 0.1)',
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 1,
-                }}
-              >
-                {stop.info}
-              </Typography>
-            </Box>
-          )}
+            {stop.time && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                <TimeIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: '#8E8E93',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  {stop.time}
+                </Typography>
+              </Box>
+            )}
 
-          {(stop.phone1 || stop.phone2) && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-              {stop.phone1 && (
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <PhoneIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#8E8E93',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => callPhone(stop.phone1!)}
-                  >
-                    {stop.phone1}
-                  </Typography>
-                </Box>
-              )}
-              {stop.phone2 && (
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <PhoneIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#8E8E93',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => callPhone(stop.phone2!)}
-                  >
-                    {stop.phone2}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          )}
+            {stop.info && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                <InfoIcon sx={{ fontSize: 14, color: '#007AFF', mr: 0.5 }} />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: '#007AFF',
+                    fontSize: '0.75rem',
+                    bgcolor: 'rgba(0, 122, 255, 0.1)',
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                  }}
+                >
+                  {stop.info}
+                </Typography>
+              </Box>
+            )}
+
+            {(stop.phone1 || stop.phone2) && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                {stop.phone1 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <PhoneIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: '#8E8E93',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => callPhone(stop.phone1!)}
+                    >
+                      {stop.phone1}
+                    </Typography>
+                  </Box>
+                )}
+                {stop.phone2 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <PhoneIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: '#8E8E93',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => callPhone(stop.phone2!)}
+                    >
+                      {stop.phone2}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
           </Box>
           <Box sx={{ ml: 1, flexShrink: 0 }}>
             <StopActionButtons address={stop.address} phone1={stop.phone1} phone2={stop.phone2} />

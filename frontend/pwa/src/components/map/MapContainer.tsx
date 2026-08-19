@@ -107,14 +107,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
           );
 
     return [...(mainRoute ? [mainRoute] : []), ...additionalRoutes];
-  }, [
-    routes,
-    mainRoute,
-    selectedWeekday,
-    selectedEmployeeIds,
-    selectedAreas,
-    isAreaTourDay,
-  ]);
+  }, [routes, mainRoute, selectedWeekday, selectedEmployeeIds, selectedAreas, isAreaTourDay]);
 
   // Marker-Berechnung mit useMemo
   const markers = useMemo(() => {

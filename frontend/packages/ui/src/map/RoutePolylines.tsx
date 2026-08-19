@@ -25,9 +25,7 @@ export function RoutePolylines({
   const previousDataRef = useRef<{ [id: number]: string }>({});
   const listenersRef = useRef<{ [id: number]: google.maps.MapsEventListener[] }>({});
 
-  const hoveredRouteId = useRouteHoverStore((state) =>
-    enableHover ? state.hoveredRouteId : null
-  );
+  const hoveredRouteId = useRouteHoverStore((state) => (enableHover ? state.hoveredRouteId : null));
   const hoverRoute = useRouteHoverStore((state) => state.hoverRoute);
   const unhoverRoute = useRouteHoverStore((state) => state.unhoverRoute);
 
@@ -131,14 +129,14 @@ export function RoutePolylines({
   }, [routes, map, hiddenRouteIds, hoveredRouteId, hoverRoute, unhoverRoute, enableHover]);
 
   useEffect(() => {
+    const polylines = polylineRefs.current;
+    const hits = hitRefs.current;
+    const listeners = listenersRef.current;
     return () => {
-      Object.values(listenersRef.current).forEach((group) =>
-        group.forEach((listener) => listener.remove())
-      );
-      Object.values(polylineRefs.current).forEach((line) => line.setMap(null));
-      Object.values(hitRefs.current).forEach((line) => line.setMap(null));
+      Object.values(listeners).forEach((group) => group.forEach((listener) => listener.remove()));
+      Object.values(polylines).forEach((line) => line.setMap(null));
+      Object.values(hits).forEach((line) => line.setMap(null));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup must use latest polyline instances
   }, []);
 
   return null;

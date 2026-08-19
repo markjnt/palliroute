@@ -26,7 +26,12 @@ import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore'
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { Employee, Weekday } from '../../types/models';
 import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
-import { EmployeeFilterChips, EmployeePickCard, AreaPickCard, filterEmployees } from './EmployeePickCard';
+import {
+  EmployeeFilterChips,
+  EmployeePickCard,
+  AreaPickCard,
+  filterEmployees,
+} from './EmployeePickCard';
 import AdminEmployeeSelectSheet from './AdminEmployeeSelectSheet';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 import { AW_TOUR_AREAS, findAwAreaRoute, findEmployeeDayRoute } from '../../utils/mapUtils';
