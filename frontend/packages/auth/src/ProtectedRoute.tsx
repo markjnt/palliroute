@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import { useAuth } from './useAuth';
 
@@ -6,8 +6,24 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+const LOGIN_REDIRECT_DELAY_MS = 800;
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { configured, isAuthenticated, isLoading, login } = useAuth();
+  const redirectStarted = useRef(false);
+
+  useEffect(() => {
+    if (!configured || isAuthenticated || isLoading || redirectStarted.current) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      redirectStarted.current = true;
+      login();
+    }, LOGIN_REDIRECT_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [configured, isAuthenticated, isLoading, login]);
 
   if (!configured) {
     return <>{children}</>;
@@ -36,10 +52,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           PalliRoute
         </Typography>
         <Typography color="text.secondary" textAlign="center">
-          Bitte mit Ihrem Organisationskonto anmelden.
+          Sie werden zur Microsoft-Anmeldung weitergeleitet …
         </Typography>
-        <Button variant="contained" onClick={login} size="large">
-          Anmelden
+        <CircularProgress size={28} />
+        <Button variant="text" onClick={login} size="small">
+          Falls Sie nicht weitergeleitet werden: Anmelden
         </Button>
       </Box>
     );
