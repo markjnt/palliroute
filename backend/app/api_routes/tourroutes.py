@@ -1,11 +1,11 @@
 from datetime import datetime
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 
 from .. import db
-from ..auth.decorators import require_internal
+from ..auth.decorators import require_auth
 from ..models.employee import Employee
-from ..models.route import Route
+from ..models.route import Route, same_appointment_ids
 from ..services.aplano_sync import sync_employee_planning
 from ..services.holiday_service import is_aw_area_assignment_day
 from ..services.pdf_generator import PDFGenerator
@@ -16,6 +16,17 @@ from ..services.route_utils import AW_TOUR_AREAS, is_aw_tour_area
 routes_bp = Blueprint("routes", __name__)
 route_planner = RoutePlanner()
 route_optimizer = RouteOptimizer()
+
+
+def _can_mutate_own_route_order(route: Route):
+    """Web/internal and admins: any route. PWA JWT: only the assigned employee's tour."""
+    if getattr(g, "auth_mode", None) in ("internal", "disabled"):
+        return True
+    if bool(getattr(g, "is_admin", False)):
+        return True
+    caller_employee = getattr(g, "employee", None)
+    caller_id = getattr(caller_employee, "id", None) if caller_employee is not None else None
+    return caller_id is not None and route.employee_id == caller_id
 
 
 @routes_bp.route("/", methods=["GET"])
@@ -182,6 +193,66 @@ def update_route(route_id):
         return jsonify({"error": str(e)}), 500
 
 
+@routes_bp.route("/<int:route_id>/custom-order", methods=["PUT"])
+@require_auth
+def update_custom_order(route_id):
+    """Set the PWA custom stop order for a route. Body: { appointment_ids: number[] }"""
+    try:
+        route = Route.query.get_or_404(route_id)
+        if not _can_mutate_own_route_order(route):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.get_json() or {}
+        appointment_ids = data.get("appointment_ids")
+        if not isinstance(appointment_ids, list):
+            return jsonify({"error": "appointment_ids must be a list"}), 400
+        try:
+            appointment_ids = [int(item) for item in appointment_ids]
+        except (TypeError, ValueError):
+            return jsonify({"error": "appointment_ids must be integers"}), 400
+
+        current_ids = route.get_route_order()
+        if not same_appointment_ids(appointment_ids, current_ids):
+            return jsonify(
+                {"error": "appointment_ids must be a permutation of the current route_order"}
+            ), 400
+
+        route.set_custom_order(appointment_ids, active=True)
+        db.session.flush()
+        route_planner.plan_custom_route(route)
+        return jsonify({"message": "Custom order updated", "route": route.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@routes_bp.route("/<int:route_id>/apply-optimized-order", methods=["POST"])
+@require_auth
+def apply_optimized_order(route_id):
+    """Optimize route_order, then copy it into custom_order and deactivate custom order."""
+    try:
+        route = Route.query.get_or_404(route_id)
+        if not _can_mutate_own_route_order(route):
+            return jsonify({"error": "Forbidden"}), 403
+        weekday = route.weekday
+        calendar_week = route.calendar_week
+        if is_aw_tour_area(route.area):
+            route_optimizer.optimize_route(weekday, area=route.area, calendar_week=calendar_week)
+        elif route.employee_id is not None:
+            route_optimizer.optimize_route(
+                weekday, employee_id=route.employee_id, calendar_week=calendar_week
+            )
+        else:
+            return jsonify({"error": "Route cannot be optimized"}), 400
+
+        route = Route.query.get_or_404(route_id)
+        route.reset_custom_order()
+        db.session.commit()
+        return jsonify({"message": "Optimized order applied", "route": route.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
 @routes_bp.route("/<int:route_id>", methods=["GET"])
 def get_route(route_id):
     """Get details of a specific route"""
@@ -193,11 +264,15 @@ def get_route(route_id):
 
 
 @routes_bp.route("/<int:route_id>/assign-employee", methods=["PUT"])
-@require_internal
+@require_auth
 def assign_employee_to_aw_tour(route_id):
     """
     Assign or unassign an employee to an AW tour for this day and area.
     Expected JSON body: { "employee_id": 1 } or { "employee_id": null }
+
+    Web (internal key) may assign any employee. PWA JWT may only self-claim:
+    employee_id must be g.employee.id. Admins may assign any employee.
+    Unassign (null) is allowed for the current assignee or as admin.
     """
     try:
         route = Route.query.get_or_404(route_id)
@@ -215,6 +290,23 @@ def assign_employee_to_aw_tour(route_id):
             return jsonify({"error": "employee_id is required (number or null)"}), 400
 
         employee_id = data.get("employee_id")
+        is_internal = getattr(g, "auth_mode", None) in ("internal", "disabled")
+        is_admin = bool(getattr(g, "is_admin", False))
+        caller_employee = getattr(g, "employee", None)
+        caller_id = getattr(caller_employee, "id", None) if caller_employee is not None else None
+
+        if not is_internal:
+            if employee_id is None:
+                if not is_admin and (caller_id is None or route.employee_id != caller_id):
+                    return jsonify({"error": "Forbidden"}), 403
+            else:
+                try:
+                    requested_id = int(employee_id)
+                except (TypeError, ValueError):
+                    return jsonify({"error": "employee_id must be a number or null"}), 400
+                if not is_admin and (caller_id is None or requested_id != caller_id):
+                    return jsonify({"error": "Forbidden"}), 403
+
         if employee_id is None:
             route.employee_id = None
         else:
@@ -238,6 +330,11 @@ def assign_employee_to_aw_tour(route_id):
             print(
                 f"AW tour assignment saved but route planning failed for route {route.id}: {plan_error}"
             )
+
+        route = Route.query.get(route_id)
+        if route and not planning_failed:
+            route.reset_custom_order()
+            db.session.commit()
 
         route = Route.query.get(route_id)
         payload = {

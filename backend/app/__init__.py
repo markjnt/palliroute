@@ -63,7 +63,7 @@ def create_app(config_class=Config):
     from .api_routes.employees import employees_bp
     from .api_routes.patients import patients_bp
     from .api_routes.pflegeheime import pflegeheime_bp
-    from .api_routes.routes import routes_bp
+    from .api_routes.tourroutes import routes_bp
     from .api_routes.scheduling import scheduling_bp
     from .auth.routes import auth_bp
 

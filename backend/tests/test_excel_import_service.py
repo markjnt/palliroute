@@ -40,3 +40,93 @@ def test_aw_tour_employee_snapshot_ignores_invalid_payload():
         )
         == []
     )
+
+
+def test_custom_order_snapshot_roundtrip():
+    snapshots = [
+        {
+            "calendar_week": 34,
+            "weekday": "monday",
+            "employee_id": 7,
+            "area": None,
+            "active": True,
+            "stops": [
+                {
+                    "first_name": "Anna",
+                    "last_name": "Arzt",
+                    "street": "Hauptstr. 1",
+                    "zip_code": "51545",
+                    "visit_type": "HB",
+                }
+            ],
+        }
+    ]
+    raw = ExcelImportService._serialize_custom_order_snapshot(snapshots)
+    assert ExcelImportService._deserialize_custom_order_snapshot(raw) == snapshots
+
+
+def test_custom_order_snapshot_ignores_invalid_payload():
+    assert ExcelImportService._deserialize_custom_order_snapshot(None) == []
+    assert ExcelImportService._deserialize_custom_order_snapshot("not-json") == []
+    assert ExcelImportService._deserialize_custom_order_snapshot(json.dumps({"x": 1})) == []
+    assert ExcelImportService._deserialize_custom_order_snapshot(json.dumps([{"weekday": "monday"}])) == []
+
+
+def test_match_custom_order_keeps_remaining_stops_and_appends_new():
+    identity_anna = ExcelImportService._normalize_stop_identity(
+        "Anna", "Arzt", "Hauptstr. 1", "51545", "HB"
+    )
+    identity_bernd = ExcelImportService._normalize_stop_identity(
+        "Bernd", "Becker", "Nebenweg 2", "51545", "HB"
+    )
+    identity_clara = ExcelImportService._normalize_stop_identity(
+        "Clara", "Conrad", "Berg 3", "51545", "NA"
+    )
+    current_ids = [10, 11, 12]
+    identity_by_id = {
+        10: identity_anna,
+        11: identity_bernd,
+        12: identity_clara,
+    }
+    snapshot_stops = [
+        {
+            "first_name": "Clara",
+            "last_name": "Conrad",
+            "street": "Berg 3",
+            "zip_code": "51545",
+            "visit_type": "NA",
+        },
+        {
+            "first_name": "Anna",
+            "last_name": "Arzt",
+            "street": "Hauptstr. 1",
+            "zip_code": "51545",
+            "visit_type": "HB",
+        },
+        {
+            "first_name": "Weg",
+            "last_name": "Verschoben",
+            "street": "Alte 9",
+            "zip_code": "51545",
+            "visit_type": "HB",
+        },
+    ]
+    assert ExcelImportService._match_custom_order_ids(
+        current_ids, identity_by_id, snapshot_stops
+    ) == [12, 10, 11]
+
+
+def test_match_custom_order_is_case_insensitive():
+    identity = ExcelImportService._normalize_stop_identity(
+        "Anna", "Arzt", "Hauptstr. 1", "51545", "HB"
+    )
+    snapshot_stops = [
+        {
+            "first_name": "ANNA",
+            "last_name": "arzt",
+            "street": " hauptstr. 1 ",
+            "zip_code": "51545",
+            "visit_type": "hb",
+        }
+    ]
+    assert ExcelImportService._match_custom_order_ids([5], {5: identity}, snapshot_stops) == [5]

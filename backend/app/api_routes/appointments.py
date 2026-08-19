@@ -124,16 +124,13 @@ def move_appointment():
             appointment.area = target_area
 
             if source_route:
-                # Remove appointment from source route
-                route_order = source_route.get_route_order()
-                if appointment.id in route_order:
-                    route_order.remove(appointment.id)
-                    source_route.set_route_order(route_order)
-
-                # Recalculate source route
+                source_route.remove_appointment_id(appointment.id)
                 route_planner.plan_route(
                     weekday, area=source_area, calendar_week=appointment.calendar_week
                 )
+                source_route = Route.query.get(source_route.id)
+                if source_route and source_route.custom_order_active:
+                    route_planner.plan_custom_route(source_route)
 
             # Ensure target route exists and update its route order for HB/NA visits
             if appointment.visit_type in ("HB", "NA"):
@@ -153,6 +150,8 @@ def move_appointment():
                         employee_id=None,
                         weekday=weekday,
                         route_order=json.dumps([]),
+                        custom_order=json.dumps([]),
+                        custom_order_active=False,
                         total_duration=0,
                         total_distance=0,
                         area=target_area,
@@ -161,15 +160,15 @@ def move_appointment():
                     db.session.add(target_route)
                     db.session.flush()
 
-                route_order = target_route.get_route_order()
-                if appointment.id not in route_order:
-                    route_order.append(appointment.id)
-                    target_route.set_route_order(route_order)
+                target_route.append_appointment_id(appointment.id)
 
                 # Optimize area route (Wochenende / Feiertag)
                 route_optimizer.optimize_route(
                     weekday, area=target_area, calendar_week=appointment.calendar_week
                 )
+                target_route = Route.query.get(target_route.id)
+                if target_route and target_route.custom_order_active:
+                    route_planner.plan_custom_route(target_route)
         else:
             # Normaler Werktag – Zuweisung zwischen Mitarbeitern
             if not source_employee_id or not target_employee_id:
@@ -223,27 +222,22 @@ def move_appointment():
             target_route = target_route_query.first()
 
             if source_route:
-                # Remove appointment from source route
-                route_order = source_route.get_route_order()
-                if appointment.id in route_order:
-                    route_order.remove(appointment.id)
-                    source_route.set_route_order(route_order)
-
-                # Plan source route
+                source_route.remove_appointment_id(appointment.id)
                 route_planner.plan_route(
                     weekday, source_employee_id, calendar_week=appointment.calendar_week
                 )
+                source_route = Route.query.get(source_route.id)
+                if source_route and source_route.custom_order_active:
+                    route_planner.plan_custom_route(source_route)
 
             if target_route and appointment.visit_type in ("HB", "NA"):
-                # Only add HB and NA appointments to route order (exclude TK)
-                route_order = target_route.get_route_order()
-                route_order.append(appointment.id)
-                target_route.set_route_order(route_order)
-
-                # Optimize target route using the final employee ID (replacement or original)
+                target_route.append_appointment_id(appointment.id)
                 route_optimizer.optimize_route(
                     weekday, final_employee_id, calendar_week=appointment.calendar_week
                 )
+                target_route = Route.query.get(target_route.id)
+                if target_route and target_route.custom_order_active:
+                    route_planner.plan_custom_route(target_route)
 
         db.session.commit()
         return jsonify({"message": "Appointment moved successfully"})
@@ -302,6 +296,8 @@ def assign_tour_area():
                     employee_id=None,
                     weekday=appointment.weekday,
                     route_order=json.dumps([]),
+                    custom_order=json.dumps([]),
+                    custom_order_active=False,
                     total_duration=0,
                     total_distance=0,
                     area=target_area,
@@ -310,13 +306,13 @@ def assign_tour_area():
                 db.session.add(target_route)
                 db.session.flush()
 
-            route_order = target_route.get_route_order()
-            if appointment.id not in route_order:
-                route_order.append(appointment.id)
-                target_route.set_route_order(route_order)
+            target_route.append_appointment_id(appointment.id)
             route_optimizer.optimize_route(
                 appointment.weekday, area=target_area, calendar_week=appointment.calendar_week
             )
+            target_route = Route.query.get(target_route.id)
+            if target_route and target_route.custom_order_active:
+                route_planner.plan_custom_route(target_route)
 
         db.session.commit()
 
