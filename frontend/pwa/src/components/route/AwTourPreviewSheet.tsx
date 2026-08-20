@@ -168,7 +168,7 @@ export const AwTourPreviewSheet: React.FC<AwTourPreviewSheetProps> = ({
         setPolylineLoading(false);
         const overviewPath = result?.routes[0]?.overview_path;
         if (status === google.maps.DirectionsStatus.OK && overviewPath?.length) {
-          const waypointOrder = result.routes[0].waypoint_order ?? [];
+          const waypointOrder = result?.routes[0]?.waypoint_order ?? [];
           const optimizedOrder =
             waypointOrder.length === orderedAppointmentIds.length
               ? waypointOrder.map((index) => orderedAppointmentIds[index])
