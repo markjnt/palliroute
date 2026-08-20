@@ -9,11 +9,17 @@ import {
   DialogActions,
   Snackbar,
   Alert,
+  Card,
+  CardContent,
+  Avatar,
+  Chip,
 } from '@mui/material';
 import {
   Home as HomeIcon,
   Phone as PhoneIcon,
   AddCircle as AddCircleIcon,
+  Map as MapIcon,
+  WarningAmber as WarningAmberIcon,
   type SvgIconComponent,
 } from '@mui/icons-material';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
@@ -34,7 +40,7 @@ import { getCurrentCalendarWeek, getTourAreaColor, isAwTourArea } from '@palliro
 import { useNrwpHolidayLookupForSelectedKw } from '../../hooks/useNrwpHolidayForTourDay';
 import { findEmployeeDayRoute } from '../../utils/mapUtils';
 import { isAwCalendarDay } from '../../utils/resolveWeekdayAfterWeekChange';
-import { AreaPickCard } from '../user/EmployeePickCard';
+import AwTourPreviewSheet from '../route/AwTourPreviewSheet';
 
 const AW_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
 
@@ -120,6 +126,8 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
 
   const [claimWeekday, setClaimWeekday] = useState<Weekday | null>(null);
   const [claimArea, setClaimArea] = useState<(typeof AW_AREAS)[number]>('Nord');
+  const [claimConfirmOpen, setClaimConfirmOpen] = useState(false);
+  const [previewArea, setPreviewArea] = useState<(typeof AW_AREAS)[number] | null>(null);
   const [feedback, setFeedback] = useState<{
     message: string;
     severity: 'success' | 'warning' | 'error';
@@ -240,11 +248,39 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
   const handleDayClick = (weekday: (typeof weekdays)[number]) => {
     if (weekday.isAwDay && !weekday.assigned) {
       setClaimArea('Nord');
+      setClaimConfirmOpen(false);
+      setPreviewArea(null);
       setClaimWeekday(weekday.value);
       return;
     }
     onWeekdaySelect(weekday.value);
   };
+
+  const closeClaimDialogs = () => {
+    setClaimConfirmOpen(false);
+    setPreviewArea(null);
+    setClaimWeekday(null);
+  };
+
+  const openAssignConfirm = (area: (typeof AW_AREAS)[number]) => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    setClaimArea(area);
+    setClaimConfirmOpen(true);
+  };
+
+  const openPreview = (area: (typeof AW_AREAS)[number]) => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    setClaimArea(area);
+    setPreviewArea(area);
+  };
+
+  const previewRoute =
+    claimWeekday && previewArea
+      ? allRoutes.find(
+          (route) =>
+            route.weekday === claimWeekday && isAwTourArea(route.area) && route.area === previewArea
+        )
+      : undefined;
 
   const handleClaimConfirm = async () => {
     if (!claimWeekday || !selectedUserId || !claimRoute?.id) {
@@ -272,7 +308,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
         setFeedback({ message: 'AW-Tour übernommen', severity: 'success' });
       }
       onWeekdaySelect(claimWeekday);
-      setClaimWeekday(null);
+      closeClaimDialogs();
     } catch (error) {
       console.error('Failed to claim AW tour:', error);
       setFeedback({ message: 'Tour konnte nicht übernommen werden', severity: 'error' });
@@ -517,8 +553,8 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
       </Box>
 
       <Dialog
-        open={Boolean(claimWeekday)}
-        onClose={() => setClaimWeekday(null)}
+        open={Boolean(claimWeekday) && !claimConfirmOpen && !previewArea}
+        onClose={closeClaimDialogs}
         fullWidth
         maxWidth="xs"
         slotProps={{
@@ -548,27 +584,9 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
         </DialogTitle>
         <DialogContent sx={{ px: 2.5, pb: 1 }}>
           <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            {claimWeekday ? `Möchten Sie die AW-Tour am ${claimDayLabel} übernehmen?` : ''}
-          </Typography>
-          {claimOwner && claimOwner.id !== selectedUserId && (
-            <Alert
-              severity="warning"
-              sx={{
-                mb: 2,
-                borderRadius: 2,
-                bgcolor: 'rgba(255, 152, 0, 0.12)',
-                color: '#e65100',
-                '& .MuiAlert-icon': { color: '#ff9800' },
-              }}
-            >
-              Diese Tour gehört derzeit {claimOwner.first_name} {claimOwner.last_name}.
-            </Alert>
-          )}
-          <Typography
-            variant="caption"
-            sx={{ display: 'block', mb: 1, fontWeight: 600, color: '#1d1d1f' }}
-          >
-            Bereich
+            {claimWeekday
+              ? `Wählen Sie einen Bereich für den ${claimDayLabel}, um die AW-Tour zu übernehmen.`
+              : ''}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {AW_AREAS.map((area) => {
@@ -583,21 +601,139 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
               const owner = areaRoute?.employee_id
                 ? employees.find((emp) => emp.id === areaRoute.employee_id)
                 : undefined;
+              const color = getTourAreaColor(area);
+              const hasRoute = Boolean(areaRoute);
               return (
-                <AreaPickCard
+                <Card
                   key={area}
-                  area={area}
-                  assignedName={owner ? `${owner.first_name} ${owner.last_name}` : null}
-                  selected={claimArea === area}
-                  onClick={() => setClaimArea(area)}
-                />
+                  sx={{
+                    borderRadius: 2,
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    boxShadow: 'none',
+                    opacity: hasRoute ? 1 : 0.55,
+                  }}
+                >
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Box display="flex" alignItems="center" mb={1.25}>
+                      <Avatar
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          bgcolor: color,
+                          color: 'white',
+                          mr: 1.5,
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {area.charAt(0)}
+                      </Avatar>
+                      <Box flex={1} minWidth={0}>
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            color: '#1d1d1f',
+                            fontSize: '0.95rem',
+                            lineHeight: 1.3,
+                            mb: 0.5,
+                          }}
+                        >
+                          {area}
+                        </Typography>
+                        {owner ? (
+                          <Chip
+                            size="small"
+                            icon={<WarningAmberIcon />}
+                            label={`${owner.first_name} ${owner.last_name}`}
+                            sx={{
+                              height: 22,
+                              maxWidth: '100%',
+                              bgcolor: 'rgba(255, 193, 7, 0.18)',
+                              color: '#f57f17',
+                              border: '1px solid rgba(255, 193, 7, 0.55)',
+                              fontWeight: 600,
+                              fontSize: '0.7rem',
+                              '& .MuiChip-icon': {
+                                color: '#f9a825',
+                                fontSize: '0.95rem',
+                                ml: '4px',
+                              },
+                              '& .MuiChip-label': {
+                                px: 0.75,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              },
+                            }}
+                          />
+                        ) : (
+                          <Chip
+                            size="small"
+                            label={hasRoute ? 'Nicht zugewiesen' : 'Keine Tour'}
+                            variant="outlined"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.7rem',
+                              fontWeight: 500,
+                              color: 'text.secondary',
+                              borderColor: 'rgba(0, 0, 0, 0.12)',
+                              bgcolor: 'transparent',
+                              '& .MuiChip-label': { px: 0.75 },
+                            }}
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<MapIcon />}
+                        onClick={() => openPreview(area)}
+                        disabled={!hasRoute}
+                        sx={{
+                          flex: 1,
+                          textTransform: 'none',
+                          borderRadius: 1.5,
+                          fontWeight: 600,
+                          borderColor: `${color}66`,
+                          color,
+                          '&:hover': {
+                            borderColor: color,
+                            bgcolor: `${color}12`,
+                          },
+                        }}
+                      >
+                        Vorschau
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={() => openAssignConfirm(area)}
+                        disabled={!hasRoute}
+                        sx={{
+                          flex: 1,
+                          textTransform: 'none',
+                          borderRadius: 1.5,
+                          fontWeight: 600,
+                          bgcolor: '#ff9800',
+                          boxShadow: 'none',
+                          '&:hover': { bgcolor: '#f57c00', boxShadow: 'none' },
+                          '&.Mui-disabled': {
+                            bgcolor: 'rgba(255, 152, 0, 0.4)',
+                            color: 'white',
+                          },
+                        }}
+                      >
+                        Zuweisen
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
               );
             })}
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 1.5, gap: 1 }}>
           <Button
-            onClick={() => setClaimWeekday(null)}
+            onClick={closeClaimDialogs}
             sx={{
               textTransform: 'none',
               borderRadius: 1.5,
@@ -608,6 +744,89 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
           >
             Abbrechen
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <AwTourPreviewSheet
+        open={Boolean(claimWeekday && previewArea)}
+        onClose={() => setPreviewArea(null)}
+        weekday={claimWeekday ?? selectedWeekday}
+        weekdayLabel={claimDayLabel}
+        area={previewArea ?? 'Nord'}
+        route={previewRoute}
+        appointments={allAppointments}
+        patients={patients}
+        employees={employees}
+        onAssign={() => {
+          if (previewArea) openAssignConfirm(previewArea);
+        }}
+      />
+
+      <Dialog
+        open={claimConfirmOpen}
+        onClose={() => setClaimConfirmOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        sx={{ zIndex: 14000 }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              bgcolor: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.35)',
+              mx: 2,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 600,
+            color: '#1d1d1f',
+            pb: 0.5,
+            pt: 2.5,
+            px: 2.5,
+          }}
+        >
+          Übernehmen bestätigen
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.5, pb: 1 }}>
+          {claimOwner && claimOwner.id !== selectedUserId ? (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 1.5,
+                borderRadius: 2,
+                bgcolor: 'rgba(255, 152, 0, 0.12)',
+                color: '#e65100',
+                '& .MuiAlert-icon': { color: '#ff9800' },
+              }}
+            >
+              Diese Tour gehört derzeit {claimOwner.first_name} {claimOwner.last_name}.
+            </Alert>
+          ) : null}
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {claimWeekday
+              ? `Die AW-Tour am ${claimDayLabel} im Bereich ${claimArea} wird jetzt übernommen. Diese Aktion kann nicht rückgängig gemacht werden.`
+              : ''}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 1.5, gap: 1 }}>
+          <Button
+            onClick={() => setClaimConfirmOpen(false)}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 1.5,
+              color: '#1d1d1f',
+              fontWeight: 600,
+              '&:hover': { bgcolor: 'transparent' },
+            }}
+          >
+            Zurück
+          </Button>
           <Button
             variant="contained"
             onClick={handleClaimConfirm}
@@ -616,13 +835,13 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
               textTransform: 'none',
               borderRadius: 1.5,
               fontWeight: 600,
-              bgcolor: '#ff9800',
+              bgcolor: '#d32f2f',
               boxShadow: 'none',
-              '&:hover': { bgcolor: '#ff9800', boxShadow: 'none' },
-              '&.Mui-disabled': { bgcolor: 'rgba(255, 152, 0, 0.4)', color: 'white' },
+              '&:hover': { bgcolor: '#b71c1c', boxShadow: 'none' },
+              '&.Mui-disabled': { bgcolor: 'rgba(211, 47, 47, 0.4)', color: 'white' },
             }}
           >
-            {assignAwTourEmployee.isPending ? 'Übernehme…' : 'Übernehmen'}
+            {assignAwTourEmployee.isPending ? 'Weise zu…' : 'Zuweisen'}
           </Button>
         </DialogActions>
       </Dialog>
