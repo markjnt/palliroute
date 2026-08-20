@@ -210,9 +210,7 @@ export const AwTourPreviewSheet: React.FC<AwTourPreviewSheetProps> = ({
       calculateRouteBounds([route], employees, patients, appointments) ??
       new google.maps.LatLngBounds();
     if (selectedEmployee?.latitude != null && selectedEmployee?.longitude != null) {
-      bounds.extend(
-        new google.maps.LatLng(selectedEmployee.latitude, selectedEmployee.longitude)
-      );
+      bounds.extend(new google.maps.LatLng(selectedEmployee.latitude, selectedEmployee.longitude));
     }
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds, {
@@ -258,7 +256,10 @@ export const AwTourPreviewSheet: React.FC<AwTourPreviewSheetProps> = ({
           <Box sx={{ px: 3, pb: 1.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#1d1d1f', lineHeight: 1.25 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: '#1d1d1f', lineHeight: 1.25 }}
+                >
                   AW-Tour: {weekdayLabel}
                 </Typography>
                 <Box
