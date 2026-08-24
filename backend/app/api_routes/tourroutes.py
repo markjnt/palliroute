@@ -348,7 +348,8 @@ def assign_employee_to_aw_tour(route_id):
         return jsonify(payload)
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        routes_bp.logger.exception("Failed to assign employee to AW tour")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @routes_bp.route("/optimize", methods=["POST"])
