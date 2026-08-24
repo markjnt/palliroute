@@ -220,7 +220,7 @@ def update_custom_order(route_id):
         db.session.flush()
         route_planner.plan_custom_route(route)
         return jsonify({"message": "Custom order updated", "route": route.to_dict()})
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         routes_bp.logger.exception("Failed to update custom order for route_id=%s", route_id)
         return jsonify({"error": "An internal error has occurred."}), 500
@@ -346,7 +346,7 @@ def assign_employee_to_aw_tour(route_id):
             payload["planning_failed"] = True
             payload["planning_error"] = planning_error
         return jsonify(payload)
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         routes_bp.logger.exception("Failed to assign employee to AW tour")
         return jsonify({"error": "Internal server error"}), 500
