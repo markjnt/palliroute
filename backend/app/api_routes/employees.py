@@ -157,7 +157,10 @@ def delete_employee(id):
             Route.employee_id == id,
             ~Route.area.in_(AW_TOUR_AREAS),
         ).delete(synchronize_session=False)
-        Route.query.filter_by(employee_id=id).update({"employee_id": None})
+        Route.query.filter(
+            Route.employee_id == id,
+            Route.area.in_(AW_TOUR_AREAS),
+        ).update({"employee_id": None}, synchronize_session=False)
 
         # Delete related appointments
         Appointment.query.filter_by(employee_id=id).delete()
