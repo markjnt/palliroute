@@ -327,7 +327,7 @@ def assign_employee_to_aw_tour(route_id):
             )
         except Exception as plan_error:
             planning_failed = True
-            planning_error = str(plan_error)
+            planning_error = "Route planning failed."
             print(
                 f"AW tour assignment saved but route planning failed for route {route.id}: {plan_error}"
             )
