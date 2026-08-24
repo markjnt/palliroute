@@ -249,9 +249,9 @@ def apply_optimized_order(route_id):
         route.reset_custom_order()
         db.session.commit()
         return jsonify({"message": "Optimized order applied", "route": route.to_dict()})
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @routes_bp.route("/<int:route_id>", methods=["GET"])
