@@ -9,6 +9,7 @@
 # IDE-Dateien
 /.idea
 /.vscode
+.cursor
 
 # Python Cache Dateien
 __pycache__/
