@@ -222,7 +222,8 @@ def update_custom_order(route_id):
         return jsonify({"message": "Custom order updated", "route": route.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        routes_bp.logger.exception("Failed to update custom order for route_id=%s", route_id)
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 @routes_bp.route("/<int:route_id>/apply-optimized-order", methods=["POST"])
