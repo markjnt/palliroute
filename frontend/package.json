@@ -13,8 +13,8 @@
     "build:pwa": "npm run build -w @palliroute/pwa",
     "build": "npm run build -w @palliroute/web && npm run build -w @palliroute/pwa",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown .",
     "typecheck": "npm run typecheck -w @palliroute/web && npm run typecheck -w @palliroute/pwa",
     "test": "vitest run --passWithNoTests"
   },

@@ -16,7 +16,7 @@ repos:
     hooks:
       - id: frontend-prettier
         name: prettier (frontend)
-        entry: bash -c 'rel=(); for f in "$@"; do rel+=("${f#frontend/}"); done; cd frontend && npx prettier --write --config .prettierrc --ignore-path .prettierignore "${rel[@]}"' --
+        entry: bash -c 'rel=(); for f in "$@"; do rel+=("${f#frontend/}"); done; cd frontend && npx prettier --write --ignore-unknown --config .prettierrc --ignore-path .prettierignore "${rel[@]}"' --
         language: system
         files: ^frontend/
 
