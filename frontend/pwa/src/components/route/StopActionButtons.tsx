@@ -1,14 +1,7 @@
 import React from 'react';
 import { Box, IconButton } from '@mui/material';
 import { Map as MapIcon, Phone as PhoneIcon } from '@mui/icons-material';
-
-const openMaps = (address: string) => {
-  window.location.href = `https://maps.google.com/?q=${encodeURIComponent(address)}`;
-};
-
-const callPhone = (phone: string) => {
-  window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
-};
+import { callPhone, openMaps } from './stopContactActions';
 
 interface StopActionButtonsProps {
   address?: string;
@@ -75,5 +68,3 @@ export const StopActionButtons: React.FC<StopActionButtonsProps> = ({
     </Box>
   );
 };
-
-export { openMaps, callPhone };

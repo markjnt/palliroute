@@ -33,8 +33,8 @@ import {
   EmployeeFilterChips,
   EmployeePickCard,
   AreaPickCard,
-  filterEmployees,
 } from './EmployeePickCard';
+import { filterEmployees } from './filterEmployees';
 import AdminEmployeeSelectSheet from './AdminEmployeeSelectSheet';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 import { AW_TOUR_AREAS, findAwAreaRoute, findEmployeeDayRoute } from '../../utils/mapUtils';

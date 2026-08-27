@@ -30,7 +30,7 @@ import { useEmployees } from '../../services/queries/useEmployees';
 import { useRoutes } from '../../services/queries/useRoutes';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 import { useCloseOnMapClick } from '@palliroute/ui';
-import { openMaps, callPhone } from '../route/StopActionButtons';
+import { openMaps, callPhone } from '../route/stopContactActions';
 
 const dialogPaperSx = {
   borderRadius: 3,

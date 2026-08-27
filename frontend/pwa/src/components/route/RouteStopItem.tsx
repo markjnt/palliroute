@@ -9,7 +9,8 @@ import {
 import { getColorForVisitType } from '../../utils/mapUtils';
 import { useUserStore } from '../../stores/useUserStore';
 import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
-import { StopActionButtons, openMaps, callPhone } from './StopActionButtons';
+import { StopActionButtons } from './StopActionButtons';
+import { openMaps, callPhone } from './stopContactActions';
 
 interface RouteStop {
   id: number;

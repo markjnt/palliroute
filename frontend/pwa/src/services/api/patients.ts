@@ -1,6 +1,5 @@
 import { api } from '@palliroute/shared';
 import { Patient, PatientImportResponse } from '../../types/models';
-import { getCurrentCalendarWeek, getBestCalendarWeek } from '@palliroute/shared';
 import { calendarWeekService } from './calendarWeek';
 
 export const patientsApi = {

@@ -11,7 +11,8 @@ import { useEmployees } from '../../services/queries/useEmployees';
 import { useUserStore } from '../../stores/useUserStore';
 import { Employee } from '../../types/models';
 import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
-import { EmployeeFilterChips, EmployeePickCard, filterEmployees } from './EmployeePickCard';
+import { EmployeeFilterChips, EmployeePickCard } from './EmployeePickCard';
+import { filterEmployees } from './filterEmployees';
 
 interface AdminEmployeeSelectSheetProps {
   open: boolean;

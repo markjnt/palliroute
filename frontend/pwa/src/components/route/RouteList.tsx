@@ -12,7 +12,8 @@ import { findEmployeeDayRoute } from '../../utils/mapUtils';
 import { getOwnRouteOrder } from '@palliroute/shared';
 import { Weekday } from '../../types/models';
 import RouteStopItem from './RouteStopItem';
-import { StopActionButtons, callPhone } from './StopActionButtons';
+import { StopActionButtons } from './StopActionButtons';
+import { callPhone } from './stopContactActions';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 
 interface RouteStop {

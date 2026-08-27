@@ -750,7 +750,6 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
       <AwTourPreviewSheet
         open={Boolean(claimWeekday && previewArea)}
         onClose={() => setPreviewArea(null)}
-        weekday={claimWeekday ?? selectedWeekday}
         weekdayLabel={claimDayLabel}
         area={previewArea ?? 'Nord'}
         route={previewRoute}

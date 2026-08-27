@@ -17,14 +17,13 @@ import {
   defaultZoom,
   mapOptions,
 } from '../../utils/mapUtils';
-import type { Appointment, Employee, Patient, Route, Weekday } from '../../types/models';
+import type { Appointment, Employee, Patient, Route } from '../../types/models';
 import type { MarkerData } from '../../types/mapTypes';
 
 interface AwTourPreviewSheetProps {
   open: boolean;
   onClose: () => void;
   weekdayLabel: string;
-  weekday: Weekday;
   area: string;
   route?: Route;
   appointments: Appointment[];
@@ -41,7 +40,6 @@ export const AwTourPreviewSheet: React.FC<AwTourPreviewSheetProps> = ({
   open,
   onClose,
   weekdayLabel,
-  weekday: _weekday,
   area,
   route,
   appointments,
