@@ -1,12 +1,12 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@palliroute/auth";
-import { registerSW } from "virtual:pwa-register";
-import { queryClient } from "./query/client";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@palliroute/auth';
+import { registerSW } from 'virtual:pwa-register';
+import { queryClient } from './query/client';
 
-if ("serviceWorker" in navigator) {
+if ('serviceWorker' in navigator) {
   let updateToast: HTMLDivElement | null = null;
   let isReloading = false;
 
@@ -15,8 +15,8 @@ if ("serviceWorker" in navigator) {
       return;
     }
 
-    updateToast = document.createElement("div");
-    updateToast.textContent = "Neue Version verfügbar. Aktualisierung läuft …";
+    updateToast = document.createElement('div');
+    updateToast.textContent = 'Neue Version verfügbar. Aktualisierung läuft …';
     updateToast.style.cssText = `
       position: fixed;
       bottom: 24px;
@@ -34,15 +34,15 @@ if ("serviceWorker" in navigator) {
     document.body.appendChild(updateToast);
   };
 
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (isReloading) {
       return;
     }
     isReloading = true;
 
     if (updateToast) {
-      updateToast.style.transition = "opacity 200ms ease";
-      updateToast.style.opacity = "0";
+      updateToast.style.transition = 'opacity 200ms ease';
+      updateToast.style.opacity = '0';
     }
 
     setTimeout(() => {
@@ -60,7 +60,7 @@ if ("serviceWorker" in navigator) {
       triggerUpdate(true);
     },
     onOfflineReady() {
-      console.log("App ist jetzt offlinefähig!");
+      console.log('App ist jetzt offlinefähig!');
     },
     onRegisteredSW(_swUrl, registration) {
       if (!registration) return;
@@ -71,8 +71,8 @@ if ("serviceWorker" in navigator) {
 
       checkForUpdate();
       setInterval(checkForUpdate, 30 * 60 * 1000);
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
           checkForUpdate();
         }
       });
@@ -80,12 +80,12 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <App />
       </AuthProvider>
     </QueryClientProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

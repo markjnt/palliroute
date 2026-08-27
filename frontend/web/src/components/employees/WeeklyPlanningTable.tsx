@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Table,
@@ -12,19 +12,19 @@ import {
   Typography,
   Avatar,
   Tooltip,
-} from "@mui/material";
-import { Employee, Weekday } from "../../types/models";
+} from '@mui/material';
+import { Employee, Weekday } from '../../types/models';
 import {
   getColorForTour,
   holidayNameForCalendarWeekday,
   isoYearForCalendarWeek,
-} from "@palliroute/shared";
-import { getColorForEmployeeType } from "../../utils/mapUtils";
-import { WeeklyPlanningCell } from "./WeeklyPlanningCell";
-import { useEmployeePlanning } from "../../services/queries/useEmployeePlanning";
-import { usePlanningWeekStore } from "../../stores/usePlanningWeekStore";
-import { useAreaStore } from "../../stores/useAreaStore";
-import { useNrwpHolidaysForYears } from "../../services/queries/useConfig";
+} from '@palliroute/shared';
+import { getColorForEmployeeType } from '../../utils/mapUtils';
+import { WeeklyPlanningCell } from './WeeklyPlanningCell';
+import { useEmployeePlanning } from '../../services/queries/useEmployeePlanning';
+import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
+import { useAreaStore } from '../../stores/useAreaStore';
+import { useNrwpHolidaysForYears } from '../../services/queries/useConfig';
 
 interface WeeklyPlanningTableProps {
   employees: Employee[];
@@ -38,9 +38,9 @@ const createTourAvatar = (employee: Employee) => {
       bgcolor: tourColor,
       width: 32,
       height: 32,
-      fontSize: "0.875rem",
-      color: "white",
-      fontWeight: "bold",
+      fontSize: '0.875rem',
+      color: 'white',
+      fontWeight: 'bold',
     },
     children: `${employee.first_name[0]}${employee.last_name[0]}`.toUpperCase(),
   };
@@ -51,32 +51,22 @@ const getFunctionColor = (functionName: string): string => {
   return getColorForEmployeeType(functionName);
 };
 
-const weekdays = [
-  "Montag",
-  "Dienstag",
-  "Mittwoch",
-  "Donnerstag",
-  "Freitag",
-  "Samstag",
-  "Sonntag",
-];
+const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
 const GERMAN_TO_ENGLISH_WEEKDAY: Record<string, Weekday> = {
-  Montag: "monday",
-  Dienstag: "tuesday",
-  Mittwoch: "wednesday",
-  Donnerstag: "thursday",
-  Freitag: "friday",
-  Samstag: "saturday",
-  Sonntag: "sunday",
+  Montag: 'monday',
+  Dienstag: 'tuesday',
+  Mittwoch: 'wednesday',
+  Donnerstag: 'thursday',
+  Freitag: 'friday',
+  Samstag: 'saturday',
+  Sonntag: 'sunday',
 };
 
-export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
-  employees,
-}) => {
-  const [employeeFilter, setEmployeeFilter] = useState<
-    "all" | "pflege_n" | "pflege_s" | "arzt"
-  >("all");
+export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({ employees }) => {
+  const [employeeFilter, setEmployeeFilter] = useState<'all' | 'pflege_n' | 'pflege_s' | 'arzt'>(
+    'all'
+  );
   // React Query hooks - planning week is automatically read from store
   const { data: planningEntries = [], isLoading } = useEmployeePlanning();
   const { selectedPlanningWeek } = usePlanningWeekStore();
@@ -85,7 +75,7 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
   const currentYear = new Date().getFullYear();
   const holidayYears = useMemo(
     () => [currentYear - 1, currentYear, currentYear + 1],
-    [currentYear],
+    [currentYear]
   );
   const { holidayByYmd } = useNrwpHolidaysForYears(holidayYears);
 
@@ -98,12 +88,7 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
     const isoYear = isoYearForCalendarWeek(selectedPlanningWeek);
     weekdays.forEach((germanDay) => {
       const en = GERMAN_TO_ENGLISH_WEEKDAY[germanDay];
-      const name = holidayNameForCalendarWeekday(
-        holidayByYmd,
-        isoYear,
-        selectedPlanningWeek,
-        en,
-      );
+      const name = holidayNameForCalendarWeekday(holidayByYmd, isoYear, selectedPlanningWeek, en);
       map.set(germanDay, name);
     });
     return map;
@@ -121,20 +106,16 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
     let base = employees;
 
     // Erst nach Gebiet filtern (Nord/Süd)
-    if (
-      currentArea &&
-      currentArea !== "Nord- und Südkreis" &&
-      currentArea !== "Gesamt"
-    ) {
+    if (currentArea && currentArea !== 'Nord- und Südkreis' && currentArea !== 'Gesamt') {
       base = base.filter((employee) => {
         if (!employee.area) return false;
 
-        if (currentArea === "Nordkreis") {
-          return employee.area.includes("Nordkreis");
+        if (currentArea === 'Nordkreis') {
+          return employee.area.includes('Nordkreis');
         }
 
-        if (currentArea === "Südkreis") {
-          return employee.area.includes("Südkreis");
+        if (currentArea === 'Südkreis') {
+          return employee.area.includes('Südkreis');
         }
 
         return true;
@@ -142,28 +123,25 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
     }
 
     // Dann Mitarbeiter-Filter anwenden
-    if (employeeFilter === "pflege_n") {
+    if (employeeFilter === 'pflege_n') {
       return base.filter(
         (employee) =>
-          (employee.function === "Pflegekraft" ||
-            employee.function === "PDL") &&
-          employee.area?.includes("Nordkreis"),
+          (employee.function === 'Pflegekraft' || employee.function === 'PDL') &&
+          employee.area?.includes('Nordkreis')
       );
     }
 
-    if (employeeFilter === "pflege_s") {
+    if (employeeFilter === 'pflege_s') {
       return base.filter(
         (employee) =>
-          (employee.function === "Pflegekraft" ||
-            employee.function === "PDL") &&
-          employee.area?.includes("Südkreis"),
+          (employee.function === 'Pflegekraft' || employee.function === 'PDL') &&
+          employee.area?.includes('Südkreis')
       );
     }
 
-    if (employeeFilter === "arzt") {
+    if (employeeFilter === 'arzt') {
       return base.filter(
-        (employee) =>
-          employee.function === "Arzt" || employee.function === "Honorararzt",
+        (employee) => employee.function === 'Arzt' || employee.function === 'Honorararzt'
       );
     }
 
@@ -173,7 +151,7 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
   // Helper function to count occurrences for an employee across the week
   const getEmployeeWeekStats = (employeeId: number) => {
     const employeePlanning = allPlanningData.filter(
-      (entry: any) => entry.employee_id === employeeId,
+      (entry: any) => entry.employee_id === employeeId
     );
 
     let conflictCount = 0;
@@ -187,8 +165,8 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
       }
 
       // Count tours (custom_text contains "Tour" or "AW")
-      const customText = entry.custom_text || "";
-      if (customText.includes("Tour") || customText.includes("AW")) {
+      const customText = entry.custom_text || '';
+      if (customText.includes('Tour') || customText.includes('AW')) {
         tourCount++;
       }
 
@@ -214,8 +192,8 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
 
     const getAreaOrder = (area?: string) => {
       if (!area) return 2;
-      if (area.includes("Nordkreis")) return 0;
-      if (area.includes("Südkreis")) return 1;
+      if (area.includes('Nordkreis')) return 0;
+      if (area.includes('Südkreis')) return 1;
       return 2;
     };
 
@@ -275,77 +253,64 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
   }, [filteredEmployees, allPlanningData]);
 
   return (
-    <Box sx={{ width: "100%", height: "100%", overflow: "auto" }}>
-      <TableContainer
-        component={Paper}
-        sx={{ height: "100%", maxHeight: "none" }}
-      >
+    <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ height: '100%', maxHeight: 'none' }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell
                 sx={{
                   minWidth: 200,
-                  position: "sticky",
+                  position: 'sticky',
                   top: 0,
                   left: 0,
                   zIndex: 3,
-                  backgroundColor: "background.paper",
+                  backgroundColor: 'background.paper',
                   borderRight: 1,
-                  borderColor: "divider",
+                  borderColor: 'divider',
                 }}
               >
                 <Typography variant="subtitle2" fontWeight="bold">
                   Mitarbeiter
                 </Typography>
-                <Box
-                  sx={{ display: "flex", gap: 0.5, mt: 1, flexWrap: "wrap" }}
-                >
+                <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
                   <Chip
                     label="Alle"
                     size="small"
                     clickable
-                    color={employeeFilter === "all" ? "primary" : "default"}
-                    variant={employeeFilter === "all" ? "filled" : "outlined"}
-                    onClick={() => setEmployeeFilter("all")}
+                    color={employeeFilter === 'all' ? 'primary' : 'default'}
+                    variant={employeeFilter === 'all' ? 'filled' : 'outlined'}
+                    onClick={() => setEmployeeFilter('all')}
                   />
                   <Chip
                     label="Pflege N"
                     size="small"
                     clickable
-                    color={
-                      employeeFilter === "pflege_n" ? "primary" : "default"
-                    }
-                    variant={
-                      employeeFilter === "pflege_n" ? "filled" : "outlined"
-                    }
-                    onClick={() => setEmployeeFilter("pflege_n")}
+                    color={employeeFilter === 'pflege_n' ? 'primary' : 'default'}
+                    variant={employeeFilter === 'pflege_n' ? 'filled' : 'outlined'}
+                    onClick={() => setEmployeeFilter('pflege_n')}
                   />
                   <Chip
                     label="Pflege S"
                     size="small"
                     clickable
-                    color={
-                      employeeFilter === "pflege_s" ? "primary" : "default"
-                    }
-                    variant={
-                      employeeFilter === "pflege_s" ? "filled" : "outlined"
-                    }
-                    onClick={() => setEmployeeFilter("pflege_s")}
+                    color={employeeFilter === 'pflege_s' ? 'primary' : 'default'}
+                    variant={employeeFilter === 'pflege_s' ? 'filled' : 'outlined'}
+                    onClick={() => setEmployeeFilter('pflege_s')}
                   />
                   <Chip
                     label="Arzt"
                     size="small"
                     clickable
-                    color={employeeFilter === "arzt" ? "primary" : "default"}
-                    variant={employeeFilter === "arzt" ? "filled" : "outlined"}
-                    onClick={() => setEmployeeFilter("arzt")}
+                    color={employeeFilter === 'arzt' ? 'primary' : 'default'}
+                    variant={employeeFilter === 'arzt' ? 'filled' : 'outlined'}
+                    onClick={() => setEmployeeFilter('arzt')}
                   />
                 </Box>
               </TableCell>
               {weekdays.map((day) => {
                 const holidayName = holidayByGermanWeekday.get(day) ?? null;
-                const isWeekend = day === "Samstag" || day === "Sonntag";
+                const isWeekend = day === 'Samstag' || day === 'Sonntag';
                 const isWeekdayHoliday = Boolean(holidayName && !isWeekend);
                 return (
                   <TableCell
@@ -353,16 +318,16 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
                     align="center"
                     sx={{
                       minWidth: 120,
-                      position: "sticky",
+                      position: 'sticky',
                       top: 0,
                       zIndex: 2,
                       backgroundColor: isWeekdayHoliday
-                        ? "warning.50"
+                        ? 'warning.50'
                         : isWeekend
-                          ? "grey.100"
-                          : "background.paper",
+                          ? 'grey.100'
+                          : 'background.paper',
                       borderBottom: 1,
-                      borderColor: "divider",
+                      borderColor: 'divider',
                     }}
                   >
                     <Typography variant="subtitle2" fontWeight="bold">
@@ -374,12 +339,12 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
                           variant="caption"
                           color="warning.dark"
                           sx={{
-                            display: "block",
+                            display: 'block',
                             maxWidth: 110,
-                            mx: "auto",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            mx: 'auto',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {holidayName}
@@ -396,42 +361,38 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
               <TableRow
                 key={employee.id}
                 hover
-                sx={{ "&:last-child td, &:last-child th": { borderBottom: 0 } }}
+                sx={{ '&:last-child td, &:last-child th': { borderBottom: 0 } }}
               >
                 {/* Mitarbeiter Spalte - Sticky */}
                 <TableCell
                   component="th"
                   scope="row"
                   sx={{
-                    position: "sticky",
+                    position: 'sticky',
                     left: 0,
                     zIndex: 2,
-                    backgroundColor: "background.paper",
+                    backgroundColor: 'background.paper',
                     borderRight: 1,
-                    borderColor: "divider",
+                    borderColor: 'divider',
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar {...createTourAvatar(employee)} />
                     <Box>
                       <Typography variant="body2" fontWeight="medium">
                         {employee.first_name} {employee.last_name}
                       </Typography>
-                      <Box sx={{ display: "flex", gap: 0.5, mt: 0.5 }}>
+                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
                         {employee.area && (
                           <Chip
-                            label={
-                              employee.area.includes("Nordkreis") ? "N" : "S"
-                            }
+                            label={employee.area.includes('Nordkreis') ? 'N' : 'S'}
                             size="small"
                             sx={{
-                              backgroundColor: employee.area.includes(
-                                "Nordkreis",
-                              )
-                                ? "primary.main"
-                                : "secondary.main",
-                              color: "white",
-                              fontWeight: "bold",
+                              backgroundColor: employee.area.includes('Nordkreis')
+                                ? 'primary.main'
+                                : 'secondary.main',
+                              color: 'white',
+                              fontWeight: 'bold',
                             }}
                           />
                         )}
@@ -440,11 +401,9 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
                             label={employee.function}
                             size="small"
                             sx={{
-                              backgroundColor: getFunctionColor(
-                                employee.function,
-                              ),
-                              color: "white",
-                              fontWeight: "medium",
+                              backgroundColor: getFunctionColor(employee.function),
+                              color: 'white',
+                              fontWeight: 'medium',
                             }}
                           />
                         )}
@@ -457,7 +416,7 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
                 {weekdays.map((day) => {
                   const holidayName = holidayByGermanWeekday.get(day) ?? null;
                   const en = GERMAN_TO_ENGLISH_WEEKDAY[day];
-                  const isWeekend = en === "saturday" || en === "sunday";
+                  const isWeekend = en === 'saturday' || en === 'sunday';
                   const isAwDay = isWeekend || Boolean(holidayName);
                   return (
                     <TableCell
@@ -466,7 +425,7 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({
                       sx={{
                         minWidth: 100,
                         borderLeft: 1,
-                        borderColor: "divider",
+                        borderColor: 'divider',
                       }}
                     >
                       <WeeklyPlanningCell

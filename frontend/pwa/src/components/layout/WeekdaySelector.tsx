@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -13,7 +13,7 @@ import {
   CardContent,
   Avatar,
   Chip,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Home as HomeIcon,
   Phone as PhoneIcon,
@@ -21,39 +21,28 @@ import {
   Map as MapIcon,
   WarningAmber as WarningAmberIcon,
   type SvgIconComponent,
-} from "@mui/icons-material";
-import { useWeekdayStore } from "../../stores/useWeekdayStore";
-import { useCalendarWeekStore } from "../../stores/useCalendarWeekStore";
-import { usePatients, patientKeys } from "../../services/queries/usePatients";
-import {
-  useAppointments,
-  appointmentKeys,
-} from "../../services/queries/useAppointments";
-import {
-  useRoutes,
-  useAssignAwTourEmployee,
-  routeKeys,
-} from "../../services/queries/useRoutes";
-import { useEmployees } from "../../services/queries/useEmployees";
-import { useUserStore } from "../../stores/useUserStore";
+} from '@mui/icons-material';
+import { useWeekdayStore } from '../../stores/useWeekdayStore';
+import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
+import { usePatients, patientKeys } from '../../services/queries/usePatients';
+import { useAppointments, appointmentKeys } from '../../services/queries/useAppointments';
+import { useRoutes, useAssignAwTourEmployee, routeKeys } from '../../services/queries/useRoutes';
+import { useEmployees } from '../../services/queries/useEmployees';
+import { useUserStore } from '../../stores/useUserStore';
 import {
   useCalendarWeek,
   useCalendarWeeks,
   calendarWeekKeys,
-} from "../../services/queries/useCalendarWeek";
-import { Weekday } from "../../types/models";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  getCurrentCalendarWeek,
-  getTourAreaColor,
-  isAwTourArea,
-} from "@palliroute/shared";
-import { useNrwpHolidayLookupForSelectedKw } from "../../hooks/useNrwpHolidayForTourDay";
-import { findEmployeeDayRoute } from "../../utils/mapUtils";
-import { isAwCalendarDay } from "../../utils/resolveWeekdayAfterWeekChange";
-import AwTourPreviewSheet from "../route/AwTourPreviewSheet";
+} from '../../services/queries/useCalendarWeek';
+import { Weekday } from '../../types/models';
+import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentCalendarWeek, getTourAreaColor, isAwTourArea } from '@palliroute/shared';
+import { useNrwpHolidayLookupForSelectedKw } from '../../hooks/useNrwpHolidayForTourDay';
+import { findEmployeeDayRoute } from '../../utils/mapUtils';
+import { isAwCalendarDay } from '../../utils/resolveWeekdayAfterWeekChange';
+import AwTourPreviewSheet from '../route/AwTourPreviewSheet';
 
-const AW_AREAS = ["Nord", "Mitte", "Süd"] as const;
+const AW_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
 
 function VisitTypeCount({
   icon: Icon,
@@ -67,12 +56,12 @@ function VisitTypeCount({
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
         gap: 0.25,
-        width: "100%",
+        width: '100%',
         minWidth: 0,
       }}
     >
@@ -86,10 +75,10 @@ function VisitTypeCount({
           borderRadius: 0.75,
           bgcolor: `${color}14`,
           border: `1px solid ${color}40`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "0.55rem",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '0.55rem',
           fontWeight: 700,
           lineHeight: 1,
           color,
@@ -101,10 +90,10 @@ function VisitTypeCount({
   );
 }
 
-const getAwAreaLetter = (area?: string | null): "N" | "M" | "S" | null => {
-  if (area === "Nord") return "N";
-  if (area === "Mitte") return "M";
-  if (area === "Süd") return "S";
+const getAwAreaLetter = (area?: string | null): 'N' | 'M' | 'S' | null => {
+  if (area === 'Nord') return 'N';
+  if (area === 'Mitte') return 'M';
+  if (area === 'Süd') return 'S';
   return null;
 };
 
@@ -114,22 +103,13 @@ interface WeekdaySelectorProps {
   onWeekdaySelect: (weekday: string) => void;
 }
 
-export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
-  isOpen,
-  onWeekdaySelect,
-}) => {
+export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeekdaySelect }) => {
   const { selectedWeekday } = useWeekdayStore();
-  const selectedCalendarWeek = useCalendarWeekStore(
-    (state) => state.selectedCalendarWeek,
-  );
-  const setSelectedCalendarWeek = useCalendarWeekStore(
-    (state) => state.setSelectedCalendarWeek,
-  );
-  const availableCalendarWeeks = useCalendarWeekStore(
-    (state) => state.availableCalendarWeeks,
-  );
+  const selectedCalendarWeek = useCalendarWeekStore((state) => state.selectedCalendarWeek);
+  const setSelectedCalendarWeek = useCalendarWeekStore((state) => state.setSelectedCalendarWeek);
+  const availableCalendarWeeks = useCalendarWeekStore((state) => state.availableCalendarWeeks);
   const setAvailableCalendarWeeks = useCalendarWeekStore(
-    (state) => state.setAvailableCalendarWeeks,
+    (state) => state.setAvailableCalendarWeeks
   );
   const { selectedUserId } = useUserStore();
   const queryClient = useQueryClient();
@@ -145,14 +125,12 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   const getHolidayName = useNrwpHolidayLookupForSelectedKw();
 
   const [claimWeekday, setClaimWeekday] = useState<Weekday | null>(null);
-  const [claimArea, setClaimArea] = useState<(typeof AW_AREAS)[number]>("Nord");
+  const [claimArea, setClaimArea] = useState<(typeof AW_AREAS)[number]>('Nord');
   const [claimConfirmOpen, setClaimConfirmOpen] = useState(false);
-  const [previewArea, setPreviewArea] = useState<
-    (typeof AW_AREAS)[number] | null
-  >(null);
+  const [previewArea, setPreviewArea] = useState<(typeof AW_AREAS)[number] | null>(null);
   const [feedback, setFeedback] = useState<{
     message: string;
-    severity: "success" | "warning" | "error";
+    severity: 'success' | 'warning' | 'error';
   } | null>(null);
 
   useEffect(() => {
@@ -175,13 +153,13 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 
   const getGermanWeekday = (weekday: string): string => {
     const weekdayMap: Record<string, string> = {
-      monday: "Mo",
-      tuesday: "Di",
-      wednesday: "Mi",
-      thursday: "Do",
-      friday: "Fr",
-      saturday: "Sa",
-      sunday: "So",
+      monday: 'Mo',
+      tuesday: 'Di',
+      wednesday: 'Mi',
+      thursday: 'Do',
+      friday: 'Fr',
+      saturday: 'Sa',
+      sunday: 'So',
     };
     return weekdayMap[weekday] || weekday;
   };
@@ -189,13 +167,13 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   const getCurrentWeekday = () => {
     const today = new Date().getDay();
     const weekdayMap = [
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
     ];
     return weekdayMap[today] as Weekday;
   };
@@ -220,13 +198,13 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 
   const weekdays = useMemo(() => {
     const defs: Array<{ value: Weekday; label: string }> = [
-      { value: "monday", label: "Montag" },
-      { value: "tuesday", label: "Dienstag" },
-      { value: "wednesday", label: "Mittwoch" },
-      { value: "thursday", label: "Donnerstag" },
-      { value: "friday", label: "Freitag" },
-      { value: "saturday", label: "Samstag" },
-      { value: "sunday", label: "Sonntag" },
+      { value: 'monday', label: 'Montag' },
+      { value: 'tuesday', label: 'Dienstag' },
+      { value: 'wednesday', label: 'Mittwoch' },
+      { value: 'thursday', label: 'Donnerstag' },
+      { value: 'friday', label: 'Freitag' },
+      { value: 'saturday', label: 'Samstag' },
+      { value: 'sunday', label: 'Sonntag' },
     ];
 
     return defs.map((d) => {
@@ -245,54 +223,37 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     });
   }, [getHolidayName, allRoutes, selectedUserId]);
 
-  const getEmployeeAppointments = (
-    weekday: Weekday,
-    isAwDay: boolean,
-    assignedArea?: string,
-  ) => {
+  const getEmployeeAppointments = (weekday: Weekday, isAwDay: boolean, assignedArea?: string) => {
     if (isAwDay) {
       if (!assignedArea) return [];
-      return allAppointments.filter(
-        (a) => a.weekday === weekday && a.area === assignedArea,
-      );
+      return allAppointments.filter((a) => a.weekday === weekday && a.area === assignedArea);
     }
-    return allAppointments.filter(
-      (a) => a.employee_id === selectedUserId && a.weekday === weekday,
-    );
+    return allAppointments.filter((a) => a.employee_id === selectedUserId && a.weekday === weekday);
   };
 
   const getPatientsByVisitType = (
     appointments: typeof allAppointments,
-    visitType: "HB" | "NA" | "TK",
+    visitType: 'HB' | 'NA' | 'TK'
   ) => {
-    const typeAppointments = appointments.filter(
-      (a) => a.visit_type === visitType,
-    );
-    const patientIds = Array.from(
-      new Set(typeAppointments.map((a) => a.patient_id)),
-    );
-    return patientIds
-      .map((id) => patients.find((p) => p.id === id))
-      .filter((p) => p !== undefined);
+    const typeAppointments = appointments.filter((a) => a.visit_type === visitType);
+    const patientIds = Array.from(new Set(typeAppointments.map((a) => a.patient_id)));
+    return patientIds.map((id) => patients.find((p) => p.id === id)).filter((p) => p !== undefined);
   };
 
   const claimRoute = claimWeekday
     ? allRoutes.find(
         (route) =>
-          route.weekday === claimWeekday &&
-          isAwTourArea(route.area) &&
-          route.area === claimArea,
+          route.weekday === claimWeekday && isAwTourArea(route.area) && route.area === claimArea
       )
     : undefined;
   const claimOwner = claimRoute?.employee_id
     ? employees.find((emp) => emp.id === claimRoute.employee_id)
     : undefined;
-  const claimDayLabel =
-    weekdays.find((day) => day.value === claimWeekday)?.label ?? "";
+  const claimDayLabel = weekdays.find((day) => day.value === claimWeekday)?.label ?? '';
 
   const handleDayClick = (weekday: (typeof weekdays)[number]) => {
     if (weekday.isAwDay && !weekday.assigned) {
-      setClaimArea("Nord");
+      setClaimArea('Nord');
       setClaimConfirmOpen(false);
       setPreviewArea(null);
       setClaimWeekday(weekday.value);
@@ -323,9 +284,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     claimWeekday && previewArea
       ? allRoutes.find(
           (route) =>
-            route.weekday === claimWeekday &&
-            isAwTourArea(route.area) &&
-            route.area === previewArea,
+            route.weekday === claimWeekday && isAwTourArea(route.area) && route.area === previewArea
         )
       : undefined;
 
@@ -333,9 +292,9 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     if (!claimWeekday || !selectedUserId || !claimRoute?.id) {
       setFeedback({
         message: claimRoute
-          ? "Bitte wählen Sie einen Mitarbeiter"
-          : "Keine AW-Tour für diesen Bereich",
-        severity: "error",
+          ? 'Bitte wählen Sie einen Mitarbeiter'
+          : 'Keine AW-Tour für diesen Bereich',
+        severity: 'error',
       });
       return;
     }
@@ -348,19 +307,19 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
       if (result.planning_failed) {
         setFeedback({
           message:
-            "Tour übernommen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.",
-          severity: "warning",
+            'Tour übernommen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.',
+          severity: 'warning',
         });
       } else {
-        setFeedback({ message: "AW-Tour übernommen", severity: "success" });
+        setFeedback({ message: 'AW-Tour übernommen', severity: 'success' });
       }
       onWeekdaySelect(claimWeekday);
       closeClaimDialogs();
     } catch (error) {
-      console.error("Failed to claim AW tour:", error);
+      console.error('Failed to claim AW tour:', error);
       setFeedback({
-        message: "Tour konnte nicht übernommen werden",
-        severity: "error",
+        message: 'Tour konnte nicht übernommen werden',
+        severity: 'error',
       });
     }
   };
@@ -371,26 +330,25 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
     <>
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: 58,
           left: 28,
           right: 28,
-          height: "auto",
-          bgcolor: "rgba(255, 255, 255, 0.95)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
+          height: 'auto',
+          bgcolor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
           borderRadius: 2,
-          boxShadow:
-            "0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)",
-          display: "flex",
-          flexDirection: "column",
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
           zIndex: 10000,
         }}
       >
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
             gap: 0.5,
             px: 0.75,
             pt: 1.5,
@@ -401,61 +359,57 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
             const dayAppointments = getEmployeeAppointments(
               weekday.value,
               weekday.isAwDay,
-              weekday.assignedArea,
+              weekday.assignedArea
             );
-            const hbPatients = getPatientsByVisitType(dayAppointments, "HB");
-            const tkPatients = getPatientsByVisitType(dayAppointments, "TK");
-            const naPatients = getPatientsByVisitType(dayAppointments, "NA");
-            const areaLetter = weekday.isAwDay
-              ? getAwAreaLetter(weekday.assignedArea)
-              : null;
+            const hbPatients = getPatientsByVisitType(dayAppointments, 'HB');
+            const tkPatients = getPatientsByVisitType(dayAppointments, 'TK');
+            const naPatients = getPatientsByVisitType(dayAppointments, 'NA');
+            const areaLetter = weekday.isAwDay ? getAwAreaLetter(weekday.assignedArea) : null;
 
             const isSelected = selectedWeekday === weekday.value;
             const isUnassignedAw = weekday.isAwDay && !weekday.assigned;
-            const accent = weekday.isAwDay ? "#ff9800" : "#007AFF";
+            const accent = weekday.isAwDay ? '#ff9800' : '#007AFF';
 
             return (
               <Box
                 key={weekday.value}
                 onClick={() => handleDayClick(weekday)}
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                  width: "100%",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  width: '100%',
                   minWidth: 0,
-                  overflow: "hidden",
+                  overflow: 'hidden',
                   borderRadius: 2,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                   bgcolor: isSelected
                     ? `${accent}1A`
                     : weekday.isAwDay
-                      ? "rgba(255, 152, 0, 0.08)"
-                      : "transparent",
-                  border: isSelected
-                    ? `1px solid ${accent}33`
-                    : "1px solid transparent",
-                  position: "relative",
+                      ? 'rgba(255, 152, 0, 0.08)'
+                      : 'transparent',
+                  border: isSelected ? `1px solid ${accent}33` : '1px solid transparent',
+                  position: 'relative',
                   px: 0.65,
                   pt: 0.75,
                   pb: 0.75,
                   opacity: isUnassignedAw ? 0.45 : 1,
-                  filter: isUnassignedAw ? "grayscale(0.7)" : "none",
-                  "&:active": {
-                    bgcolor: isSelected ? `${accent}26` : "rgba(0, 0, 0, 0.05)",
-                    transform: "scale(0.95)",
+                  filter: isUnassignedAw ? 'grayscale(0.7)' : 'none',
+                  '&:active': {
+                    bgcolor: isSelected ? `${accent}26` : 'rgba(0, 0, 0, 0.05)',
+                    transform: 'scale(0.95)',
                   },
-                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 <Box
                   sx={{
                     height: 8,
                     mb: 0.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   {currentWeekday === weekday.value ? (
@@ -463,7 +417,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                       sx={{
                         width: 6,
                         height: 6,
-                        borderRadius: "50%",
+                        borderRadius: '50%',
                         backgroundColor: accent,
                         border: `1px solid ${accent}33`,
                         boxShadow: `0 1px 2px ${accent}4D`,
@@ -476,8 +430,8 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                   variant="caption"
                   sx={{
                     fontWeight: currentWeekday === weekday.value ? 700 : 600,
-                    fontSize: "0.7rem",
-                    color: isSelected ? accent : "#1d1d1f",
+                    fontSize: '0.7rem',
+                    color: isSelected ? accent : '#1d1d1f',
                     mb: 0.2,
                   }}
                 >
@@ -488,10 +442,10 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                   sx={{
                     height: 12,
                     mb: 0.35,
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   {weekday.holidayName ? (
@@ -499,15 +453,15 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                       title={`Feiertag: ${weekday.holidayName}`}
                       variant="caption"
                       sx={{
-                        display: "block",
-                        fontSize: "0.5rem",
+                        display: 'block',
+                        fontSize: '0.5rem',
                         lineHeight: 1.15,
-                        color: "warning.dark",
-                        width: "100%",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        textAlign: "center",
+                        color: 'warning.dark',
+                        width: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        textAlign: 'center',
                       }}
                     >
                       {weekday.holidayName}
@@ -517,28 +471,16 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 
                 <Box
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
+                    display: 'flex',
+                    flexDirection: 'column',
                     gap: 0.2,
-                    width: "100%",
+                    width: '100%',
                     mb: 0.35,
                   }}
                 >
-                  <VisitTypeCount
-                    icon={HomeIcon}
-                    count={hbPatients.length}
-                    color="#007AFF"
-                  />
-                  <VisitTypeCount
-                    icon={PhoneIcon}
-                    count={tkPatients.length}
-                    color="#4caf50"
-                  />
-                  <VisitTypeCount
-                    icon={AddCircleIcon}
-                    count={naPatients.length}
-                    color="#FF3B30"
-                  />
+                  <VisitTypeCount icon={HomeIcon} count={hbPatients.length} color="#007AFF" />
+                  <VisitTypeCount icon={PhoneIcon} count={tkPatients.length} color="#4caf50" />
+                  <VisitTypeCount icon={AddCircleIcon} count={naPatients.length} color="#FF3B30" />
                 </Box>
 
                 {areaLetter ? (
@@ -548,13 +490,13 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                     sx={{
                       width: 16,
                       height: 16,
-                      borderRadius: "50%",
+                      borderRadius: '50%',
                       bgcolor: getTourAreaColor(weekday.assignedArea),
-                      color: "white",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "0.55rem",
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.55rem',
                       fontWeight: 700,
                       lineHeight: 1,
                       flexShrink: 0,
@@ -573,9 +515,9 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
             px: 1,
             pt: 0.25,
             pb: 1,
-            display: "flex",
+            display: 'flex',
             gap: 1,
-            alignItems: "stretch",
+            alignItems: 'stretch',
           }}
         >
           {(sortedCalendarWeeks.length > 0
@@ -591,39 +533,33 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                 onClick={() => handleCalendarWeekChange(week as number)}
                 sx={{
                   flex: 1,
-                  color: isSelected
-                    ? "#ffffff"
-                    : isCurrent
-                      ? "#2e7d32"
-                      : "#007AFF",
+                  color: isSelected ? '#ffffff' : isCurrent ? '#2e7d32' : '#007AFF',
                   fontWeight: isSelected ? 700 : 600,
-                  fontSize: "0.75rem",
-                  textTransform: "none",
+                  fontSize: '0.75rem',
+                  textTransform: 'none',
                   minWidth: 0,
                   borderRadius: 1.5,
                   border: isSelected
-                    ? "1px solid transparent"
+                    ? '1px solid transparent'
                     : isCurrent
-                      ? "1px solid rgba(76, 175, 80, 0.4)"
-                      : "1px solid rgba(0, 122, 255, 0.2)",
+                      ? '1px solid rgba(76, 175, 80, 0.4)'
+                      : '1px solid rgba(0, 122, 255, 0.2)',
                   bgcolor: isSelected
                     ? isCurrent
-                      ? "#2e7d32"
-                      : "#007AFF"
+                      ? '#2e7d32'
+                      : '#007AFF'
                     : isCurrent
-                      ? "rgba(76, 175, 80, 0.12)"
-                      : "rgba(0, 122, 255, 0.08)",
-                  boxShadow: isSelected
-                    ? "0 1px 4px rgba(0, 0, 0, 0.18)"
-                    : "none",
-                  "&:hover": {
+                      ? 'rgba(76, 175, 80, 0.12)'
+                      : 'rgba(0, 122, 255, 0.08)',
+                  boxShadow: isSelected ? '0 1px 4px rgba(0, 0, 0, 0.18)' : 'none',
+                  '&:hover': {
                     backgroundColor: isSelected
                       ? isCurrent
-                        ? "#1b5e20"
-                        : "#0066d6"
+                        ? '#1b5e20'
+                        : '#0066d6'
                       : isCurrent
-                        ? "rgba(56, 142, 60, 0.2)"
-                        : "rgba(0, 122, 255, 0.15)",
+                        ? 'rgba(56, 142, 60, 0.2)'
+                        : 'rgba(0, 122, 255, 0.15)',
                   },
                 }}
               >
@@ -643,13 +579,12 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
           paper: {
             sx: {
               borderRadius: 3,
-              bgcolor: "rgba(255, 255, 255, 0.96)",
-              backdropFilter: "blur(20px)",
-              boxShadow:
-                "0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)",
-              border: "1px solid rgba(255, 255, 255, 0.35)",
+              bgcolor: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.35)',
               mx: 2,
-              overflow: "hidden",
+              overflow: 'hidden',
             },
           },
         }}
@@ -657,7 +592,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
         <DialogTitle
           sx={{
             fontWeight: 600,
-            color: "#1d1d1f",
+            color: '#1d1d1f',
             pb: 0.5,
             pt: 2.5,
             px: 2.5,
@@ -666,19 +601,19 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
           Tour übernehmen?
         </DialogTitle>
         <DialogContent sx={{ px: 2.5, pb: 1 }}>
-          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
             {claimWeekday
               ? `Wählen Sie einen Bereich für den ${claimDayLabel}, um die AW-Tour zu übernehmen.`
-              : ""}
+              : ''}
           </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {AW_AREAS.map((area) => {
               const areaRoute = claimWeekday
                 ? allRoutes.find(
                     (route) =>
                       route.weekday === claimWeekday &&
                       isAwTourArea(route.area) &&
-                      route.area === area,
+                      route.area === area
                   )
                 : undefined;
               const owner = areaRoute?.employee_id
@@ -691,21 +626,21 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                   key={area}
                   sx={{
                     borderRadius: 2,
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
-                    boxShadow: "none",
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    boxShadow: 'none',
                     opacity: hasRoute ? 1 : 0.55,
                   }}
                 >
-                  <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
                     <Box display="flex" alignItems="center" mb={1.25}>
                       <Avatar
                         sx={{
                           width: 36,
                           height: 36,
                           bgcolor: color,
-                          color: "white",
+                          color: 'white',
                           mr: 1.5,
-                          fontSize: "1rem",
+                          fontSize: '1rem',
                           fontWeight: 600,
                         }}
                       >
@@ -715,8 +650,8 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                         <Typography
                           sx={{
                             fontWeight: 600,
-                            color: "#1d1d1f",
-                            fontSize: "0.95rem",
+                            color: '#1d1d1f',
+                            fontSize: '0.95rem',
                             lineHeight: 1.3,
                             mb: 0.5,
                           }}
@@ -730,43 +665,43 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                             label={`${owner.first_name} ${owner.last_name}`}
                             sx={{
                               height: 22,
-                              maxWidth: "100%",
-                              bgcolor: "rgba(255, 193, 7, 0.18)",
-                              color: "#f57f17",
-                              border: "1px solid rgba(255, 193, 7, 0.55)",
+                              maxWidth: '100%',
+                              bgcolor: 'rgba(255, 193, 7, 0.18)',
+                              color: '#f57f17',
+                              border: '1px solid rgba(255, 193, 7, 0.55)',
                               fontWeight: 600,
-                              fontSize: "0.7rem",
-                              "& .MuiChip-icon": {
-                                color: "#f9a825",
-                                fontSize: "0.95rem",
-                                ml: "4px",
+                              fontSize: '0.7rem',
+                              '& .MuiChip-icon': {
+                                color: '#f9a825',
+                                fontSize: '0.95rem',
+                                ml: '4px',
                               },
-                              "& .MuiChip-label": {
+                              '& .MuiChip-label': {
                                 px: 0.75,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
                               },
                             }}
                           />
                         ) : (
                           <Chip
                             size="small"
-                            label={hasRoute ? "Nicht zugewiesen" : "Keine Tour"}
+                            label={hasRoute ? 'Nicht zugewiesen' : 'Keine Tour'}
                             variant="outlined"
                             sx={{
                               height: 22,
-                              fontSize: "0.7rem",
+                              fontSize: '0.7rem',
                               fontWeight: 500,
-                              color: "text.secondary",
-                              borderColor: "rgba(0, 0, 0, 0.12)",
-                              bgcolor: "transparent",
-                              "& .MuiChip-label": { px: 0.75 },
+                              color: 'text.secondary',
+                              borderColor: 'rgba(0, 0, 0, 0.12)',
+                              bgcolor: 'transparent',
+                              '& .MuiChip-label': { px: 0.75 },
                             }}
                           />
                         )}
                       </Box>
                     </Box>
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
                       <Button
                         variant="outlined"
                         startIcon={<MapIcon />}
@@ -774,12 +709,12 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                         disabled={!hasRoute}
                         sx={{
                           flex: 1,
-                          textTransform: "none",
+                          textTransform: 'none',
                           borderRadius: 1.5,
                           fontWeight: 600,
                           borderColor: `${color}66`,
                           color,
-                          "&:hover": {
+                          '&:hover': {
                             borderColor: color,
                             bgcolor: `${color}12`,
                           },
@@ -793,15 +728,15 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                         disabled={!hasRoute}
                         sx={{
                           flex: 1,
-                          textTransform: "none",
+                          textTransform: 'none',
                           borderRadius: 1.5,
                           fontWeight: 600,
-                          bgcolor: "#ff9800",
-                          boxShadow: "none",
-                          "&:hover": { bgcolor: "#f57c00", boxShadow: "none" },
-                          "&.Mui-disabled": {
-                            bgcolor: "rgba(255, 152, 0, 0.4)",
-                            color: "white",
+                          bgcolor: '#ff9800',
+                          boxShadow: 'none',
+                          '&:hover': { bgcolor: '#f57c00', boxShadow: 'none' },
+                          '&.Mui-disabled': {
+                            bgcolor: 'rgba(255, 152, 0, 0.4)',
+                            color: 'white',
                           },
                         }}
                       >
@@ -818,11 +753,11 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
           <Button
             onClick={closeClaimDialogs}
             sx={{
-              textTransform: "none",
+              textTransform: 'none',
               borderRadius: 1.5,
-              color: "#1d1d1f",
+              color: '#1d1d1f',
               fontWeight: 600,
-              "&:hover": { bgcolor: "transparent" },
+              '&:hover': { bgcolor: 'transparent' },
             }}
           >
             Abbrechen
@@ -834,7 +769,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
         open={Boolean(claimWeekday && previewArea)}
         onClose={() => setPreviewArea(null)}
         weekdayLabel={claimDayLabel}
-        area={previewArea ?? "Nord"}
+        area={previewArea ?? 'Nord'}
         route={previewRoute}
         appointments={allAppointments}
         patients={patients}
@@ -854,13 +789,12 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
           paper: {
             sx: {
               borderRadius: 3,
-              bgcolor: "rgba(255, 255, 255, 0.96)",
-              backdropFilter: "blur(20px)",
-              boxShadow:
-                "0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)",
-              border: "1px solid rgba(255, 255, 255, 0.35)",
+              bgcolor: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.35)',
               mx: 2,
-              overflow: "hidden",
+              overflow: 'hidden',
             },
           },
         }}
@@ -868,7 +802,7 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
         <DialogTitle
           sx={{
             fontWeight: 600,
-            color: "#1d1d1f",
+            color: '#1d1d1f',
             pb: 0.5,
             pt: 2.5,
             px: 2.5,
@@ -883,30 +817,29 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
               sx={{
                 mb: 1.5,
                 borderRadius: 2,
-                bgcolor: "rgba(255, 152, 0, 0.12)",
-                color: "#e65100",
-                "& .MuiAlert-icon": { color: "#ff9800" },
+                bgcolor: 'rgba(255, 152, 0, 0.12)',
+                color: '#e65100',
+                '& .MuiAlert-icon': { color: '#ff9800' },
               }}
             >
-              Diese Tour gehört derzeit {claimOwner.first_name}{" "}
-              {claimOwner.last_name}.
+              Diese Tour gehört derzeit {claimOwner.first_name} {claimOwner.last_name}.
             </Alert>
           ) : null}
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             {claimWeekday
               ? `Die AW-Tour am ${claimDayLabel} im Bereich ${claimArea} wird jetzt übernommen. Diese Aktion kann nicht rückgängig gemacht werden.`
-              : ""}
+              : ''}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 1.5, gap: 1 }}>
           <Button
             onClick={() => setClaimConfirmOpen(false)}
             sx={{
-              textTransform: "none",
+              textTransform: 'none',
               borderRadius: 1.5,
-              color: "#1d1d1f",
+              color: '#1d1d1f',
               fontWeight: 600,
-              "&:hover": { bgcolor: "transparent" },
+              '&:hover': { bgcolor: 'transparent' },
             }}
           >
             Zurück
@@ -916,19 +849,19 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
             onClick={handleClaimConfirm}
             disabled={assignAwTourEmployee.isPending || !claimRoute}
             sx={{
-              textTransform: "none",
+              textTransform: 'none',
               borderRadius: 1.5,
               fontWeight: 600,
-              bgcolor: "#d32f2f",
-              boxShadow: "none",
-              "&:hover": { bgcolor: "#b71c1c", boxShadow: "none" },
-              "&.Mui-disabled": {
-                bgcolor: "rgba(211, 47, 47, 0.4)",
-                color: "white",
+              bgcolor: '#d32f2f',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#b71c1c', boxShadow: 'none' },
+              '&.Mui-disabled': {
+                bgcolor: 'rgba(211, 47, 47, 0.4)',
+                color: 'white',
               },
             }}
           >
-            {assignAwTourEmployee.isPending ? "Weise zu…" : "Zuweisen"}
+            {assignAwTourEmployee.isPending ? 'Weise zu…' : 'Zuweisen'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -937,14 +870,10 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
         open={Boolean(feedback)}
         autoHideDuration={5000}
         onClose={() => setFeedback(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         {feedback ? (
-          <Alert
-            severity={feedback.severity}
-            onClose={() => setFeedback(null)}
-            variant="filled"
-          >
+          <Alert severity={feedback.severity} onClose={() => setFeedback(null)} variant="filled">
             {feedback.message}
           </Alert>
         ) : undefined}

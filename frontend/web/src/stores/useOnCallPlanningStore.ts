@@ -1,7 +1,7 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
-export type ViewMode = "month" | "week";
-export type DisplayType = "calendar" | "table";
+export type ViewMode = 'month' | 'week';
+export type DisplayType = 'calendar' | 'table';
 
 interface OnCallPlanningStore {
   viewMode: ViewMode;
@@ -15,54 +15,52 @@ interface OnCallPlanningStore {
   goToToday: () => void;
 }
 
-export const useOnCallPlanningStore = create<OnCallPlanningStore>()(
-  (set, get) => ({
-    viewMode: "month",
-    displayType: "calendar",
-    currentDate: new Date(),
+export const useOnCallPlanningStore = create<OnCallPlanningStore>()((set, get) => ({
+  viewMode: 'month',
+  displayType: 'calendar',
+  currentDate: new Date(),
 
-    setViewMode: (mode: ViewMode) => {
-      set({ viewMode: mode });
-    },
+  setViewMode: (mode: ViewMode) => {
+    set({ viewMode: mode });
+  },
 
-    setDisplayType: (type: DisplayType) => {
-      set({ displayType: type });
-    },
+  setDisplayType: (type: DisplayType) => {
+    set({ displayType: type });
+  },
 
-    setCurrentDate: (date: Date) => {
-      set({ currentDate: date });
-    },
+  setCurrentDate: (date: Date) => {
+    set({ currentDate: date });
+  },
 
-    goToPrevious: () => {
-      const { currentDate, viewMode } = get();
-      const newDate = new Date(currentDate);
+  goToPrevious: () => {
+    const { currentDate, viewMode } = get();
+    const newDate = new Date(currentDate);
 
-      if (viewMode === "month") {
-        newDate.setMonth(newDate.getMonth() - 1);
-      } else {
-        // Week view: go back 7 days
-        newDate.setDate(newDate.getDate() - 7);
-      }
+    if (viewMode === 'month') {
+      newDate.setMonth(newDate.getMonth() - 1);
+    } else {
+      // Week view: go back 7 days
+      newDate.setDate(newDate.getDate() - 7);
+    }
 
-      set({ currentDate: newDate });
-    },
+    set({ currentDate: newDate });
+  },
 
-    goToNext: () => {
-      const { currentDate, viewMode } = get();
-      const newDate = new Date(currentDate);
+  goToNext: () => {
+    const { currentDate, viewMode } = get();
+    const newDate = new Date(currentDate);
 
-      if (viewMode === "month") {
-        newDate.setMonth(newDate.getMonth() + 1);
-      } else {
-        // Week view: go forward 7 days
-        newDate.setDate(newDate.getDate() + 7);
-      }
+    if (viewMode === 'month') {
+      newDate.setMonth(newDate.getMonth() + 1);
+    } else {
+      // Week view: go forward 7 days
+      newDate.setDate(newDate.getDate() + 7);
+    }
 
-      set({ currentDate: newDate });
-    },
+    set({ currentDate: newDate });
+  },
 
-    goToToday: () => {
-      set({ currentDate: new Date() });
-    },
-  }),
-);
+  goToToday: () => {
+    set({ currentDate: new Date() });
+  },
+}));

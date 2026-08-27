@@ -1,21 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Weekday } from "../../types/models";
-import { appointmentsApi } from "../api/appointments";
-import { routeKeys, liveListQueryOptions } from "./useRoutes";
-import { patientKeys } from "./usePatients";
-import { useCalendarWeekStore } from "../../stores/useCalendarWeekStore";
-import { employeePlanningKeys } from "./useEmployeePlanning";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Weekday } from '../../types/models';
+import { appointmentsApi } from '../api/appointments';
+import { routeKeys, liveListQueryOptions } from './useRoutes';
+import { patientKeys } from './usePatients';
+import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
+import { employeePlanningKeys } from './useEmployeePlanning';
 
 // Keys für React Query Cache
 export const appointmentKeys = {
-  all: ["appointments"] as const,
-  lists: () => [...appointmentKeys.all, "list"] as const,
+  all: ['appointments'] as const,
+  lists: () => [...appointmentKeys.all, 'list'] as const,
   list: (filters: string) => [...appointmentKeys.lists(), { filters }] as const,
-  byWeekday: (weekday: Weekday) =>
-    [...appointmentKeys.lists(), { weekday }] as const,
-  byPatient: (patientId: number) =>
-    [...appointmentKeys.lists(), { patientId }] as const,
-  details: () => [...appointmentKeys.all, "detail"] as const,
+  byWeekday: (weekday: Weekday) => [...appointmentKeys.lists(), { weekday }] as const,
+  byPatient: (patientId: number) => [...appointmentKeys.lists(), { patientId }] as const,
+  details: () => [...appointmentKeys.all, 'detail'] as const,
   detail: (id: number) => [...appointmentKeys.details(), id] as const,
 };
 
@@ -29,22 +27,16 @@ export const useAppointments = () => {
 };
 
 // Hook zum Laden von Terminen für einen bestimmten Wochentag
-export const useAppointmentsByWeekday = (
-  weekday: Weekday,
-  overrideCalendarWeek?: number,
-) => {
+export const useAppointmentsByWeekday = (weekday: Weekday, overrideCalendarWeek?: number) => {
   const { selectedCalendarWeek } = useCalendarWeekStore();
 
   // Verwende override oder den ausgewählten Wert aus dem Store
   const calendarWeek =
-    overrideCalendarWeek !== undefined
-      ? overrideCalendarWeek
-      : selectedCalendarWeek;
+    overrideCalendarWeek !== undefined ? overrideCalendarWeek : selectedCalendarWeek;
 
   return useQuery({
     queryKey: [...appointmentKeys.byWeekday(weekday), { calendarWeek }],
-    queryFn: () =>
-      appointmentsApi.getByWeekday(weekday, calendarWeek || undefined),
+    queryFn: () => appointmentsApi.getByWeekday(weekday, calendarWeek || undefined),
     enabled: !!weekday, // Nur ausführen, wenn ein Wochentag angegeben ist
     ...liveListQueryOptions,
   });
@@ -97,7 +89,7 @@ export const useMoveAppointment = () => {
         sourceArea,
         targetArea,
         calendarWeek,
-        respectReplacement,
+        respectReplacement
       ),
     onSuccess: () => {
       // Invalidate all appointment queries to refetch data
@@ -120,8 +112,7 @@ export const useCheckReplacement = () => {
       targetEmployeeId: number;
       weekday: string;
       calendarWeek?: number;
-    }) =>
-      appointmentsApi.checkReplacement(targetEmployeeId, weekday, calendarWeek),
+    }) => appointmentsApi.checkReplacement(targetEmployeeId, weekday, calendarWeek),
   });
 };
 
@@ -134,7 +125,7 @@ export const useAssignTourArea = () => {
       targetArea,
     }: {
       appointmentId: number;
-      targetArea: "Nord" | "Mitte" | "Süd";
+      targetArea: 'Nord' | 'Mitte' | 'Süd';
     }) => appointmentsApi.assignTourArea(appointmentId, targetArea),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });

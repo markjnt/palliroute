@@ -1,11 +1,8 @@
-import { useCallback, useMemo } from "react";
-import { useCalendarWeekStore } from "../stores";
-import { useNrwpHolidaysForYears } from "../services/queries/useConfig";
-import {
-  holidayNameForCalendarWeekday,
-  isoYearForCalendarWeek,
-} from "@palliroute/shared";
-import type { Weekday } from "../types/models";
+import { useCallback, useMemo } from 'react';
+import { useCalendarWeekStore } from '../stores';
+import { useNrwpHolidaysForYears } from '../services/queries/useConfig';
+import { holidayNameForCalendarWeekday, isoYearForCalendarWeek } from '@palliroute/shared';
+import type { Weekday } from '../types/models';
 
 /**
  * NRW public holiday for the tour planning selection (KW + weekday), aligned with backend ISO-week logic.
@@ -16,7 +13,7 @@ export function useNrwpHolidayForTourDay(selectedWeekday: Weekday) {
   const currentYear = new Date().getFullYear();
   const holidayYears = useMemo(
     () => [currentYear - 1, currentYear, currentYear + 1],
-    [currentYear],
+    [currentYear]
   );
   const { holidayByYmd } = useNrwpHolidaysForYears(holidayYears);
 
@@ -26,12 +23,11 @@ export function useNrwpHolidayForTourDay(selectedWeekday: Weekday) {
       holidayByYmd,
       isoYearForCalendarWeek(selectedCalendarWeek),
       selectedCalendarWeek,
-      selectedWeekday,
+      selectedWeekday
     );
   }, [selectedCalendarWeek, selectedWeekday, holidayByYmd]);
 
-  const isWeekendDay =
-    selectedWeekday === "saturday" || selectedWeekday === "sunday";
+  const isWeekendDay = selectedWeekday === 'saturday' || selectedWeekday === 'sunday';
   const isWeekdayHoliday = Boolean(holidayName && !isWeekendDay);
   const isAreaTourDay = isWeekendDay || isWeekdayHoliday;
 
@@ -44,7 +40,7 @@ export function useNrwpHolidayLookupForSelectedKw() {
   const currentYear = new Date().getFullYear();
   const holidayYears = useMemo(
     () => [currentYear - 1, currentYear, currentYear + 1],
-    [currentYear],
+    [currentYear]
   );
   const { holidayByYmd } = useNrwpHolidaysForYears(holidayYears);
 
@@ -55,10 +51,10 @@ export function useNrwpHolidayLookupForSelectedKw() {
         holidayByYmd,
         isoYearForCalendarWeek(selectedCalendarWeek),
         selectedCalendarWeek,
-        weekday,
+        weekday
       );
     },
-    [selectedCalendarWeek, holidayByYmd],
+    [selectedCalendarWeek, holidayByYmd]
   );
 
   return getHolidayName;

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { useGoogleMap } from "@react-google-maps/api";
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { useGoogleMap } from '@react-google-maps/api';
 
 export interface AdvancedMapMarkerProps {
   position: google.maps.LatLng | google.maps.LatLngLiteral;
@@ -27,13 +27,11 @@ export function AdvancedMapMarker({
 }: AdvancedMapMarkerProps) {
   const map = useGoogleMap();
   const [container] = useState(() => {
-    const el = document.createElement("div");
-    el.style.cursor = "pointer";
+    const el = document.createElement('div');
+    el.style.cursor = 'pointer';
     return el;
   });
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
-    null,
-  );
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   const onClickRef = useRef(onClick);
   const onMouseOverRef = useRef(onMouseOver);
   const onMouseOutRef = useRef(onMouseOut);
@@ -63,14 +61,14 @@ export function AdvancedMapMarker({
     const handleOver = () => onMouseOverRef.current?.();
     const handleOut = () => onMouseOutRef.current?.();
 
-    marker.addEventListener("gmp-click", handleClick);
-    container.addEventListener("mouseenter", handleOver);
-    container.addEventListener("mouseleave", handleOut);
+    marker.addEventListener('gmp-click', handleClick);
+    container.addEventListener('mouseenter', handleOver);
+    container.addEventListener('mouseleave', handleOut);
 
     return () => {
-      marker.removeEventListener("gmp-click", handleClick);
-      container.removeEventListener("mouseenter", handleOver);
-      container.removeEventListener("mouseleave", handleOut);
+      marker.removeEventListener('gmp-click', handleClick);
+      container.removeEventListener('mouseenter', handleOver);
+      container.removeEventListener('mouseleave', handleOut);
       marker.map = null;
       markerRef.current = null;
     };
@@ -82,7 +80,7 @@ export function AdvancedMapMarker({
     const marker = markerRef.current;
     if (!marker) return;
     marker.position = position;
-    marker.title = title ?? "";
+    marker.title = title ?? '';
     marker.zIndex = zIndex;
   }, [position, title, zIndex]);
 
@@ -107,25 +105,23 @@ export function CircleStopMarker({
   return (
     <div
       style={{
-        boxSizing: "border-box",
+        boxSizing: 'border-box',
         width: 22,
         height: 22,
-        borderRadius: "50%",
+        borderRadius: '50%',
         backgroundColor: color,
-        border: "2px solid #ffffff",
-        boxShadow: emphasized
-          ? "0 1px 4px rgba(0,0,0,0.4)"
-          : "0 1px 2px rgba(0,0,0,0.3)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#ffffff",
+        border: '2px solid #ffffff',
+        boxShadow: emphasized ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 2px rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#ffffff',
         fontWeight: 700,
         fontSize: label && label.length > 2 ? 8 : 10,
         lineHeight: 1,
         opacity: dimmed ? Math.min(opacity, 0.28) : opacity,
-        transform: emphasized ? "scale(1.12)" : "scale(1)",
-        transition: "opacity 120ms ease, transform 120ms ease",
+        transform: emphasized ? 'scale(1.12)' : 'scale(1)',
+        transition: 'opacity 120ms ease, transform 120ms ease',
       }}
     >
       {label}
@@ -147,20 +143,13 @@ export function CustomPlaceMarker({
       height="35"
       viewBox="0 0 56 56"
       style={{
-        display: "block",
+        display: 'block',
         opacity: dimmed ? Math.min(opacity, 0.28) : opacity,
-        filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.35))",
-        transition: "opacity 120ms ease",
+        filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.35))',
+        transition: 'opacity 120ms ease',
       }}
     >
-      <circle
-        cx="28"
-        cy="28"
-        r="26"
-        fill="#ff5722"
-        stroke="#fff"
-        strokeWidth="3"
-      />
+      <circle cx="28" cy="28" r="26" fill="#ff5722" stroke="#fff" strokeWidth="3" />
       <path
         fill="#fff"
         d="M28 14c-6.07 0-11 4.93-11 11 0 8.25 11 18 11 18s11-9.75 11-18c0-6.07-4.93-11-11-11zm0 15c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"

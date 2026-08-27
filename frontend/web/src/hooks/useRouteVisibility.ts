@@ -1,5 +1,5 @@
-import { useCallback } from "react";
-import { useRouteVisibility as useRouteVisibilityStore } from "../stores/useRouteVisibilityStore";
+import { useCallback } from 'react';
+import { useRouteVisibility as useRouteVisibilityStore } from '../stores/useRouteVisibilityStore';
 
 interface UseRouteVisibilityProps {
   routeId?: number;
@@ -34,8 +34,7 @@ export const useRouteVisibility = ({
   } = useRouteVisibilityStore();
 
   // Check if current route is visible
-  const isVisible =
-    routeId !== undefined ? !hiddenPolylines.has(routeId) : false;
+  const isVisible = routeId !== undefined ? !hiddenPolylines.has(routeId) : false;
 
   // Toggle visibility for current route
   const toggleVisibility = useCallback(() => {

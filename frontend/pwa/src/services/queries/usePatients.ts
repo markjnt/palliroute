@@ -1,15 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { patientsApi } from "../api/patients";
-import { appointmentKeys } from "./useAppointments";
-import { liveListQueryOptions, routeKeys } from "./useRoutes";
-import { employeeKeys } from "./useEmployees";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { patientsApi } from '../api/patients';
+import { appointmentKeys } from './useAppointments';
+import { liveListQueryOptions, routeKeys } from './useRoutes';
+import { employeeKeys } from './useEmployees';
 
 // Keys für React Query Cache
 export const patientKeys = {
-  all: ["patients"] as const,
-  lists: () => [...patientKeys.all, "list"] as const,
+  all: ['patients'] as const,
+  lists: () => [...patientKeys.all, 'list'] as const,
   list: (filters: string) => [...patientKeys.lists(), { filters }] as const,
-  details: () => [...patientKeys.all, "detail"] as const,
+  details: () => [...patientKeys.all, 'detail'] as const,
   detail: (id: number) => [...patientKeys.details(), id] as const,
 };
 

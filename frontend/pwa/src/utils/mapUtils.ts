@@ -1,5 +1,5 @@
-import { MarkerData } from "../types/mapTypes";
-import { Route, Employee, Patient, Appointment } from "../types/models";
+import { MarkerData } from '../types/mapTypes';
+import { Route, Employee, Patient, Appointment } from '../types/models';
 import {
   weekdayMap,
   getCurrentWeekday,
@@ -15,7 +15,7 @@ import {
   MAP_CONTAINER_STYLE,
   MAP_DEFAULT_CENTER,
   MAP_DEFAULT_ZOOM,
-} from "@palliroute/shared";
+} from '@palliroute/shared';
 
 export {
   weekdayMap,
@@ -34,28 +34,20 @@ export function findEmployeeDayRoute(
   routes: Route[],
   employeeId: number | null | undefined,
   weekday: string,
-  isAwDay: boolean,
+  isAwDay: boolean
 ): Route | undefined {
   if (!employeeId) return undefined;
   return routes.find((route) => {
-    if (route.weekday !== weekday || route.employee_id !== employeeId)
-      return false;
+    if (route.weekday !== weekday || route.employee_id !== employeeId) return false;
     return isAwDay ? isAwTourArea(route.area) : !isAwTourArea(route.area);
   });
 }
 
-export const AW_TOUR_AREAS = ["Nord", "Mitte", "Süd"] as const;
+export const AW_TOUR_AREAS = ['Nord', 'Mitte', 'Süd'] as const;
 
-export function findAwAreaRoute(
-  routes: Route[],
-  area: string,
-  weekday: string,
-): Route | undefined {
+export function findAwAreaRoute(routes: Route[], area: string, weekday: string): Route | undefined {
   return routes.find(
-    (route) =>
-      route.weekday === weekday &&
-      route.area === area &&
-      isAwTourArea(route.area),
+    (route) => route.weekday === weekday && route.area === area && isAwTourArea(route.area)
   );
 }
 
@@ -70,45 +62,40 @@ export const mapOptions: google.maps.MapOptions = {
   mapTypeControl: false,
   streetViewControl: false,
   fullscreenControl: false,
-  gestureHandling: "greedy",
+  gestureHandling: 'greedy',
   clickableIcons: false,
   mapId: GOOGLE_MAPS_MAP_ID,
 };
 
 export const createEmployeeMarkerData = (
   employee: Employee,
-  routeId?: number,
+  routeId?: number
 ): MarkerData | null => {
   if (employee.latitude && employee.longitude) {
-    const position = new google.maps.LatLng(
-      employee.latitude,
-      employee.longitude,
-    );
+    const position = new google.maps.LatLng(employee.latitude, employee.longitude);
     return {
       position,
-      title: `${employee.first_name} ${employee.last_name} - ${employee.function || "Mitarbeiter"}`,
-      type: "employee",
+      title: `${employee.first_name} ${employee.last_name} - ${employee.function || 'Mitarbeiter'}`,
+      type: 'employee',
       employeeType: employee.function,
       employeeId: employee.id,
       routeId,
     };
   }
-  console.warn(
-    `No coordinates for employee: ${employee.first_name} ${employee.last_name}`,
-  );
+  console.warn(`No coordinates for employee: ${employee.first_name} ${employee.last_name}`);
   return null;
 };
 
 export const createTourAreaMarkerData = (
   area: string,
-  routeId?: number | null,
+  routeId?: number | null
 ): MarkerData | null => {
   const start = getTourAreaStartLocation(area);
   const position = new google.maps.LatLng(start.lat, start.lng);
   return {
     position,
     title: `AW Tour: ${area}-Bereich`,
-    type: "tour_area",
+    type: 'tour_area',
     area,
     employeeId: null,
     routeId: routeId ?? null,
@@ -120,18 +107,15 @@ export const createPatientMarkerData = (
   appointment: Appointment,
   position?: number,
   routeId?: number,
-  route?: Route,
+  route?: Route
 ): MarkerData | null => {
   if (patient.latitude && patient.longitude) {
-    const position_coords = new google.maps.LatLng(
-      patient.latitude,
-      patient.longitude,
-    );
+    const position_coords = new google.maps.LatLng(patient.latitude, patient.longitude);
     const label = position ? position.toString() : undefined;
     return {
       position: position_coords,
       title: `${patient.first_name} ${patient.last_name} - ${appointment.visit_type}`,
-      type: "patient",
+      type: 'patient',
       label,
       visitType: appointment.visit_type,
       patientId: patient.id,
@@ -141,9 +125,7 @@ export const createPatientMarkerData = (
       area: route?.area as string | undefined,
     };
   }
-  console.warn(
-    `No coordinates for patient: ${patient.first_name} ${patient.last_name}`,
-  );
+  console.warn(`No coordinates for patient: ${patient.first_name} ${patient.last_name}`);
   return null;
 };
 
@@ -152,7 +134,7 @@ export const calculateRouteBounds = (
   employees: Employee[],
   patients: Patient[],
   appointments: Appointment[],
-  selectedTourArea?: string | null,
+  selectedTourArea?: string | null
 ): google.maps.LatLngBounds | null => {
   const bounds = new google.maps.LatLngBounds();
   let hasValidPoints = false;
@@ -163,12 +145,7 @@ export const calculateRouteBounds = (
       ? employees.find((e) => e.id === areaRoute.employee_id)
       : undefined;
     if (assignedEmployee?.latitude && assignedEmployee?.longitude) {
-      bounds.extend(
-        new google.maps.LatLng(
-          assignedEmployee.latitude,
-          assignedEmployee.longitude,
-        ),
-      );
+      bounds.extend(new google.maps.LatLng(assignedEmployee.latitude, assignedEmployee.longitude));
     } else {
       const start = getTourAreaStartLocation(selectedTourArea);
       bounds.extend(new google.maps.LatLng(start.lat, start.lng));
@@ -180,9 +157,7 @@ export const calculateRouteBounds = (
     for (const route of routes) {
       const employee = employees.find((e) => e.id === route.employee_id);
       if (employee?.latitude && employee?.longitude) {
-        bounds.extend(
-          new google.maps.LatLng(employee.latitude, employee.longitude),
-        );
+        bounds.extend(new google.maps.LatLng(employee.latitude, employee.longitude));
         hasValidPoints = true;
       }
 
@@ -194,13 +169,9 @@ export const calculateRouteBounds = (
         for (const appointmentId of routeOrder) {
           const appointment = appointments.find((a) => a.id === appointmentId);
           if (appointment) {
-            const patient = patients.find(
-              (p) => p.id === appointment.patient_id,
-            );
+            const patient = patients.find((p) => p.id === appointment.patient_id);
             if (patient?.latitude && patient?.longitude) {
-              bounds.extend(
-                new google.maps.LatLng(patient.latitude, patient.longitude),
-              );
+              bounds.extend(new google.maps.LatLng(patient.latitude, patient.longitude));
               hasValidPoints = true;
             }
           }

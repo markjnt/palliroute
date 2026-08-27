@@ -1,32 +1,32 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
-import { MainLayout } from "./components/layout/MainLayout";
-import { MapView } from "./components/layout/MainViewMap";
-import { OnCallPlanningView } from "./components/oncall/OnCallPlanningView";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { MainLayout } from './components/layout/MainLayout';
+import { MapView } from './components/layout/MainViewMap';
+import { OnCallPlanningView } from './components/oncall/OnCallPlanningView';
 
 // Design: eine zentrale Theme-Definition — Farben, Radien, Schatten und Komponenten-Defaults.
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#007AFF",
+      main: '#007AFF',
     },
     secondary: {
-      main: "#FF3B30",
+      main: '#FF3B30',
     },
     background: {
-      default: "#f8f9fa",
-      paper: "#ffffff",
+      default: '#f8f9fa',
+      paper: '#ffffff',
     },
     text: {
-      primary: "#1d1d1f",
-      secondary: "#86868b",
+      primary: '#1d1d1f',
+      secondary: '#86868b',
     },
-    divider: "rgba(0, 0, 0, 0.09)",
+    divider: 'rgba(0, 0, 0, 0.09)',
     action: {
-      hover: "rgba(0, 0, 0, 0.06)",
-      selected: "rgba(0, 122, 255, 0.08)",
-      focus: "rgba(0, 122, 255, 0.12)",
+      hover: 'rgba(0, 0, 0, 0.06)',
+      selected: 'rgba(0, 122, 255, 0.08)',
+      focus: 'rgba(0, 122, 255, 0.12)',
     },
   },
   typography: {
@@ -34,26 +34,26 @@ const theme = createTheme({
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     h4: {
       fontWeight: 600,
-      letterSpacing: "-0.02em",
+      letterSpacing: '-0.02em',
     },
     h5: {
       fontWeight: 600,
-      letterSpacing: "-0.02em",
+      letterSpacing: '-0.02em',
     },
     h6: {
       fontWeight: 600,
-      letterSpacing: "-0.02em",
+      letterSpacing: '-0.02em',
     },
     subtitle1: {
       fontWeight: 500,
     },
     subtitle2: {
       fontWeight: 600,
-      letterSpacing: "-0.01em",
+      letterSpacing: '-0.01em',
     },
     button: {
       fontWeight: 600,
-      textTransform: "none",
+      textTransform: 'none',
     },
   },
   shape: {
@@ -63,8 +63,8 @@ const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          WebkitFontSmoothing: "antialiased",
-          MozOsxFontSmoothing: "grayscale",
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale',
         },
       },
     },
@@ -74,14 +74,14 @@ const theme = createTheme({
       },
       styleOverrides: {
         root: ({ theme }) => ({
-          textTransform: "none",
+          textTransform: 'none',
           fontWeight: 600,
           borderRadius: theme.spacing(2.5),
           transition: theme.transitions.create(
-            ["background-color", "border-color", "color", "box-shadow"],
+            ['background-color', 'border-color', 'color', 'box-shadow'],
             {
               duration: theme.transitions.duration.short,
-            },
+            }
           ),
         }),
         sizeSmall: ({ theme }) => ({
@@ -93,7 +93,7 @@ const theme = createTheme({
         outlined: ({ theme }) => ({
           borderColor: theme.palette.divider,
           color: theme.palette.text.primary,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
             borderColor: theme.palette.primary.main,
           },
@@ -101,7 +101,7 @@ const theme = createTheme({
         outlinedPrimary: ({ theme }) => ({
           borderColor: theme.palette.divider,
           color: theme.palette.text.primary,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
             borderColor: theme.palette.primary.main,
           },
@@ -109,7 +109,7 @@ const theme = createTheme({
         outlinedSecondary: ({ theme }) => ({
           borderColor: theme.palette.divider,
           color: theme.palette.text.primary,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
             borderColor: theme.palette.secondary.main,
           },
@@ -117,7 +117,7 @@ const theme = createTheme({
         outlinedError: ({ theme }) => ({
           borderColor: theme.palette.error.main,
           color: theme.palette.error.main,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
             borderColor: theme.palette.error.dark,
           },
@@ -125,7 +125,7 @@ const theme = createTheme({
         outlinedWarning: ({ theme }) => ({
           borderColor: theme.palette.warning.main,
           color: theme.palette.warning.dark,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
             borderColor: theme.palette.warning.dark,
           },
@@ -133,25 +133,25 @@ const theme = createTheme({
         outlinedSuccess: ({ theme }) => ({
           borderColor: theme.palette.success.main,
           color: theme.palette.success.dark,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
             borderColor: theme.palette.success.dark,
           },
         }),
         contained: ({ theme }) => ({
-          boxShadow: "none",
-          "&:hover": {
-            boxShadow: "none",
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: 'none',
           },
         }),
         containedPrimary: ({ theme }) => ({
-          "&:hover": {
-            boxShadow: "none",
+          '&:hover': {
+            boxShadow: 'none',
           },
         }),
         text: ({ theme }) => ({
           color: theme.palette.text.primary,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
           },
         }),
@@ -161,10 +161,10 @@ const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           borderRadius: theme.spacing(2.5),
-          transition: theme.transitions.create(["background-color"], {
+          transition: theme.transitions.create(['background-color'], {
             duration: theme.transitions.duration.short,
           }),
-          "&:hover": {
+          '&:hover': {
             backgroundColor: theme.palette.action.hover,
           },
         }),
@@ -174,7 +174,7 @@ const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           borderRadius: Number(theme.shape.borderRadius),
-          backgroundImage: "none",
+          backgroundImage: 'none',
         }),
       },
     },
@@ -182,7 +182,7 @@ const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           borderRadius: Number(theme.shape.borderRadius),
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
         }),
       },
     },
@@ -190,7 +190,7 @@ const theme = createTheme({
       styleOverrides: {
         paper: ({ theme }) => ({
           borderRadius: Number(theme.shape.borderRadius),
-          boxShadow: "0 12px 40px rgba(0, 0, 0, 0.14)",
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.14)',
         }),
       },
     },
@@ -199,7 +199,7 @@ const theme = createTheme({
         root: ({ theme }) => ({
           fontSize: theme.typography.h6.fontSize,
           fontWeight: 600,
-          letterSpacing: "-0.02em",
+          letterSpacing: '-0.02em',
           padding: theme.spacing(2, 2.5),
         }),
       },
@@ -224,7 +224,7 @@ const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           borderRadius: Number(theme.shape.borderRadius),
-          transition: theme.transitions.create(["border-color", "box-shadow"], {
+          transition: theme.transitions.create(['border-color', 'box-shadow'], {
             duration: theme.transitions.duration.short,
           }),
         }),
@@ -233,7 +233,7 @@ const theme = createTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: ({ theme }) => ({
-          "&.Mui-focused": {
+          '&.Mui-focused': {
             color: theme.palette.primary.main,
           },
         }),

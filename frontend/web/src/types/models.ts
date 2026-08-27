@@ -1,2 +1,2 @@
-export * from "@palliroute/models";
-export * from "./models.web";
+export * from '@palliroute/models';
+export * from './models.web';

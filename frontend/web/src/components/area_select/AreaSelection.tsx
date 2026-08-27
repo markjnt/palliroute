@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Container,
   Typography,
@@ -8,25 +8,25 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { mapFloatingControlSx } from "../../theme/floatingControlSx";
-import { useNavigate } from "react-router-dom";
-import { useAreaStore } from "../../stores/useAreaStore";
-import AreaList from "./AreaList";
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { mapFloatingControlSx } from '../../theme/floatingControlSx';
+import { useNavigate } from 'react-router-dom';
+import { useAreaStore } from '../../stores/useAreaStore';
+import AreaList from './AreaList';
 import {
   Public as PublicIcon,
   ChangeCircle as ChangeIcon,
   Close as CloseIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
-const AREAS = ["Nord- und Südkreis", "Nordkreis", "Südkreis"];
+const AREAS = ['Nord- und Südkreis', 'Nordkreis', 'Südkreis'];
 
 const getAreaInitial = (area: string) => {
-  if (area === "Nordkreis") return "N";
-  if (area === "Südkreis") return "S";
-  if (area === "Nord- und Südkreis" || area === "Gesamt") return "G";
-  return "?";
+  if (area === 'Nordkreis') return 'N';
+  if (area === 'Südkreis') return 'S';
+  if (area === 'Nord- und Südkreis' || area === 'Gesamt') return 'G';
+  return '?';
 };
 
 interface AreaSelectionProps {
@@ -50,11 +50,8 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
   const navigate = useNavigate();
   const [internalModalOpen, setInternalModalOpen] = useState(false);
 
-  const isDialogControlled =
-    controlledDialogOpen !== undefined && onDialogOpenChange !== undefined;
-  const modalOpen = isDialogControlled
-    ? controlledDialogOpen
-    : internalModalOpen;
+  const isDialogControlled = controlledDialogOpen !== undefined && onDialogOpenChange !== undefined;
+  const modalOpen = isDialogControlled ? controlledDialogOpen : internalModalOpen;
   const setModalOpen = (open: boolean) => {
     if (isDialogControlled) onDialogOpenChange!(open);
     else setInternalModalOpen(open);
@@ -66,7 +63,7 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
       setModalOpen(false);
       onAreaChange?.();
     } else {
-      navigate("/");
+      navigate('/');
     }
   };
 
@@ -88,7 +85,7 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
             startIcon={<ChangeIcon />}
             sx={mapFloatingControlSx}
           >
-            {getAreaInitial(currentArea || "")}
+            {getAreaInitial(currentArea || '')}
           </Button>
         )}
 
@@ -105,19 +102,19 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
         >
           <DialogTitle
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               gap: 2,
               pb: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
+              borderBottom: '1px solid',
+              borderColor: 'divider',
             }}
           >
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 2,
                 minWidth: 0,
               }}
@@ -128,27 +125,19 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
                   height: 40,
                   borderRadius: 2,
                   bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <ChangeIcon sx={{ color: "primary.main", fontSize: 22 }} />
+                <ChangeIcon sx={{ color: 'primary.main', fontSize: 22 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography
-                  component="span"
-                  variant="h6"
-                  sx={{ lineHeight: 1.3 }}
-                >
+                <Typography component="span" variant="h6" sx={{ lineHeight: 1.3 }}>
                   Gebiet wählen
                 </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.25 }}
-                >
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                   Kreis für Karte und Planung
                 </Typography>
               </Box>
@@ -157,18 +146,14 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
               aria-label="Schließen"
               onClick={() => setModalOpen(false)}
               size="small"
-              sx={{ color: "text.secondary" }}
+              sx={{ color: 'text.secondary' }}
             >
               <CloseIcon />
             </IconButton>
           </DialogTitle>
           <DialogContent sx={{ p: 0 }}>
             <Box sx={{ px: 2.5, pt: 3, pb: 3 }}>
-              <AreaList
-                areas={AREAS}
-                onAreaSelect={handleAreaSelect}
-                selectedArea={currentArea}
-              />
+              <AreaList areas={AREAS} onAreaSelect={handleAreaSelect} selectedArea={currentArea} />
             </Box>
           </DialogContent>
         </Dialog>
@@ -183,43 +168,39 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
         sx={{
           p: 4,
           borderRadius: 3,
-          bgcolor: "background.paper",
-          border: "1px solid",
-          borderColor: "divider",
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
           boxShadow: 1,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
           <Box
             sx={{
               width: 48,
               height: 48,
               borderRadius: 2,
               bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <PublicIcon sx={{ color: "primary.main", fontSize: 28 }} />
+            <PublicIcon sx={{ color: 'primary.main', fontSize: 28 }} />
           </Box>
           <Typography
             variant="h4"
             component="h1"
             sx={{
               fontWeight: 600,
-              color: "text.primary",
-              letterSpacing: "-0.02em",
+              color: 'text.primary',
+              letterSpacing: '-0.02em',
             }}
           >
             Kreisauswahl
           </Typography>
         </Box>
-        <AreaList
-          areas={AREAS}
-          onAreaSelect={handleAreaSelect}
-          selectedArea={currentArea}
-        />
+        <AreaList areas={AREAS} onAreaSelect={handleAreaSelect} selectedArea={currentArea} />
       </Box>
     </Container>
   );

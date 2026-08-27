@@ -1,9 +1,9 @@
-import React, { useMemo } from "react";
-import { Box, CircularProgress } from "@mui/material";
-import { Employee, EmployeeCapacity } from "../../../types/models";
-import { EmployeeCapacityCard } from "./EmployeeCapacityCard";
+import React, { useMemo } from 'react';
+import { Box, CircularProgress } from '@mui/material';
+import { Employee, EmployeeCapacity } from '../../../types/models';
+import { EmployeeCapacityCard } from './EmployeeCapacityCard';
 
-type FilterType = "all" | "pflege" | "arzt";
+type FilterType = 'all' | 'pflege' | 'arzt';
 
 interface CapacityOverviewProps {
   employees: Employee[];
@@ -16,7 +16,7 @@ export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
   employees,
   employeeCapacities,
   currentDate,
-  activeFilter = "all",
+  activeFilter = 'all',
 }) => {
   // Create a map of capacities by employee ID
   const capacitiesMap = useMemo(() => {
@@ -45,18 +45,16 @@ export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
     let filtered = employees;
 
     // Apply filter
-    if (activeFilter !== "all") {
+    if (activeFilter !== 'all') {
       switch (activeFilter) {
-        case "pflege":
+        case 'pflege':
           filtered = filtered.filter(
-            (emp: Employee) =>
-              emp.function === "Pflegekraft" || emp.function === "PDL",
+            (emp: Employee) => emp.function === 'Pflegekraft' || emp.function === 'PDL'
           );
           break;
-        case "arzt":
+        case 'arzt':
           filtered = filtered.filter(
-            (emp: Employee) =>
-              emp.function === "Arzt" || emp.function === "Honorararzt",
+            (emp: Employee) => emp.function === 'Arzt' || emp.function === 'Honorararzt'
           );
           break;
       }
@@ -64,15 +62,15 @@ export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
 
     // Sort employees like in UserSelectSheet.tsx
     const getGroupOrder = (employee: Employee) => {
-      const area = employee.area?.toLowerCase() || "";
-      if (employee.function === "Pflegekraft") {
-        if (area.includes("nord")) return 1; // Pflege Nord
-        if (area.includes("süd")) return 2; // Pflege Süd
+      const area = employee.area?.toLowerCase() || '';
+      if (employee.function === 'Pflegekraft') {
+        if (area.includes('nord')) return 1; // Pflege Nord
+        if (area.includes('süd')) return 2; // Pflege Süd
         return 3; // Other Pflegekräfte without area
       }
-      if (employee.function === "PDL") return 4;
-      if (employee.function === "Arzt") return 5;
-      if (employee.function === "Honorararzt") return 6;
+      if (employee.function === 'PDL') return 4;
+      if (employee.function === 'Arzt') return 5;
+      if (employee.function === 'Honorararzt') return 6;
       return 999;
     };
 
@@ -101,12 +99,12 @@ export const CapacityOverview: React.FC<CapacityOverviewProps> = ({
     <Box sx={{ pt: 2 }}>
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(3, 1fr)",
-            lg: "repeat(4, 1fr)",
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: 'repeat(4, 1fr)',
           },
           gap: 2.5,
         }}

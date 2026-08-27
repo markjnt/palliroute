@@ -22,10 +22,7 @@ export const getIsoWeekYear = (now: Date = new Date()): number => {
  * Available KWs are stored without a year, so KW 1 in late December belongs
  * to the next ISO year and KW 52/53 in January to the previous one.
  */
-export const isoYearForCalendarWeek = (
-  week: number,
-  now: Date = new Date(),
-): number => {
+export const isoYearForCalendarWeek = (week: number, now: Date = new Date()): number => {
   const currentWeek = getCalendarWeek(now);
   const year = getIsoWeekYear(now);
   if (week >= 45 && currentWeek <= 15) return year - 1;
@@ -35,10 +32,8 @@ export const isoYearForCalendarWeek = (
 
 export const getBestCalendarWeek = (availableWeeks: number[]): number => {
   if (availableWeeks.length === 0) {
-    throw new Error("No calendar weeks available");
+    throw new Error('No calendar weeks available');
   }
   const currentWeek = getCurrentCalendarWeek();
-  return availableWeeks.includes(currentWeek)
-    ? currentWeek
-    : Math.max(...availableWeeks);
+  return availableWeeks.includes(currentWeek) ? currentWeek : Math.max(...availableWeeks);
 };

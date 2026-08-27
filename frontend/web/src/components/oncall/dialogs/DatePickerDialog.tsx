@@ -1,18 +1,7 @@
-import React, { useMemo } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Box,
-  Typography,
-  Button,
-  Grid,
-} from "@mui/material";
-import { ViewMode } from "../../../stores/useOnCallPlanningStore";
-import {
-  getCalendarWeek,
-  formatMonthYear,
-} from "../../../utils/oncall/dateUtils";
+import React, { useMemo } from 'react';
+import { Dialog, DialogTitle, DialogContent, Box, Typography, Button, Grid } from '@mui/material';
+import { ViewMode } from '../../../stores/useOnCallPlanningStore';
+import { getCalendarWeek, formatMonthYear } from '../../../utils/oncall/dateUtils';
 
 interface DatePickerDialogProps {
   open: boolean;
@@ -37,18 +26,18 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
   // Generate months for the current year
   const months = useMemo(() => {
     const monthNames = [
-      "Januar",
-      "Februar",
-      "März",
-      "April",
-      "Mai",
-      "Juni",
-      "Juli",
-      "August",
-      "September",
-      "Oktober",
-      "November",
-      "Dezember",
+      'Januar',
+      'Februar',
+      'März',
+      'April',
+      'Mai',
+      'Juni',
+      'Juli',
+      'August',
+      'September',
+      'Oktober',
+      'November',
+      'Dezember',
     ];
     return monthNames.map((name, index) => ({
       name,
@@ -80,8 +69,7 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
       // Only include weeks that belong to the current year and haven't been seen
       if (
         !seenWeeks.has(week) &&
-        (startDate.getFullYear() === currentYear ||
-          endDate.getFullYear() === currentYear)
+        (startDate.getFullYear() === currentYear || endDate.getFullYear() === currentYear)
       ) {
         seenWeeks.add(week);
         weeks.push({ week, startDate, endDate });
@@ -106,15 +94,11 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
   };
 
   const isCurrentMonth = (monthIndex: number) => {
-    return (
-      monthIndex === today.getMonth() && currentYear === today.getFullYear()
-    );
+    return monthIndex === today.getMonth() && currentYear === today.getFullYear();
   };
 
   const isCurrentWeek = (week: number) => {
-    return (
-      week === getCalendarWeek(today) && currentYear === today.getFullYear()
-    );
+    return week === getCalendarWeek(today) && currentYear === today.getFullYear();
   };
 
   const isSelectedMonth = (monthIndex: number) => {
@@ -138,20 +122,15 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
       }}
     >
       <DialogTitle component="div" sx={{ pb: 1 }}>
-        <Box component="h2" sx={{ fontSize: "1.25rem", fontWeight: 600, m: 0 }}>
-          {viewMode === "month" ? "Monat auswählen" : "Kalenderwoche auswählen"}
+        <Box component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, m: 0 }}>
+          {viewMode === 'month' ? 'Monat auswählen' : 'Kalenderwoche auswählen'}
         </Box>
-        <Typography
-          variant="body2"
-          component="p"
-          color="text.secondary"
-          sx={{ mt: 0.5, m: 0 }}
-        >
+        <Typography variant="body2" component="p" color="text.secondary" sx={{ mt: 0.5, m: 0 }}>
           Jahr: {currentYear}
         </Typography>
       </DialogTitle>
       <DialogContent>
-        {viewMode === "month" ? (
+        {viewMode === 'month' ? (
           <Grid container spacing={1}>
             {months.map(({ name, index, date }) => {
               const isCurrent = isCurrentMonth(index);
@@ -165,39 +144,31 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
                     sx={{
                       py: 1.5,
                       borderRadius: 2,
-                      textTransform: "none",
+                      textTransform: 'none',
                       fontWeight: isSelected ? 600 : 500,
                       backgroundColor: isSelected
-                        ? "primary.main"
+                        ? 'primary.main'
                         : isCurrent
-                          ? "rgba(76, 175, 80, 0.15)"
-                          : "transparent",
+                          ? 'rgba(76, 175, 80, 0.15)'
+                          : 'transparent',
                       color: isSelected
-                        ? "primary.contrastText"
+                        ? 'primary.contrastText'
                         : isCurrent
-                          ? "#2e7d32"
-                          : "text.primary",
-                      border: isSelected
-                        ? "2px solid"
-                        : isCurrent
-                          ? "2px solid"
-                          : "1px solid",
-                      borderColor: isSelected
-                        ? "primary.main"
-                        : isCurrent
-                          ? "#4caf50"
-                          : "divider",
-                      "&:hover": {
+                          ? '#2e7d32'
+                          : 'text.primary',
+                      border: isSelected ? '2px solid' : isCurrent ? '2px solid' : '1px solid',
+                      borderColor: isSelected ? 'primary.main' : isCurrent ? '#4caf50' : 'divider',
+                      '&:hover': {
                         backgroundColor: isSelected
-                          ? "primary.dark"
+                          ? 'primary.dark'
                           : isCurrent
-                            ? "rgba(76, 175, 80, 0.25)"
-                            : "action.hover",
+                            ? 'rgba(76, 175, 80, 0.25)'
+                            : 'action.hover',
                         color: isSelected
-                          ? "primary.contrastText"
+                          ? 'primary.contrastText'
                           : isCurrent
-                            ? "#1b5e20"
-                            : "text.primary",
+                            ? '#1b5e20'
+                            : 'text.primary',
                       },
                     }}
                   >
@@ -210,8 +181,8 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
         ) : (
           <Box
             sx={{
-              maxHeight: "400px",
-              overflow: "auto",
+              maxHeight: '400px',
+              overflow: 'auto',
             }}
           >
             <Grid container spacing={1}>
@@ -227,65 +198,58 @@ export const DatePickerDialog: React.FC<DatePickerDialogProps> = ({
                       sx={{
                         py: 1.5,
                         borderRadius: 2,
-                        textTransform: "none",
+                        textTransform: 'none',
                         fontWeight: isSelected ? 600 : 500,
                         backgroundColor: isSelected
-                          ? "primary.main"
+                          ? 'primary.main'
                           : isCurrent
-                            ? "rgba(76, 175, 80, 0.15)"
-                            : "transparent",
+                            ? 'rgba(76, 175, 80, 0.15)'
+                            : 'transparent',
                         color: isSelected
-                          ? "primary.contrastText"
+                          ? 'primary.contrastText'
                           : isCurrent
-                            ? "#2e7d32"
-                            : "text.primary",
-                        border: isSelected
-                          ? "2px solid"
-                          : isCurrent
-                            ? "2px solid"
-                            : "1px solid",
+                            ? '#2e7d32'
+                            : 'text.primary',
+                        border: isSelected ? '2px solid' : isCurrent ? '2px solid' : '1px solid',
                         borderColor: isSelected
-                          ? "primary.main"
+                          ? 'primary.main'
                           : isCurrent
-                            ? "#4caf50"
-                            : "divider",
-                        "&:hover": {
+                            ? '#4caf50'
+                            : 'divider',
+                        '&:hover': {
                           backgroundColor: isSelected
-                            ? "primary.dark"
+                            ? 'primary.dark'
                             : isCurrent
-                              ? "rgba(76, 175, 80, 0.25)"
-                              : "action.hover",
+                              ? 'rgba(76, 175, 80, 0.25)'
+                              : 'action.hover',
                           color: isSelected
-                            ? "primary.contrastText"
+                            ? 'primary.contrastText'
                             : isCurrent
-                              ? "#1b5e20"
-                              : "text.primary",
+                              ? '#1b5e20'
+                              : 'text.primary',
                         },
                       }}
                     >
-                      <Box sx={{ textAlign: "center", width: "100%" }}>
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: "inherit" }}
-                        >
+                      <Box sx={{ textAlign: 'center', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
                           KW {week}
                         </Typography>
                         <Typography
                           variant="caption"
                           sx={{
-                            display: "block",
-                            fontSize: "0.7rem",
+                            display: 'block',
+                            fontSize: '0.7rem',
                             opacity: 0.8,
                           }}
                         >
-                          {startDate.toLocaleDateString("de-DE", {
-                            day: "2-digit",
-                            month: "2-digit",
-                          })}{" "}
-                          -{" "}
-                          {endDate.toLocaleDateString("de-DE", {
-                            day: "2-digit",
-                            month: "2-digit",
+                          {startDate.toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                          })}{' '}
+                          -{' '}
+                          {endDate.toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
                           })}
                         </Typography>
                       </Box>

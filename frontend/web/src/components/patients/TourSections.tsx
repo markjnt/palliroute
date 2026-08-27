@@ -1,13 +1,13 @@
-import React from "react";
-import { List, ListItem, Typography, Paper, Box } from "@mui/material";
+import React from 'react';
+import { List, ListItem, Typography, Paper, Box } from '@mui/material';
 import {
   Home as HomeIcon,
   Phone as PhoneIcon,
   AddCircle as AddCircleIcon,
   Person as PersonIcon,
-} from "@mui/icons-material";
-import { Patient, Appointment, Weekday, Route } from "../../types/models";
-import { PatientCard } from "./PatientCard";
+} from '@mui/icons-material';
+import { Patient, Appointment, Weekday, Route } from '../../types/models';
+import { PatientCard } from './PatientCard';
 
 interface TourSectionsProps {
   sortedRoutePatients: Patient[];
@@ -16,10 +16,7 @@ interface TourSectionsProps {
   tourEmployeeTkPatients: Patient[]; // Tour employee TK patients (shown but not in normal TK section)
   emptyTypePatients: Patient[];
   getPatientAppointments: (patientId: number) => Appointment[];
-  isTourEmployeeAppointment: (
-    appointment: Appointment,
-    employeeId?: number,
-  ) => boolean;
+  isTourEmployeeAppointment: (appointment: Appointment, employeeId?: number) => boolean;
   selectedDay: Weekday;
   employeeId?: number;
   // New props for appointments
@@ -61,22 +58,18 @@ const TourSections: React.FC<TourSectionsProps> = ({
         routeOrder = route.route_order;
       } else {
         try {
-          const parsedOrder = JSON.parse(
-            route.route_order as unknown as string,
-          );
+          const parsedOrder = JSON.parse(route.route_order as unknown as string);
           if (Array.isArray(parsedOrder)) {
             routeOrder = parsedOrder;
           }
         } catch (error) {
-          console.error("Failed to parse route_order:", error);
+          console.error('Failed to parse route_order:', error);
         }
       }
 
       // Sort appointments by route order
       const sortedApps: Appointment[] = [];
-      const appointmentMap = new Map(
-        normalRouteAppointments.map((app) => [app.id, app]),
-      );
+      const appointmentMap = new Map(normalRouteAppointments.map((app) => [app.id, app]));
 
       // Add appointments in route order
       for (const appointmentId of routeOrder) {
@@ -101,10 +94,10 @@ const TourSections: React.FC<TourSectionsProps> = ({
       {/* Home visits and new admissions (HB + NA) section */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           mb: 2,
-          color: "primary.main",
+          color: 'primary.main',
         }}
       >
         <HomeIcon color="primary" />
@@ -126,10 +119,7 @@ const TourSections: React.FC<TourSectionsProps> = ({
             });
 
             // Create a map of tour employee appointments by patient_id
-            const tourEmployeeAppointmentsByPatient = new Map<
-              number,
-              Appointment[]
-            >();
+            const tourEmployeeAppointmentsByPatient = new Map<number, Appointment[]>();
             tourEmployeeAppointments.forEach((app) => {
               const patientId = app.patient_id;
               if (!tourEmployeeAppointmentsByPatient.has(patientId)) {
@@ -139,58 +129,40 @@ const TourSections: React.FC<TourSectionsProps> = ({
             });
 
             let globalIndex = 0;
-            return Array.from(appointmentsByPatient.entries()).map(
-              ([patientId, patientAppts]) => {
-                const patient = patients.find((p) => p.id === patientId);
-                if (!patient) return null;
+            return Array.from(appointmentsByPatient.entries()).map(([patientId, patientAppts]) => {
+              const patient = patients.find((p) => p.id === patientId);
+              if (!patient) return null;
 
-                const allPatientAppointments = getPatientAppointments(
-                  patient.id || 0,
-                );
-                const visitType =
-                  patientAppts[0].visit_type === "HB" ? "HB" : "NA";
-                const isMultiple = patientAppts.length > 1;
-                const currentIndex = globalIndex + 1;
-                globalIndex += patientAppts.length;
+              const allPatientAppointments = getPatientAppointments(patient.id || 0);
+              const visitType = patientAppts[0].visit_type === 'HB' ? 'HB' : 'NA';
+              const isMultiple = patientAppts.length > 1;
+              const currentIndex = globalIndex + 1;
+              globalIndex += patientAppts.length;
 
-                // Check if there are tour employee appointments for this patient
-                const tourEmployeeApptsForPatient =
-                  tourEmployeeAppointmentsByPatient.get(patientId);
+              // Check if there are tour employee appointments for this patient
+              const tourEmployeeApptsForPatient = tourEmployeeAppointmentsByPatient.get(patientId);
 
-                return (
-                  <ListItem
-                    key={`route-patient-${patientId}`}
-                    disablePadding
-                    sx={{ mb: 1 }}
-                  >
-                    <PatientCard
-                      patient={patient}
-                      appointments={allPatientAppointments}
-                      visitType={visitType}
-                      index={currentIndex}
-                      selectedDay={selectedDay}
-                      isTourEmployeeAppointment={false}
-                      currentEmployeeId={employeeId}
-                      appointmentId={patientAppts[0].id}
-                      multipleAppointments={
-                        isMultiple ? patientAppts : undefined
-                      }
-                      tourEmployeeAppointmentsForPatient={
-                        tourEmployeeApptsForPatient
-                      }
-                    />
-                  </ListItem>
-                );
-              },
-            );
+              return (
+                <ListItem key={`route-patient-${patientId}`} disablePadding sx={{ mb: 1 }}>
+                  <PatientCard
+                    patient={patient}
+                    appointments={allPatientAppointments}
+                    visitType={visitType}
+                    index={currentIndex}
+                    selectedDay={selectedDay}
+                    isTourEmployeeAppointment={false}
+                    currentEmployeeId={employeeId}
+                    appointmentId={patientAppts[0].id}
+                    multipleAppointments={isMultiple ? patientAppts : undefined}
+                    tourEmployeeAppointmentsForPatient={tourEmployeeApptsForPatient}
+                  />
+                </ListItem>
+              );
+            });
           })()}
         </List>
       ) : (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ ml: 4, mb: 2 }}
-        >
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 4, mb: 2 }}>
           Keine Route-Termine für diesen Tag geplant.
         </Typography>
       )}
@@ -198,13 +170,10 @@ const TourSections: React.FC<TourSectionsProps> = ({
       {/* Tour employee appointments (shown but not in route) */}
       {(() => {
         // Filter out tour employee appointments that already have a normal route appointment for the same patient
-        const normalRoutePatientIds = new Set(
-          allRouteAppointments.map((app) => app.patient_id),
+        const normalRoutePatientIds = new Set(allRouteAppointments.map((app) => app.patient_id));
+        const filteredTourEmployeeAppointments = tourEmployeeAppointments.filter(
+          (app) => !normalRoutePatientIds.has(app.patient_id)
         );
-        const filteredTourEmployeeAppointments =
-          tourEmployeeAppointments.filter(
-            (app) => !normalRoutePatientIds.has(app.patient_id),
-          );
 
         if (filteredTourEmployeeAppointments.length === 0) return null;
 
@@ -227,21 +196,14 @@ const TourSections: React.FC<TourSectionsProps> = ({
                     const patient = patients.find((p) => p.id === patientId);
                     if (!patient) return null;
 
-                    const allPatientAppointments = getPatientAppointments(
-                      patient.id || 0,
-                    );
-                    const visitType =
-                      patientAppts[0].visit_type === "HB" ? "HB" : "NA";
+                    const allPatientAppointments = getPatientAppointments(patient.id || 0);
+                    const visitType = patientAppts[0].visit_type === 'HB' ? 'HB' : 'NA';
                     const isMultiple = patientAppts.length > 1;
 
                     // Since appointments are grouped by patient_id, each displayed appointment is the first for this patient
                     // So isFirstTourEmployeeAppointment should always be true
                     return (
-                      <ListItem
-                        key={`tour-patient-${patientId}`}
-                        disablePadding
-                        sx={{ mb: 1 }}
-                      >
+                      <ListItem key={`tour-patient-${patientId}`} disablePadding sx={{ mb: 1 }}>
                         <PatientCard
                           patient={patient}
                           appointments={allPatientAppointments}
@@ -250,14 +212,12 @@ const TourSections: React.FC<TourSectionsProps> = ({
                           isTourEmployeeAppointment={true}
                           currentEmployeeId={employeeId}
                           appointmentId={patientAppts[0].id}
-                          multipleAppointments={
-                            isMultiple ? patientAppts : undefined
-                          }
+                          multipleAppointments={isMultiple ? patientAppts : undefined}
                           isFirstTourEmployeeAppointment={true}
                         />
                       </ListItem>
                     );
-                  },
+                  }
                 );
               })()}
             </List>
@@ -265,29 +225,29 @@ const TourSections: React.FC<TourSectionsProps> = ({
         );
       })()}
 
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
         {/* Phone contacts (TK) section */}
         <Paper
           variant="outlined"
           sx={{
             flex: {
-              xs: "1 1 100%",
-              sm: "1 1 47%",
+              xs: '1 1 100%',
+              sm: '1 1 47%',
             },
             minWidth: {
-              xs: "100%",
-              sm: "300px",
+              xs: '100%',
+              sm: '300px',
             },
             p: 2,
-            bgcolor: "rgba(76, 175, 80, 0.04)",
+            bgcolor: 'rgba(76, 175, 80, 0.04)',
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               mb: 2,
-              color: "success.main",
+              color: 'success.main',
             }}
           >
             <PhoneIcon color="success" />
@@ -307,10 +267,7 @@ const TourSections: React.FC<TourSectionsProps> = ({
             });
 
             // Create a map of tour employee TK appointments by patient_id
-            const tourEmployeeTkAppointmentsByPatient = new Map<
-              number,
-              Appointment[]
-            >();
+            const tourEmployeeTkAppointmentsByPatient = new Map<number, Appointment[]>();
             tourEmployeeTkAppointments.forEach((app) => {
               const patientId = app.patient_id;
               if (!tourEmployeeTkAppointmentsByPatient.has(patientId)) {
@@ -338,24 +295,17 @@ const TourSections: React.FC<TourSectionsProps> = ({
                   const patient = patients.find((p) => p.id === patientId);
                   if (!patient) return null;
 
-                  const normalTkAppts =
-                    tkAppointmentsByPatient.get(patientId) || [];
+                  const normalTkAppts = tkAppointmentsByPatient.get(patientId) || [];
                   const tourEmployeeTkAppts =
                     tourEmployeeTkAppointmentsByPatient.get(patientId) || [];
 
                   // If there are normal TK appointments, show them and include tour employee appointments
                   if (normalTkAppts.length > 0) {
-                    const allPatientAppointments = getPatientAppointments(
-                      patient.id || 0,
-                    );
+                    const allPatientAppointments = getPatientAppointments(patient.id || 0);
                     const isMultiple = normalTkAppts.length > 1;
 
                     return (
-                      <ListItem
-                        key={`tk-patient-${patientId}`}
-                        disablePadding
-                        sx={{ mb: 1 }}
-                      >
+                      <ListItem key={`tk-patient-${patientId}`} disablePadding sx={{ mb: 1 }}>
                         <PatientCard
                           patient={patient}
                           appointments={allPatientAppointments}
@@ -365,13 +315,9 @@ const TourSections: React.FC<TourSectionsProps> = ({
                           isTourEmployeeAppointment={false}
                           currentEmployeeId={employeeId}
                           appointmentId={normalTkAppts[0].id}
-                          multipleAppointments={
-                            isMultiple ? normalTkAppts : undefined
-                          }
+                          multipleAppointments={isMultiple ? normalTkAppts : undefined}
                           tourEmployeeAppointmentsForPatient={
-                            tourEmployeeTkAppts.length > 0
-                              ? tourEmployeeTkAppts
-                              : undefined
+                            tourEmployeeTkAppts.length > 0 ? tourEmployeeTkAppts : undefined
                           }
                         />
                       </ListItem>
@@ -380,17 +326,11 @@ const TourSections: React.FC<TourSectionsProps> = ({
 
                   // Only tour employee TK appointments (no normal ones)
                   if (tourEmployeeTkAppts.length > 0) {
-                    const allPatientAppointments = getPatientAppointments(
-                      patient.id || 0,
-                    );
+                    const allPatientAppointments = getPatientAppointments(patient.id || 0);
                     const isMultiple = tourEmployeeTkAppts.length > 1;
 
                     return (
-                      <ListItem
-                        key={`tour-tk-patient-${patientId}`}
-                        disablePadding
-                        sx={{ mb: 1 }}
-                      >
+                      <ListItem key={`tour-tk-patient-${patientId}`} disablePadding sx={{ mb: 1 }}>
                         <PatientCard
                           patient={patient}
                           appointments={allPatientAppointments}
@@ -400,9 +340,7 @@ const TourSections: React.FC<TourSectionsProps> = ({
                           isTourEmployeeAppointment={true}
                           currentEmployeeId={employeeId}
                           appointmentId={tourEmployeeTkAppts[0].id}
-                          multipleAppointments={
-                            isMultiple ? tourEmployeeTkAppts : undefined
-                          }
+                          multipleAppointments={isMultiple ? tourEmployeeTkAppts : undefined}
                         />
                       </ListItem>
                     );
@@ -429,10 +367,7 @@ const TourSections: React.FC<TourSectionsProps> = ({
         });
 
         // Create a map of tour employee empty type appointments by patient_id
-        const tourEmployeeEmptyTypeAppointmentsByPatient = new Map<
-          number,
-          Appointment[]
-        >();
+        const tourEmployeeEmptyTypeAppointmentsByPatient = new Map<number, Appointment[]>();
         tourEmployeeEmptyTypeAppointments.forEach((app) => {
           const patientId = app.patient_id;
           if (!tourEmployeeEmptyTypeAppointmentsByPatient.has(patientId)) {
@@ -454,15 +389,15 @@ const TourSections: React.FC<TourSectionsProps> = ({
               variant="outlined"
               sx={{
                 p: 2,
-                bgcolor: "rgba(158, 158, 158, 0.04)",
+                bgcolor: 'rgba(158, 158, 158, 0.04)',
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   mb: 2,
-                  color: "text.secondary",
+                  color: 'text.secondary',
                 }}
               >
                 <PersonIcon color="action" />
@@ -475,24 +410,20 @@ const TourSections: React.FC<TourSectionsProps> = ({
                   const patient = patients.find((p) => p.id === patientId);
                   if (!patient) return null;
 
-                  const normalEmptyTypeAppts =
-                    emptyTypeAppointmentsByPatient.get(patientId) || [];
+                  const normalEmptyTypeAppts = emptyTypeAppointmentsByPatient.get(patientId) || [];
                   const tourEmployeeEmptyTypeAppts =
-                    tourEmployeeEmptyTypeAppointmentsByPatient.get(patientId) ||
-                    [];
+                    tourEmployeeEmptyTypeAppointmentsByPatient.get(patientId) || [];
 
                   // If there are normal empty type appointments, show them and include tour employee appointments
                   if (normalEmptyTypeAppts.length > 0) {
-                    const allPatientAppointments = getPatientAppointments(
-                      patient.id || 0,
-                    );
+                    const allPatientAppointments = getPatientAppointments(patient.id || 0);
                     const isMultiple = normalEmptyTypeAppts.length > 1;
 
                     return (
                       <ListItem
                         key={`empty-patient-${patientId}`}
                         disablePadding
-                        sx={{ width: "100%" }}
+                        sx={{ width: '100%' }}
                       >
                         <PatientCard
                           patient={patient}
@@ -503,9 +434,7 @@ const TourSections: React.FC<TourSectionsProps> = ({
                           isTourEmployeeAppointment={false}
                           currentEmployeeId={employeeId}
                           appointmentId={normalEmptyTypeAppts[0].id}
-                          multipleAppointments={
-                            isMultiple ? normalEmptyTypeAppts : undefined
-                          }
+                          multipleAppointments={isMultiple ? normalEmptyTypeAppts : undefined}
                           tourEmployeeAppointmentsForPatient={
                             tourEmployeeEmptyTypeAppts.length > 0
                               ? tourEmployeeEmptyTypeAppts
@@ -518,16 +447,14 @@ const TourSections: React.FC<TourSectionsProps> = ({
 
                   // Only tour employee empty type appointments (no normal ones)
                   if (tourEmployeeEmptyTypeAppts.length > 0) {
-                    const allPatientAppointments = getPatientAppointments(
-                      patient.id || 0,
-                    );
+                    const allPatientAppointments = getPatientAppointments(patient.id || 0);
                     const isMultiple = tourEmployeeEmptyTypeAppts.length > 1;
 
                     return (
                       <ListItem
                         key={`tour-empty-patient-${patientId}`}
                         disablePadding
-                        sx={{ width: "100%" }}
+                        sx={{ width: '100%' }}
                       >
                         <PatientCard
                           patient={patient}
@@ -538,9 +465,7 @@ const TourSections: React.FC<TourSectionsProps> = ({
                           isTourEmployeeAppointment={true}
                           currentEmployeeId={employeeId}
                           appointmentId={tourEmployeeEmptyTypeAppts[0].id}
-                          multipleAppointments={
-                            isMultiple ? tourEmployeeEmptyTypeAppts : undefined
-                          }
+                          multipleAppointments={isMultiple ? tourEmployeeEmptyTypeAppts : undefined}
                         />
                       </ListItem>
                     );

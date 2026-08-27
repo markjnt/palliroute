@@ -1,17 +1,10 @@
-import React, { useState } from "react";
-import {
-  Box,
-  IconButton,
-  Typography,
-  Chip,
-  Tooltip,
-  Alert,
-} from "@mui/material";
-import { Warning, PersonAdd } from "@mui/icons-material";
-import { ReplacementMenu } from "./ReplacementMenu";
-import { ReplacementConfirmationDialog } from "./ReplacementConfirmationDialog";
-import { useUpdateReplacement } from "../../services/queries/useEmployeePlanning";
-import { getColorForTour } from "@palliroute/shared";
+import React, { useState } from 'react';
+import { Box, IconButton, Typography, Chip, Tooltip, Alert } from '@mui/material';
+import { Warning, PersonAdd } from '@mui/icons-material';
+import { ReplacementMenu } from './ReplacementMenu';
+import { ReplacementConfirmationDialog } from './ReplacementConfirmationDialog';
+import { useUpdateReplacement } from '../../services/queries/useEmployeePlanning';
+import { getColorForTour } from '@palliroute/shared';
 
 interface WeeklyPlanningCellProps {
   employeeId: number;
@@ -33,32 +26,30 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
 }) => {
   // Map German weekday names to English database format
   const weekdayMapping: { [key: string]: string } = {
-    Montag: "monday",
-    Dienstag: "tuesday",
-    Mittwoch: "wednesday",
-    Donnerstag: "thursday",
-    Freitag: "friday",
-    Samstag: "saturday",
-    Sonntag: "sunday",
+    Montag: 'monday',
+    Dienstag: 'tuesday',
+    Mittwoch: 'wednesday',
+    Donnerstag: 'thursday',
+    Freitag: 'friday',
+    Samstag: 'saturday',
+    Sonntag: 'sunday',
   };
 
   const dbWeekday = weekdayMapping[weekday] || weekday.toLowerCase();
 
   // Filter data for this specific employee and weekday
   const relevantData = allPlanningData.find(
-    (entry: any) =>
-      entry.employee_id === employeeId && entry.weekday === dbWeekday,
+    (entry: any) => entry.employee_id === employeeId && entry.weekday === dbWeekday
   );
 
   // Always use backend data - no local state management
   const isAvailable: boolean = relevantData?.available ?? true;
-  const currentCustomText: string = relevantData?.custom_text || "";
+  const currentCustomText: string = relevantData?.custom_text || '';
   const hasConflicts: boolean = relevantData?.has_conflicts || false;
   const appointmentsCount: number = relevantData?.appointments_count || 0;
   const replacementEmployee = relevantData?.replacement_employee;
 
-  const [replacementMenuAnchor, setReplacementMenuAnchor] =
-    useState<null | HTMLElement>(null);
+  const [replacementMenuAnchor, setReplacementMenuAnchor] = useState<null | HTMLElement>(null);
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [pendingReplacement, setPendingReplacement] = useState<{
     targetEmployee: any;
@@ -80,8 +71,7 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
 
       // Find planning data for this employee and current weekday
       const planningEntry = allPlanningData.find(
-        (entry: any) =>
-          entry.employee_id === employeeId && entry.weekday === dbWeekday,
+        (entry: any) => entry.employee_id === employeeId && entry.weekday === dbWeekday
       );
 
       // Use patient_count from planning data, or 0 if not found
@@ -119,11 +109,11 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
         // Show success message if appointments were moved
         if (result.data.moved_appointments > 0) {
           console.log(
-            `${result.data.moved_appointments} Termin${result.data.moved_appointments !== 1 ? "e" : ""} automatisch zurück zum ursprünglichen Mitarbeiter verschoben`,
+            `${result.data.moved_appointments} Termin${result.data.moved_appointments !== 1 ? 'e' : ''} automatisch zurück zum ursprünglichen Mitarbeiter verschoben`
           );
         }
       } catch (error) {
-        console.error("Error removing replacement:", error);
+        console.error('Error removing replacement:', error);
       }
       return;
     } else {
@@ -131,17 +121,11 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
       if (replacementEmployee) {
         // Changing existing replacement: source is current replacement, target is new replacement
         sourceEmployee = replacementEmployee;
-        targetEmployee = availableEmployees.find(
-          (emp) => emp.id === replacementId,
-        );
+        targetEmployee = availableEmployees.find((emp) => emp.id === replacementId);
       } else {
         // Setting new replacement: source is original employee, target is new replacement
-        sourceEmployee = availableEmployees.find(
-          (emp) => emp.id === employeeId,
-        );
-        targetEmployee = availableEmployees.find(
-          (emp) => emp.id === replacementId,
-        );
+        sourceEmployee = availableEmployees.find((emp) => emp.id === employeeId);
+        targetEmployee = availableEmployees.find((emp) => emp.id === replacementId);
       }
     }
 
@@ -170,17 +154,17 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
       // Show success message if appointments were moved
       if (result.data.moved_appointments > 0) {
         const replacementEmployee = availableEmployees.find(
-          (emp) => emp.id === pendingReplacement.replacementId,
+          (emp) => emp.id === pendingReplacement.replacementId
         );
         const employeeName = replacementEmployee
           ? `${replacementEmployee.first_name} ${replacementEmployee.last_name}`
-          : "Original";
+          : 'Original';
         console.log(
-          `${result.data.moved_appointments} Termin${result.data.moved_appointments !== 1 ? "e" : ""} automatisch zu ${employeeName} verschoben`,
+          `${result.data.moved_appointments} Termin${result.data.moved_appointments !== 1 ? 'e' : ''} automatisch zu ${employeeName} verschoben`
         );
       }
     } catch (error) {
-      console.error("Error updating replacement:", error);
+      console.error('Error updating replacement:', error);
     } finally {
       setConfirmationDialogOpen(false);
       setPendingReplacement(null);
@@ -193,48 +177,45 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
   };
 
   // Get current employee info to determine color
-  const currentEmployee = availableEmployees.find(
-    (emp) => emp.id === employeeId,
-  );
-  const employeeFunction = (currentEmployee?.function || "").toLowerCase();
-  const isDoctor =
-    employeeFunction === "arzt" || employeeFunction === "honorararzt";
+  const currentEmployee = availableEmployees.find((emp) => emp.id === employeeId);
+  const employeeFunction = (currentEmployee?.function || '').toLowerCase();
+  const isDoctor = employeeFunction === 'arzt' || employeeFunction === 'honorararzt';
 
   // Check custom_text for Tour Nord or Tour Süd
-  const customText = relevantData?.custom_text || "";
+  const customText = relevantData?.custom_text || '';
 
   // Determine color based on tour and function
   const getAvailableColor = () => {
     if (isDoctor) {
       // Doctors keep the old green color
-      return "#2196F3";
-    } else if (customText === "Tour Nord") {
+      return '#2196F3';
+    } else if (customText === 'Tour Nord') {
       // Tour Nord: Rosa
-      return "#ff8ade";
-    } else if (customText === "Tour Süd") {
+      return '#ff8ade';
+    } else if (customText === 'Tour Süd') {
       // Tour Süd: Grün
-      return "#65B761";
-    } else if (customText === "AW Nord") {
+      return '#65B761';
+    } else if (customText === 'AW Nord') {
       // AW Nord: Light blue (from colorUtils.ts)
-      return "#59cdf0";
-    } else if (customText === "AW Mitte") {
+      return '#59cdf0';
+    } else if (customText === 'AW Mitte') {
       // AW Mitte: Yellow (from colorUtils.ts)
-      return "#ffe600";
-    } else if (customText === "AW Süd") {
+      return '#ffe600';
+    } else if (customText === 'AW Süd') {
       // AW Süd: Green (from colorUtils.ts)
-      return "#41b955";
+      return '#41b955';
     } else {
       // Default: Blue to distinguish from tour colors
-      return "#2196F3";
+      return '#2196F3';
     }
   };
 
   // Get status display info
   const statusInfo = isAvailable
-    ? { value: true, label: "Verfügbar", color: getAvailableColor() }
-    : { value: false, label: "Abwesend", color: "#F44336" };
+    ? { value: true, label: 'Verfügbar', color: getAvailableColor() }
+    : { value: false, label: 'Abwesend', color: '#F44336' };
 
-  const isWeekend = weekday === "Samstag" || weekday === "Sonntag";
+  const isWeekend = weekday === 'Samstag' || weekday === 'Sonntag';
   // Feiertage wie Wochenende: AW-Chips, kein Vertretungs-UI
   const treatAsAwDay = isAwDay || isWeekend;
 
@@ -243,15 +224,15 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
       <Box
         sx={{
           minHeight: 40,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "1px dashed",
-          borderColor: hasConflicts ? "error.main" : "grey.300",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px dashed',
+          borderColor: hasConflicts ? 'error.main' : 'grey.300',
           borderRadius: 1,
-          backgroundColor: treatAsAwDay ? "grey.100" : "grey.50",
-          position: "relative",
+          backgroundColor: treatAsAwDay ? 'grey.100' : 'grey.50',
+          position: 'relative',
           px: 1,
           py: 0.5,
           gap: 0.5,
@@ -261,7 +242,7 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
         {hasConflicts && (
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               top: -6,
               right: -6,
               zIndex: 0,
@@ -269,42 +250,38 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
           >
             <Warning
               sx={{
-                color: "error.main",
+                color: 'error.main',
                 fontSize: 25,
-                backgroundColor: "white",
-                borderRadius: "50%",
-                padding: "2px",
+                backgroundColor: 'white',
+                borderRadius: '50%',
+                padding: '2px',
               }}
             />
           </Box>
         )}
 
         {/* Status display */}
-        <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           {hasConflicts ? (
             <Tooltip
-              title={`${appointmentsCount} Termin${appointmentsCount !== 1 ? "e" : ""} vorhanden`}
+              title={`${appointmentsCount} Termin${appointmentsCount !== 1 ? 'e' : ''} vorhanden`}
               arrow
               placement="top"
             >
               <Box>
                 <Chip
-                  label={
-                    !isAvailable && currentCustomText
-                      ? currentCustomText
-                      : statusInfo.label
-                  }
+                  label={!isAvailable && currentCustomText ? currentCustomText : statusInfo.label}
                   size="small"
                   sx={{
                     backgroundColor: statusInfo.color,
-                    color: "white",
-                    fontSize: "0.75rem",
+                    color: 'white',
+                    fontSize: '0.75rem',
                     height: 20,
-                    maxWidth: "100%",
-                    "& .MuiChip-label": {
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                    maxWidth: '100%',
+                    '& .MuiChip-label': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     },
                   }}
                 />
@@ -317,14 +294,14 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
               title={holidayName || undefined}
               sx={{
                 backgroundColor: statusInfo.color,
-                color: "white",
-                fontSize: "0.75rem",
+                color: 'white',
+                fontSize: '0.75rem',
                 height: 20,
-                maxWidth: "100%",
-                "& .MuiChip-label": {
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                maxWidth: '100%',
+                '& .MuiChip-label': {
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 },
               }}
             />
@@ -335,33 +312,33 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
         {!treatAsAwDay && (
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              width: "100%",
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
               gap: 0.5,
             }}
           >
             {replacementEmployee ? (
               <Tooltip title="Vertretung ändern" arrow placement="top">
                 <Chip
-                  label={`${replacementEmployee.first_name?.charAt(0) || ""}. ${replacementEmployee.last_name}`}
+                  label={`${replacementEmployee.first_name?.charAt(0) || ''}. ${replacementEmployee.last_name}`}
                   size="small"
                   onClick={handleReplacementMenuOpen}
                   sx={{
                     bgcolor: getColorForTour(replacementEmployee.id),
-                    color: "white",
-                    fontSize: "0.65rem",
+                    color: 'white',
+                    fontSize: '0.65rem',
                     height: 18,
-                    maxWidth: "100%",
-                    cursor: "pointer",
-                    "&:hover": {
+                    maxWidth: '100%',
+                    cursor: 'pointer',
+                    '&:hover': {
                       opacity: 0.8,
                     },
-                    "& .MuiChip-label": {
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                    '& .MuiChip-label': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                       px: 0.75,
                       py: 0,
                     },
@@ -377,12 +354,12 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
                     width: 18,
                     height: 18,
                     p: 0,
-                    "&:hover": {
-                      backgroundColor: "primary.50",
+                    '&:hover': {
+                      backgroundColor: 'primary.50',
                     },
                   }}
                 >
-                  <PersonAdd sx={{ fontSize: 14, color: "text.secondary" }} />
+                  <PersonAdd sx={{ fontSize: 14, color: 'text.secondary' }} />
                 </IconButton>
               </Tooltip>
             )}
@@ -414,9 +391,7 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
           weekday={weekday}
           patientCount={relevantData?.replacement_affected_count || 0}
           targetPatientCount={
-            getPatientCountsForAllEmployees().get(
-              pendingReplacement.targetEmployee?.id,
-            ) || 0
+            getPatientCountsForAllEmployees().get(pendingReplacement.targetEmployee?.id) || 0
           }
           isRemovingReplacement={pendingReplacement.isRemoving}
         />

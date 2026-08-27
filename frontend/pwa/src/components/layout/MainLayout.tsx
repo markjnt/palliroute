@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Box } from "@mui/material";
-import { MapView } from "./MainViewMap";
-import { useUserStore } from "../../stores/useUserStore";
-import { useWeekdayStore } from "../../stores/useWeekdayStore";
-import { MainBottomSheet } from "./MainBottomSheet";
-import AdditionalRoutesSheet from "../user/AdditionalRoutesSheet";
-import AdminEmployeeSelectSheet from "../user/AdminEmployeeSelectSheet";
-import { TopOverviewBar } from "./TopOverviewBar";
-import { useAuthMe } from "../../services/queries/useAuthMe";
-import { useFallbackSelectedWeekday } from "../../hooks/useFallbackSelectedWeekday";
+import React, { useEffect, useState } from 'react';
+import { Box } from '@mui/material';
+import { MapView } from './MainViewMap';
+import { useUserStore } from '../../stores/useUserStore';
+import { useWeekdayStore } from '../../stores/useWeekdayStore';
+import { MainBottomSheet } from './MainBottomSheet';
+import AdditionalRoutesSheet from '../user/AdditionalRoutesSheet';
+import AdminEmployeeSelectSheet from '../user/AdminEmployeeSelectSheet';
+import { TopOverviewBar } from './TopOverviewBar';
+import { useAuthMe } from '../../services/queries/useAuthMe';
+import { useFallbackSelectedWeekday } from '../../hooks/useFallbackSelectedWeekday';
 
 declare global {
   interface Window {
@@ -16,7 +16,7 @@ declare global {
   }
 }
 
-const WEEKDAY_STORAGE_KEY = "pwa-weekday-storage";
+const WEEKDAY_STORAGE_KEY = 'pwa-weekday-storage';
 
 const MainLayout: React.FC = () => {
   const { selectedUserId } = useUserStore();
@@ -83,18 +83,18 @@ const MainLayout: React.FC = () => {
   return (
     <Box
       sx={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        position: "fixed",
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
       }}
     >
-      <Box sx={{ flex: 1, overflow: "hidden", position: "relative" }}>
+      <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         <MapView onMapClick={handleSheetClose} />
 
         <TopOverviewBar
@@ -109,10 +109,7 @@ const MainLayout: React.FC = () => {
 
         <MainBottomSheet isOpen={isSheetOpen} onClose={handleSheetClose} />
 
-        <AdditionalRoutesSheet
-          open={isAdditionalRoutesOpen}
-          onClose={handleDrawerClose}
-        />
+        <AdditionalRoutesSheet open={isAdditionalRoutesOpen} onClose={handleDrawerClose} />
         <AdminEmployeeSelectSheet
           open={isAdminSelectOpen}
           onClose={() => {

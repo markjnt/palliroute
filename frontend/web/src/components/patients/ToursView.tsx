@@ -1,26 +1,22 @@
-import React, { useMemo } from "react";
-import { Box, Typography, Alert, CircularProgress } from "@mui/material";
-import { Employee, Weekday } from "../../types/models";
-import { TourContainer } from "./TourContainer";
-import { NursingAreaRouteSummary } from "./tour/NursingAreaRouteSummary";
-import { SearchField } from "./SearchField";
-import type { FilteredResults } from "./SearchField";
-import { WeekendToursView } from "./weekend/WeekendToursView";
+import React, { useMemo } from 'react';
+import { Box, Typography, Alert, CircularProgress } from '@mui/material';
+import { Employee, Weekday } from '../../types/models';
+import { TourContainer } from './TourContainer';
+import { NursingAreaRouteSummary } from './tour/NursingAreaRouteSummary';
+import { SearchField } from './SearchField';
+import type { FilteredResults } from './SearchField';
+import { WeekendToursView } from './weekend/WeekendToursView';
 import {
   Person as PersonIcon,
   LocalHospital as DoctorIcon,
   RemoveCircle as EmptyIcon,
-} from "@mui/icons-material";
-import { useRoutes } from "../../services/queries/useRoutes";
-import { useEmployees } from "../../services/queries/useEmployees";
-import { usePatients } from "../../services/queries/usePatients";
-import { useAppointmentsByWeekday } from "../../services/queries/useAppointments";
-import { useAreaStore } from "../../stores/useAreaStore";
-import {
-  useEmployeeManagement,
-  useAreaManagement,
-  useNrwpHolidayForTourDay,
-} from "../../hooks";
+} from '@mui/icons-material';
+import { useRoutes } from '../../services/queries/useRoutes';
+import { useEmployees } from '../../services/queries/useEmployees';
+import { usePatients } from '../../services/queries/usePatients';
+import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
+import { useAreaStore } from '../../stores/useAreaStore';
+import { useEmployeeManagement, useAreaManagement, useNrwpHolidayForTourDay } from '../../hooks';
 
 interface ToursViewProps {
   selectedDay: Weekday;
@@ -46,11 +42,7 @@ export const ToursView: React.FC<ToursViewProps> = ({
     isLoading: loadingEmployees,
     error: employeesError,
   } = useEmployees();
-  const {
-    data: patients = [],
-    isLoading: loadingPatients,
-    error: patientsError,
-  } = usePatients();
+  const { data: patients = [], isLoading: loadingPatients, error: patientsError } = usePatients();
   const {
     data: appointments = [],
     isLoading: loadingAppointments,
@@ -88,20 +80,20 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
   const activeOtherEmployeesWithPatients = useMemo(
     () => filteredActiveOtherEmployeesWithPatients,
-    [filteredActiveOtherEmployeesWithPatients],
+    [filteredActiveOtherEmployeesWithPatients]
   );
   const activeOtherEmployeesWithoutPatients = useMemo(
     () => filteredActiveOtherEmployeesWithoutPatients,
-    [filteredActiveOtherEmployeesWithoutPatients],
+    [filteredActiveOtherEmployeesWithoutPatients]
   );
   const activeDoctorsWithPatients = useMemo(() => {
     return filteredDoctors.filter((doctor) =>
-      employeeManagement.hasPatientInEmployee(doctor.id || 0),
+      employeeManagement.hasPatientInEmployee(doctor.id || 0)
     );
   }, [filteredDoctors, employeeManagement]);
   const activeDoctorsWithoutPatients = useMemo(() => {
     return filteredDoctors.filter(
-      (doctor) => !employeeManagement.hasPatientInEmployee(doctor.id || 0),
+      (doctor) => !employeeManagement.hasPatientInEmployee(doctor.id || 0)
     );
   }, [filteredDoctors, employeeManagement]);
 
@@ -113,14 +105,9 @@ export const ToursView: React.FC<ToursViewProps> = ({
     );
   }
 
-  if (
-    loadingEmployees ||
-    loadingPatients ||
-    loadingAppointments ||
-    loadingRoutes
-  ) {
+  if (loadingEmployees || loadingPatients || loadingAppointments || loadingRoutes) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", pt: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 4 }}>
         <CircularProgress />
       </Box>
     );
@@ -148,11 +135,7 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
   return (
     <Box>
-      <NursingAreaRouteSummary
-        employees={employees}
-        routes={routes}
-        selectedDay={selectedDay}
-      />
+      <NursingAreaRouteSummary employees={employees} routes={routes} selectedDay={selectedDay} />
       {!isAreaTourDay && (
         <SearchField
           selectedDay={selectedDay}
@@ -167,16 +150,16 @@ export const ToursView: React.FC<ToursViewProps> = ({
         <Box sx={{ mb: 4 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               mb: 2,
-              justifyContent: "space-between",
+              justifyContent: 'space-between',
             }}
           >
             <Typography
               variant="h6"
               component="h3"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <PersonIcon />
               Pflegetouren
@@ -185,29 +168,29 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
           <Box
             sx={{
-              display: "flex",
-              flexWrap: "wrap",
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: 0.5,
-              "& > *": {
+              '& > *': {
                 flexGrow: 1,
                 flexShrink: 1,
                 flexBasis: {
-                  xs: "100%",
-                  sm: "calc(100% - 8px)",
-                  md: "47%",
-                  lg: "31%",
-                  xl: "23%",
+                  xs: '100%',
+                  sm: 'calc(100% - 8px)',
+                  md: '47%',
+                  lg: '31%',
+                  xl: '23%',
                 },
                 minWidth: {
-                  xs: "280px",
-                  sm: "320px",
-                  md: "340px",
+                  xs: '280px',
+                  sm: '320px',
+                  md: '340px',
                 },
                 maxWidth: {
-                  xs: "100%",
-                  sm: "100%",
-                  md: "100%",
-                  lg: "900px",
+                  xs: '100%',
+                  sm: '100%',
+                  md: '100%',
+                  lg: '900px',
                 },
               },
             }}
@@ -228,19 +211,19 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
       {/* 2. Ärzte - Doctors with patients */}
       {activeDoctorsWithPatients.length > 0 && (
-        <Box sx={{ mb: 4, pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Box sx={{ mb: 4, pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               mb: 2,
-              justifyContent: "space-between",
+              justifyContent: 'space-between',
             }}
           >
             <Typography
               variant="h6"
               component="h3"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <DoctorIcon />
               Ärztetouren
@@ -249,29 +232,29 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
           <Box
             sx={{
-              display: "flex",
-              flexWrap: "wrap",
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: 1,
-              "& > *": {
+              '& > *': {
                 flexGrow: 1,
                 flexShrink: 1,
                 flexBasis: {
-                  xs: "100%",
-                  sm: "calc(100% - 8px)",
-                  md: "47%",
-                  lg: "31%",
-                  xl: "23%",
+                  xs: '100%',
+                  sm: 'calc(100% - 8px)',
+                  md: '47%',
+                  lg: '31%',
+                  xl: '23%',
                 },
                 minWidth: {
-                  xs: "280px",
-                  sm: "320px",
-                  md: "340px",
+                  xs: '280px',
+                  sm: '320px',
+                  md: '340px',
                 },
                 maxWidth: {
-                  xs: "100%",
-                  sm: "100%",
-                  md: "100%",
-                  lg: "900px",
+                  xs: '100%',
+                  sm: '100%',
+                  md: '100%',
+                  lg: '900px',
                 },
               },
             }}
@@ -292,19 +275,19 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
       {/* 3. Leere Pflegetouren */}
       {activeOtherEmployeesWithoutPatients.length > 0 && (
-        <Box sx={{ mb: 4, pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Box sx={{ mb: 4, pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               mb: 2,
-              justifyContent: "space-between",
+              justifyContent: 'space-between',
             }}
           >
             <Typography
               variant="h6"
               component="h3"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <EmptyIcon />
               Leere Pflegetouren
@@ -313,29 +296,29 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
           <Box
             sx={{
-              display: "flex",
-              flexWrap: "wrap",
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: 0.5,
-              "& > *": {
+              '& > *': {
                 flexGrow: 1,
                 flexShrink: 1,
                 flexBasis: {
-                  xs: "100%",
-                  sm: "calc(100% - 8px)",
-                  md: "47%",
-                  lg: "31%",
-                  xl: "23%",
+                  xs: '100%',
+                  sm: 'calc(100% - 8px)',
+                  md: '47%',
+                  lg: '31%',
+                  xl: '23%',
                 },
                 minWidth: {
-                  xs: "280px",
-                  sm: "320px",
-                  md: "340px",
+                  xs: '280px',
+                  sm: '320px',
+                  md: '340px',
                 },
                 maxWidth: {
-                  xs: "100%",
-                  sm: "100%",
-                  md: "100%",
-                  lg: "900px",
+                  xs: '100%',
+                  sm: '100%',
+                  md: '100%',
+                  lg: '900px',
                 },
               },
             }}
@@ -356,19 +339,19 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
       {/* 4. Leere Ärztetouren */}
       {activeDoctorsWithoutPatients.length > 0 && (
-        <Box sx={{ mb: 4, pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Box sx={{ mb: 4, pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               mb: 2,
-              justifyContent: "space-between",
+              justifyContent: 'space-between',
             }}
           >
             <Typography
               variant="h6"
               component="h3"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <EmptyIcon />
               Leere Ärztetouren
@@ -377,29 +360,29 @@ export const ToursView: React.FC<ToursViewProps> = ({
 
           <Box
             sx={{
-              display: "flex",
-              flexWrap: "wrap",
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: 0.5,
-              "& > *": {
+              '& > *': {
                 flexGrow: 1,
                 flexShrink: 1,
                 flexBasis: {
-                  xs: "100%",
-                  sm: "calc(100% - 8px)",
-                  md: "47%",
-                  lg: "31%",
-                  xl: "23%",
+                  xs: '100%',
+                  sm: 'calc(100% - 8px)',
+                  md: '47%',
+                  lg: '31%',
+                  xl: '23%',
                 },
                 minWidth: {
-                  xs: "280px",
-                  sm: "320px",
-                  md: "340px",
+                  xs: '280px',
+                  sm: '320px',
+                  md: '340px',
                 },
                 maxWidth: {
-                  xs: "100%",
-                  sm: "100%",
-                  md: "100%",
-                  lg: "900px",
+                  xs: '100%',
+                  sm: '100%',
+                  md: '100%',
+                  lg: '900px',
                 },
               },
             }}

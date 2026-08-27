@@ -1,10 +1,10 @@
-import React from "react";
-import { Box, Button, Tooltip } from "@mui/material";
+import React from 'react';
+import { Box, Button, Tooltip } from '@mui/material';
 import {
   Route as RouteIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 interface WeekendTourControlsProps {
   expanded: boolean;
@@ -30,13 +30,13 @@ export const WeekendTourControls: React.FC<WeekendTourControlsProps> = ({
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 1,
         mt: 0.5,
       }}
     >
-      <Box sx={{ display: "flex", gap: 0.5, mb: 2, alignItems: "center" }}>
+      <Box sx={{ display: 'flex', gap: 0.5, mb: 2, alignItems: 'center' }}>
         {/* Optimize button */}
         <Button
           variant="outlined"
@@ -45,38 +45,35 @@ export const WeekendTourControls: React.FC<WeekendTourControlsProps> = ({
           onClick={onOptimizeRoute}
           disabled={isOptimizing || tourPatientsCount === 0}
           sx={{
-            textTransform: "none",
-            "&:hover": {
-              backgroundColor: "primary.light",
-              color: "primary.contrastText",
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: 'primary.light',
+              color: 'primary.contrastText',
             },
           }}
         >
-          {isOptimizing ? "Optimiert..." : "Optimieren"}
+          {isOptimizing ? 'Optimiert...' : 'Optimieren'}
         </Button>
 
         {/* Visibility toggle button */}
         {routeId !== undefined && (
-          <Tooltip
-            title={isVisible ? "Route ausblenden" : "Route einblenden"}
-            arrow
-          >
+          <Tooltip title={isVisible ? 'Route ausblenden' : 'Route einblenden'} arrow>
             <span>
               <Button
                 variant="outlined"
                 size="small"
                 onClick={onToggleVisibility}
                 sx={{
-                  minWidth: "40px",
-                  width: "40px",
-                  height: "31px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  minWidth: '40px',
+                  width: '40px',
+                  height: '31px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
                   ml: 0.25,
-                  "&:hover": {
-                    backgroundColor: "primary.light",
-                    color: "primary.contrastText",
+                  '&:hover': {
+                    backgroundColor: 'primary.light',
+                    color: 'primary.contrastText',
                   },
                 }}
               >

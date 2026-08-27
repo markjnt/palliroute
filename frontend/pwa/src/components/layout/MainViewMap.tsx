@@ -1,7 +1,7 @@
-import React from "react";
-import { Box, CircularProgress, Alert } from "@mui/material";
-import { MapContainer } from "../map/MapContainer";
-import { useGoogleMapsApiKey } from "../../services/queries/useConfig";
+import React from 'react';
+import { Box, CircularProgress, Alert } from '@mui/material';
+import { MapContainer } from '../map/MapContainer';
+import { useGoogleMapsApiKey } from '../../services/queries/useConfig';
 
 interface MapViewProps {
   onMapClick?: () => void;
@@ -25,10 +25,10 @@ export const MapView: React.FC<MapViewProps> = ({ onMapClick }) => {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
         }}
       >
         <CircularProgress />
@@ -37,10 +37,7 @@ export const MapView: React.FC<MapViewProps> = ({ onMapClick }) => {
   }
 
   return (
-    <Box
-      className="pwa-map-touch-area"
-      sx={{ position: "relative", height: "110%" }}
-    >
+    <Box className="pwa-map-touch-area" sx={{ position: 'relative', height: '110%' }}>
       <MapContainer apiKey={apiKey!} onMapClick={onMapClick} />
     </Box>
   );

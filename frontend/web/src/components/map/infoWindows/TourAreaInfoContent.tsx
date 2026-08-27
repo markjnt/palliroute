@@ -1,30 +1,28 @@
-import React from "react";
-import { Box, Typography } from "@mui/material";
-import { MarkerData } from "../../../types/mapTypes";
+import React from 'react';
+import { Box, Typography } from '@mui/material';
+import { MarkerData } from '../../../types/mapTypes';
 
 interface TourAreaInfoContentProps {
   marker: MarkerData;
 }
 
-export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({
-  marker,
-}) => {
+export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({ marker }) => {
   const getAreaColor = (area?: string) => {
-    if (area === "Wochenend-Touren") return "#ff9800";
+    if (area === 'Wochenend-Touren') return '#ff9800';
     switch (area) {
-      case "Nord":
-        return "#1976d2";
-      case "Mitte":
-        return "#7b1fa2";
-      case "Süd":
-        return "#388e3c";
+      case 'Nord':
+        return '#1976d2';
+      case 'Mitte':
+        return '#7b1fa2';
+      case 'Süd':
+        return '#388e3c';
       default:
-        return "#ff9800";
+        return '#ff9800';
     }
   };
 
-  const isGeneralTourMarker = marker.area === "Wochenend-Touren";
-  const area = marker.area || "";
+  const isGeneralTourMarker = marker.area === 'Wochenend-Touren';
+  const area = marker.area || '';
 
   return (
     <>
@@ -32,8 +30,8 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({
         variant="subtitle1"
         sx={{
           fontWeight: 600,
-          color: "#1d1d1f",
-          fontSize: "1rem",
+          color: '#1d1d1f',
+          fontSize: '1rem',
           lineHeight: 1.25,
           mb: 1.25,
           pr: 4.5,
@@ -44,8 +42,8 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({
 
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           mb: 1,
           p: 0.5,
           bgcolor: `${getAreaColor(marker.area)}20`,
@@ -56,37 +54,37 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({
           sx={{
             width: 12,
             height: 12,
-            borderRadius: "50%",
+            borderRadius: '50%',
             bgcolor: getAreaColor(marker.area),
             mr: 1,
           }}
         />
-        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
           {isGeneralTourMarker
-            ? "Zentraler Startpunkt für alle Wochenend-Touren"
+            ? 'Zentraler Startpunkt für alle Wochenend-Touren'
             : `${marker.area}-Bereich`}
         </Typography>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
         <Typography variant="body2" color="text.secondary">
           {(() => {
             switch (area) {
-              case "Nord":
+              case 'Nord':
                 return (
                   <>
                     Lüdenscheider Str. 5<br />
                     51688 Wipperfürth
                   </>
                 );
-              case "Mitte":
+              case 'Mitte':
                 return (
                   <>
                     Auf der Brück 9<br />
                     51645 Gummersbach
                   </>
                 );
-              case "Süd":
+              case 'Süd':
                 return (
                   <>
                     Bahnhofstraße 1<br />
@@ -106,76 +104,76 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({
       </Box>
 
       {isGeneralTourMarker && (
-        <Box sx={{ mt: 1, p: 1, bgcolor: "#f5f5f5", borderRadius: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: "medium", mb: 1 }}>
+        <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 1 }}>
             Wochenend-Bereiche:
           </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 0.5,
                 px: 1,
                 py: 0.5,
-                bgcolor: "#1976d2",
-                color: "white",
+                bgcolor: '#1976d2',
+                color: 'white',
                 borderRadius: 1,
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
               }}
             >
               <Box
                 sx={{
                   width: 8,
                   height: 8,
-                  borderRadius: "50%",
-                  bgcolor: "white",
+                  borderRadius: '50%',
+                  bgcolor: 'white',
                 }}
               />
               Nord
             </Box>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 0.5,
                 px: 1,
                 py: 0.5,
-                bgcolor: "#7b1fa2",
-                color: "white",
+                bgcolor: '#7b1fa2',
+                color: 'white',
                 borderRadius: 1,
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
               }}
             >
               <Box
                 sx={{
                   width: 8,
                   height: 8,
-                  borderRadius: "50%",
-                  bgcolor: "white",
+                  borderRadius: '50%',
+                  bgcolor: 'white',
                 }}
               />
               Mitte
             </Box>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 0.5,
                 px: 1,
                 py: 0.5,
-                bgcolor: "#388e3c",
-                color: "white",
+                bgcolor: '#388e3c',
+                color: 'white',
                 borderRadius: 1,
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
               }}
             >
               <Box
                 sx={{
                   width: 8,
                   height: 8,
-                  borderRadius: "50%",
-                  bgcolor: "white",
+                  borderRadius: '50%',
+                  bgcolor: 'white',
                 }}
               />
               Süd

@@ -1,6 +1,6 @@
-import React from "react";
-import { Tooltip, Box } from "@mui/material";
-import type { SxProps, Theme } from "@mui/material/styles";
+import React from 'react';
+import { Tooltip, Box } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 const tooltipTitle = (name: string) => `Feiertag: ${name}`;
 
@@ -21,14 +21,14 @@ export const HolidayChip: React.FC<{
         aria-label={tooltipTitle(name)}
         sx={[
           {
-            display: "inline-block",
+            display: 'inline-block',
             width: size,
             height: size,
-            borderRadius: "50%",
-            bgcolor: "warning.main",
-            cursor: "default",
+            borderRadius: '50%',
+            bgcolor: 'warning.main',
+            cursor: 'default',
             flexShrink: 0,
-            boxShadow: "0 0 0 1px rgba(0,0,0,0.06)",
+            boxShadow: '0 0 0 1px rgba(0,0,0,0.06)',
           },
           ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
         ]}

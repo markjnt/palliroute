@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -10,47 +10,36 @@ import {
   Card,
   CardContent,
   Avatar,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Search as SearchIcon,
   Done as DoneIcon,
   Person as PersonIcon,
   Close as CloseIcon,
   Logout as LogoutIcon,
-} from "@mui/icons-material";
-import { Sheet } from "react-modal-sheet";
-import { useAuth } from "@palliroute/auth";
-import {
-  getColorForAdditionalTour,
-  employeeTypeColors,
-} from "@palliroute/shared";
-import { useEmployees } from "../../services/queries/useEmployees";
-import { useRoutes } from "../../services/queries/useRoutes";
-import { useAuthMe } from "../../services/queries/useAuthMe";
-import { useUserStore } from "../../stores/useUserStore";
-import { useAdditionalRoutesStore } from "../../stores/useAdditionalRoutesStore";
-import { useWeekdayStore } from "../../stores/useWeekdayStore";
-import { Employee, Weekday } from "../../types/models";
-import { useDeferredSheetMount } from "../../hooks/useDeferredSheetMount";
-import {
-  EmployeeFilterChips,
-  EmployeePickCard,
-  AreaPickCard,
-} from "./EmployeePickCard";
-import { filterEmployees } from "./filterEmployees";
-import AdminEmployeeSelectSheet from "./AdminEmployeeSelectSheet";
-import { useNrwpHolidayForTourDay } from "../../hooks/useNrwpHolidayForTourDay";
-import {
-  AW_TOUR_AREAS,
-  findAwAreaRoute,
-  findEmployeeDayRoute,
-} from "../../utils/mapUtils";
+} from '@mui/icons-material';
+import { Sheet } from 'react-modal-sheet';
+import { useAuth } from '@palliroute/auth';
+import { getColorForAdditionalTour, employeeTypeColors } from '@palliroute/shared';
+import { useEmployees } from '../../services/queries/useEmployees';
+import { useRoutes } from '../../services/queries/useRoutes';
+import { useAuthMe } from '../../services/queries/useAuthMe';
+import { useUserStore } from '../../stores/useUserStore';
+import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
+import { useWeekdayStore } from '../../stores/useWeekdayStore';
+import { Employee, Weekday } from '../../types/models';
+import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
+import { EmployeeFilterChips, EmployeePickCard, AreaPickCard } from './EmployeePickCard';
+import { filterEmployees } from './filterEmployees';
+import AdminEmployeeSelectSheet from './AdminEmployeeSelectSheet';
+import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
+import { AW_TOUR_AREAS, findAwAreaRoute, findEmployeeDayRoute } from '../../utils/mapUtils';
 
 const ADDITIONAL_ROUTE_FILTERS = [
-  { id: "all", label: "Alle" },
-  { id: "pflege-nord", label: "Nord", color: employeeTypeColors.default },
-  { id: "pflege-sued", label: "Süd", color: employeeTypeColors.default },
-  { id: "arzt", label: "Arzt", color: employeeTypeColors.Arzt },
+  { id: 'all', label: 'Alle' },
+  { id: 'pflege-nord', label: 'Nord', color: employeeTypeColors.default },
+  { id: 'pflege-sued', label: 'Süd', color: employeeTypeColors.default },
+  { id: 'arzt', label: 'Arzt', color: employeeTypeColors.Arzt },
 ];
 
 interface AdditionalRoutesSheetProps {
@@ -63,32 +52,32 @@ function LogoutPickCard({ onLogout }: { onLogout: () => void }) {
     <Card
       onClick={onLogout}
       sx={{
-        cursor: "pointer",
+        cursor: 'pointer',
         borderRadius: 2,
-        border: "1px solid rgba(0, 0, 0, 0.08)",
-        background: "linear-gradient(135deg, #ffffff 0%, #fafafa 100%)",
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: "0 8px 25px rgba(0, 0, 0, 0.1)",
+        border: '1px solid rgba(0, 0, 0, 0.08)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
         },
-        transition: "all 0.2s ease-in-out",
+        transition: 'all 0.2s ease-in-out',
       }}
     >
-      <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Box display="flex" alignItems="center" gap={1.5}>
           <Avatar
             sx={{
               width: 36,
               height: 36,
-              bgcolor: "rgba(255, 59, 48, 0.12)",
-              color: "#FF3B30",
+              bgcolor: 'rgba(255, 59, 48, 0.12)',
+              color: '#FF3B30',
             }}
           >
             <LogoutIcon />
           </Avatar>
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 600, color: "#FF3B30", fontSize: "0.95rem" }}
+            sx={{ fontWeight: 600, color: '#FF3B30', fontSize: '0.95rem' }}
           >
             Abmelden
           </Typography>
@@ -98,23 +87,15 @@ function LogoutPickCard({ onLogout }: { onLogout: () => void }) {
   );
 }
 
-export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
-  open,
-  onClose,
-}) => {
+export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ open, onClose }) => {
   const { shouldRender, onCloseEnd } = useDeferredSheetMount(open);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
   const [adminSelectOpen, setAdminSelectOpen] = useState(false);
   const { data: employees = [], isLoading, error } = useEmployees();
   const { selectedUserId } = useUserStore();
-  const {
-    selectedEmployeeIds,
-    selectedAreas,
-    toggleEmployee,
-    toggleArea,
-    deselectAll,
-  } = useAdditionalRoutesStore();
+  const { selectedEmployeeIds, selectedAreas, toggleEmployee, toggleArea, deselectAll } =
+    useAdditionalRoutesStore();
   const { selectedWeekday } = useWeekdayStore();
   const { data: me } = useAuthMe();
   const { logout, configured, isAuthenticated } = useAuth();
@@ -123,35 +104,25 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
   const { data: routes = [] } = useRoutes({
     weekday: selectedWeekday as Weekday,
   });
-  const { isAreaTourDay } = useNrwpHolidayForTourDay(
-    selectedWeekday as Weekday,
-  );
+  const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
   const selectedEmployee = employees.find((emp) => emp.id === selectedUserId);
 
   const employeesWithRoutes = useMemo(() => {
     return employees.filter(
       (emp) =>
         emp.id !== selectedUserId &&
-        Boolean(
-          findEmployeeDayRoute(routes, emp.id, selectedWeekday, isAreaTourDay),
-        ),
+        Boolean(findEmployeeDayRoute(routes, emp.id, selectedWeekday, isAreaTourDay))
     );
   }, [employees, routes, selectedUserId, selectedWeekday, isAreaTourDay]);
 
   const filteredEmployees = useMemo(
     () => filterEmployees(employeesWithRoutes, searchTerm, activeFilter),
-    [employeesWithRoutes, searchTerm, activeFilter],
+    [employeesWithRoutes, searchTerm, activeFilter]
   );
 
   const ownRoute = useMemo(
-    () =>
-      findEmployeeDayRoute(
-        routes,
-        selectedUserId,
-        selectedWeekday,
-        isAreaTourDay,
-      ),
-    [routes, selectedUserId, selectedWeekday, isAreaTourDay],
+    () => findEmployeeDayRoute(routes, selectedUserId, selectedWeekday, isAreaTourDay),
+    [routes, selectedUserId, selectedWeekday, isAreaTourDay]
   );
 
   const otherAwAreas = useMemo(() => {
@@ -166,9 +137,7 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
           : undefined;
         return {
           area,
-          assignedName: assigned
-            ? `${assigned.first_name} ${assigned.last_name}`
-            : null,
+          assignedName: assigned ? `${assigned.first_name} ${assigned.last_name}` : null,
         };
       })
       .filter((item): item is NonNullable<typeof item> => Boolean(item));
@@ -195,19 +164,19 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
           <Sheet.Header>
             <div
               style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "8px 0",
-                cursor: "grab",
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '8px 0',
+                cursor: 'grab',
               }}
             >
               <div
                 style={{
-                  width: "60px",
-                  height: "4px",
-                  backgroundColor: "rgba(0, 0, 0, 0.2)",
-                  borderRadius: "8px",
+                  width: '60px',
+                  height: '4px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '8px',
                 }}
               />
             </div>
@@ -216,8 +185,8 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
               <Box
                 sx={{
                   mb: isAreaTourDay ? 0 : 2,
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
                 }}
               >
@@ -225,7 +194,7 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: "#1d1d1f",
+                    color: '#1d1d1f',
                     flex: 1,
                     minWidth: 0,
                   }}
@@ -239,14 +208,14 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                     onClick={() => setAdminSelectOpen(true)}
                     sx={{
                       flexShrink: 0,
-                      textTransform: "none",
+                      textTransform: 'none',
                       borderRadius: 1.5,
-                      whiteSpace: "nowrap",
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {selectedEmployee
                       ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}`
-                      : "Mitarbeiter wählen"}
+                      : 'Mitarbeiter wählen'}
                   </Button>
                 ) : null}
                 {isAreaTourDay ? (
@@ -257,10 +226,10 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                       disabled={!hasOverlaySelection}
                       sx={{
                         flexShrink: 0,
-                        width: "48px",
-                        height: "48px",
-                        bgcolor: "rgba(0, 0, 0, 0.06)",
-                        "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
+                        width: '48px',
+                        height: '48px',
+                        bgcolor: 'rgba(0, 0, 0, 0.06)',
+                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.1)' },
                       }}
                     >
                       <CloseIcon />
@@ -268,12 +237,12 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                     <IconButton
                       onClick={onClose}
                       sx={{
-                        bgcolor: "primary.main",
-                        color: "white",
+                        bgcolor: 'primary.main',
+                        color: 'white',
                         flexShrink: 0,
-                        width: "48px",
-                        height: "48px",
-                        "&:hover": { bgcolor: "primary.dark" },
+                        width: '48px',
+                        height: '48px',
+                        '&:hover': { bgcolor: 'primary.dark' },
                       }}
                       aria-label="Fertig"
                     >
@@ -285,7 +254,7 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
 
               {isAreaTourDay ? null : (
                 <>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TextField
                       fullWidth
                       variant="outlined"
@@ -295,14 +264,14 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <SearchIcon sx={{ color: "text.secondary" }} />
+                            <SearchIcon sx={{ color: 'text.secondary' }} />
                           </InputAdornment>
                         ),
                         endAdornment: searchTerm ? (
                           <InputAdornment position="end">
                             <IconButton
                               aria-label="Suche leeren"
-                              onClick={() => setSearchTerm("")}
+                              onClick={() => setSearchTerm('')}
                               edge="end"
                               size="small"
                             >
@@ -312,7 +281,7 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                         ) : undefined,
                       }}
                       sx={{
-                        "& .MuiOutlinedInput-root": {
+                        '& .MuiOutlinedInput-root': {
                           height: 48,
                           borderRadius: 2,
                         },
@@ -321,12 +290,12 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                     <IconButton
                       onClick={onClose}
                       sx={{
-                        bgcolor: "primary.main",
-                        color: "white",
+                        bgcolor: 'primary.main',
+                        color: 'white',
                         flexShrink: 0,
-                        width: "48px",
-                        height: "48px",
-                        "&:hover": { bgcolor: "primary.dark" },
+                        width: '48px',
+                        height: '48px',
+                        '&:hover': { bgcolor: 'primary.dark' },
                       }}
                       aria-label="Fertig"
                     >
@@ -344,8 +313,8 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                         disabled={!hasOverlaySelection}
                         sx={{
                           flexShrink: 0,
-                          bgcolor: "rgba(0, 0, 0, 0.06)",
-                          "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
+                          bgcolor: 'rgba(0, 0, 0, 0.06)',
+                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.1)' },
                         }}
                       >
                         <CloseIcon />
@@ -363,30 +332,21 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                 {isLoading ? (
                   <Box display="flex" justifyContent="center" py={4}>
                     <Typography color="text.secondary">
-                      {isAreaTourDay
-                        ? "Lade Bereiche..."
-                        : "Lade Mitarbeiter..."}
+                      {isAreaTourDay ? 'Lade Bereiche...' : 'Lade Mitarbeiter...'}
                     </Typography>
                   </Box>
                 ) : error ? (
                   <Box display="flex" justifyContent="center" py={4}>
                     <Typography color="error">
                       {isAreaTourDay
-                        ? "Fehler beim Laden der Bereiche"
-                        : "Fehler beim Laden der Mitarbeiter"}
+                        ? 'Fehler beim Laden der Bereiche'
+                        : 'Fehler beim Laden der Mitarbeiter'}
                     </Typography>
                   </Box>
                 ) : isAreaTourDay ? (
                   otherAwAreas.length === 0 ? (
-                    <Box
-                      display="flex"
-                      flexDirection="column"
-                      alignItems="center"
-                      py={4}
-                    >
-                      <PersonIcon
-                        sx={{ fontSize: 48, color: "text.secondary", mb: 2 }}
-                      />
+                    <Box display="flex" flexDirection="column" alignItems="center" py={4}>
+                      <PersonIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                       <Typography color="text.secondary">
                         Keine weiteren Bereiche für diesen Tag
                       </Typography>
@@ -411,19 +371,12 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                     </Grid>
                   )
                 ) : filteredEmployees.length === 0 ? (
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                    py={4}
-                  >
-                    <PersonIcon
-                      sx={{ fontSize: 48, color: "text.secondary", mb: 2 }}
-                    />
+                  <Box display="flex" flexDirection="column" alignItems="center" py={4}>
+                    <PersonIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                     <Typography color="text.secondary">
                       {searchTerm
-                        ? "Keine Mitarbeiter gefunden"
-                        : "Keine weiteren Routen für diesen Tag"}
+                        ? 'Keine Mitarbeiter gefunden'
+                        : 'Keine weiteren Routen für diesen Tag'}
                     </Typography>
                   </Box>
                 ) : (
@@ -432,9 +385,7 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                       <Grid size={{ xs: 12, sm: 6 }} key={employee.id}>
                         <EmployeePickCard
                           employee={employee}
-                          selected={selectedEmployeeIds.includes(
-                            employee.id as number,
-                          )}
+                          selected={selectedEmployeeIds.includes(employee.id as number)}
                           accentColor={getColorForAdditionalTour(employee.id)}
                           onClick={() => toggleEmployee(employee.id as number)}
                         />
@@ -450,9 +401,7 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({
                 {showLogout &&
                 (isLoading ||
                   error ||
-                  (isAreaTourDay
-                    ? otherAwAreas.length === 0
-                    : filteredEmployees.length === 0)) ? (
+                  (isAreaTourDay ? otherAwAreas.length === 0 : filteredEmployees.length === 0)) ? (
                   <Box sx={{ mt: 1.5 }}>
                     <LogoutPickCard onLogout={() => logout()} />
                   </Box>

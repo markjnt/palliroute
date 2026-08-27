@@ -1,7 +1,7 @@
-import axios, { type AxiosInstance } from "axios";
+import axios, { type AxiosInstance } from 'axios';
 
 const api: AxiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: '/api',
 });
 
 type TokenProvider = () => Promise<string | null>;
@@ -28,10 +28,10 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401 && tokenProvider) {
       // Let the UI/auth layer handle re-login; clear stale header context
-      console.warn("API returned 401 — authentication required");
+      console.warn('API returned 401 — authentication required');
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;

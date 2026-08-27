@@ -6,10 +6,10 @@ export interface User {
   avatarUrl?: string;
 }
 
-export type Area = "Nordkreis" | "Südkreis" | "Nord- und Südkreis";
+export type Area = 'Nordkreis' | 'Südkreis' | 'Nord- und Südkreis';
 
 /** Route area: patient areas or AW tour sub-areas */
-export type RouteArea = Area | "Nord" | "Mitte" | "Süd";
+export type RouteArea = Area | 'Nord' | 'Mitte' | 'Süd';
 
 export interface UserFormData {
   name: string;
@@ -35,10 +35,7 @@ export interface Employee {
   updated_at?: string;
 }
 
-export type EmployeeFormData = Omit<
-  Employee,
-  "id" | "created_at" | "updated_at"
->;
+export type EmployeeFormData = Omit<Employee, 'id' | 'created_at' | 'updated_at'>;
 
 export interface EmployeeImportResponse {
   message: string;
@@ -53,15 +50,9 @@ export interface EmployeeImportResponse {
   removed_employees?: Employee[];
 }
 
-export type VisitType = "HB" | "NA" | "TK";
+export type VisitType = 'HB' | 'NA' | 'TK';
 export type Weekday =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday";
+  'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
 export interface Appointment {
   id?: number;

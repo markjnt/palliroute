@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 // Zustandsspeicher für die Sichtbarkeit von Polylines und Markern (Blacklist-Prinzip)
 export type RouteVisibilityStore = {

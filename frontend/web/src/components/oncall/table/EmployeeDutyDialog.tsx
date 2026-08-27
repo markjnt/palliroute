@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,22 +8,19 @@ import {
   Typography,
   Box,
   Chip,
-} from "@mui/material";
-import { CheckCircle as CheckCircleIcon } from "@mui/icons-material";
+} from '@mui/material';
+import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import {
   DutyType,
   OnCallArea,
   Employee,
   Assignment,
   EmployeeCapacity,
-} from "../../../types/models";
-import {
-  WEEKDAY_DUTIES,
-  WEEKEND_DUTIES,
-} from "../../../utils/oncall/constants";
-import { getDutyColor } from "../../../utils/oncall/colorUtils";
-import { isWeekend } from "../../../utils/oncall/dateUtils";
-import { shiftDefinitionToDutyType } from "../../../utils/oncall/shiftMapping";
+} from '../../../types/models';
+import { WEEKDAY_DUTIES, WEEKEND_DUTIES } from '../../../utils/oncall/constants';
+import { getDutyColor } from '../../../utils/oncall/colorUtils';
+import { isWeekend } from '../../../utils/oncall/dateUtils';
+import { shiftDefinitionToDutyType } from '../../../utils/oncall/shiftMapping';
 
 interface EmployeeDutyDialogProps {
   open: boolean;
@@ -59,11 +56,9 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
     const map = new Map<string, Assignment>();
     assignments.forEach((assignment) => {
       if (!assignment.shift_definition) return;
-      const dutyMapping = shiftDefinitionToDutyType(
-        assignment.shift_definition,
-      );
+      const dutyMapping = shiftDefinitionToDutyType(assignment.shift_definition);
       if (!dutyMapping) return;
-      const key = `${dutyMapping.dutyType}_${dutyMapping.area || ""}`;
+      const key = `${dutyMapping.dutyType}_${dutyMapping.area || ''}`;
       map.set(key, assignment);
     });
     return map;
@@ -77,26 +72,22 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
 
     // Map duty type to capacity type
     let capacityType: string;
-    if (dutyType === "rb_nursing_weekday") {
-      capacityType = "RB_NURSING_WEEKDAY";
-    } else if (
-      dutyType === "rb_nursing_weekend_day" ||
-      dutyType === "rb_nursing_weekend_night"
-    ) {
-      capacityType = "RB_NURSING_WEEKEND";
-    } else if (dutyType === "rb_doctors_weekday") {
-      capacityType = "RB_DOCTORS_WEEKDAY";
-    } else if (dutyType === "rb_doctors_weekend") {
-      capacityType = "RB_DOCTORS_WEEKEND";
-    } else if (dutyType === "aw_nursing") {
-      capacityType = "AW_NURSING";
+    if (dutyType === 'rb_nursing_weekday') {
+      capacityType = 'RB_NURSING_WEEKDAY';
+    } else if (dutyType === 'rb_nursing_weekend_day' || dutyType === 'rb_nursing_weekend_night') {
+      capacityType = 'RB_NURSING_WEEKEND';
+    } else if (dutyType === 'rb_doctors_weekday') {
+      capacityType = 'RB_DOCTORS_WEEKDAY';
+    } else if (dutyType === 'rb_doctors_weekend') {
+      capacityType = 'RB_DOCTORS_WEEKEND';
+    } else if (dutyType === 'aw_nursing') {
+      capacityType = 'AW_NURSING';
     } else {
       return -1;
     }
 
     const matchingCapacity = employeeCapacities.find(
-      (cap) =>
-        cap.employee_id === employee.id && cap.capacity_type === capacityType,
+      (cap) => cap.employee_id === employee.id && cap.capacity_type === capacityType
     );
 
     // Return remaining count from backend (already calculated)
@@ -120,30 +111,22 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
       }}
     >
       <DialogTitle component="div">
-        <Box
-          component="h2"
-          sx={{ fontSize: "1.25rem", fontWeight: 600, m: 0, mb: 0.5 }}
-        >
+        <Box component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, m: 0, mb: 0.5 }}>
           {employee.first_name} {employee.last_name}
         </Box>
-        <Typography
-          variant="subtitle2"
-          component="p"
-          color="text.secondary"
-          sx={{ m: 0 }}
-        >
-          {date.toLocaleDateString("de-DE", {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
+        <Typography variant="subtitle2" component="p" color="text.secondary" sx={{ m: 0 }}>
+          {date.toLocaleDateString('de-DE', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
           })}
         </Typography>
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 2 }}>
           {availableDuties.map((duty) => {
-            const key = `${duty.type}_${duty.area || ""}`;
+            const key = `${duty.type}_${duty.area || ''}`;
             const assignment = selectedDutiesMap.get(key);
             const isSelected = !!assignment;
             // Use getDutyColor with isSelected to get lighter colors when not selected
@@ -155,12 +138,10 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
 
             // Filter based on employee function
             const shouldShow =
-              (duty.type.includes("doctors") &&
-                (employee.function === "Arzt" ||
-                  employee.function === "Honorararzt")) ||
-              (!duty.type.includes("doctors") &&
-                (employee.function === "Pflegekraft" ||
-                  employee.function === "PDL"));
+              (duty.type.includes('doctors') &&
+                (employee.function === 'Arzt' || employee.function === 'Honorararzt')) ||
+              (!duty.type.includes('doctors') &&
+                (employee.function === 'Pflegekraft' || employee.function === 'PDL'));
 
             if (!shouldShow) return null;
 
@@ -169,61 +150,57 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
                 key={key}
                 onClick={() => handleDutyToggle(duty.type, duty.area)}
                 sx={{
-                  cursor: "pointer",
+                  cursor: 'pointer',
                   p: 2,
                   borderRadius: 2,
-                  border: isSelected ? "2px solid" : "1px solid",
+                  border: isSelected ? '2px solid' : '1px solid',
                   borderColor: isSelected ? fullColor : dutyColor,
-                  backgroundColor: isSelected
-                    ? `${fullColor}20`
-                    : "background.paper",
-                  transition: "all 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
+                  backgroundColor: isSelected ? `${fullColor}20` : 'background.paper',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
                     boxShadow: 2,
                     borderColor: fullColor,
                   },
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {isSelected && (
-                    <CheckCircleIcon sx={{ color: fullColor, fontSize: 20 }} />
-                  )}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {isSelected && <CheckCircleIcon sx={{ color: fullColor, fontSize: 20 }} />}
                   <Chip
                     label={duty.shortLabel}
                     size="small"
                     sx={{
                       bgcolor: isSelected ? fullColor : dutyColor,
-                      color: isSelected ? "white" : "text.primary",
-                      border: isSelected ? "none" : `1px solid ${dutyColor}`,
+                      color: isSelected ? 'white' : 'text.primary',
+                      border: isSelected ? 'none' : `1px solid ${dutyColor}`,
                       fontWeight: isSelected ? 600 : 500,
                     }}
                   />
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-end",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
                     gap: 0.5,
                   }}
                 >
                   <Typography
                     variant="body2"
                     sx={{
-                      color: isSelected ? "text.primary" : "text.secondary",
+                      color: isSelected ? 'text.primary' : 'text.secondary',
                       fontWeight: isSelected ? 600 : 400,
                     }}
                   >
-                    {isSelected ? "Aktiv" : "Nicht zugewiesen"}
+                    {isSelected ? 'Aktiv' : 'Nicht zugewiesen'}
                   </Typography>
                   <Typography
                     variant="caption"
                     sx={{
-                      color: hasNoCapacity ? "error.main" : "text.secondary",
+                      color: hasNoCapacity ? 'error.main' : 'text.secondary',
                       fontWeight: hasNoCapacity ? 600 : 400,
                     }}
                   >
@@ -239,7 +216,7 @@ export const EmployeeDutyDialog: React.FC<EmployeeDutyDialogProps> = ({
         <Button
           onClick={onClose}
           sx={{
-            textTransform: "none",
+            textTransform: 'none',
             fontWeight: 500,
             borderRadius: 2,
             px: 2,

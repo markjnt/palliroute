@@ -1,12 +1,12 @@
-import React, { useMemo } from "react";
-import { Box, Chip } from "@mui/material";
+import React, { useMemo } from 'react';
+import { Box, Chip } from '@mui/material';
 import {
   Home as HomeIcon,
   Phone as PhoneIcon,
   Person as PersonIcon,
   AddCircle as AddCircleIcon,
-} from "@mui/icons-material";
-import { Appointment, Patient } from "../../../types/models";
+} from '@mui/icons-material';
+import { Appointment, Patient } from '../../../types/models';
 
 interface TourSummaryProps {
   sortedRoutePatients: Patient[]; // Only normal HB/NA patients (not tour_employee)
@@ -15,15 +15,12 @@ interface TourSummaryProps {
   getPatientAppointments?: (patientId: number) => Appointment[];
 }
 
-const createAppointmentKey = (
-  patientId: number | undefined,
-  appointment: Appointment,
-) => {
+const createAppointmentKey = (patientId: number | undefined, appointment: Appointment) => {
   if (appointment.id !== undefined) {
     return `id-${appointment.id}`;
   }
-  const time = appointment.time || "";
-  return `pid-${patientId || "unknown"}-${appointment.weekday}-${appointment.visit_type}-${time}`;
+  const time = appointment.time || '';
+  return `pid-${patientId || 'unknown'}-${appointment.weekday}-${appointment.visit_type}-${time}`;
 };
 
 export const TourSummary: React.FC<TourSummaryProps> = ({
@@ -54,13 +51,13 @@ export const TourSummary: React.FC<TourSummaryProps> = ({
           seenAppointments.add(key);
 
           switch (appointment.visit_type) {
-            case "HB":
+            case 'HB':
               hb += 1;
               break;
-            case "NA":
+            case 'NA':
               na += 1;
               break;
-            case "TK":
+            case 'TK':
               tk += 1;
               break;
             default:
@@ -76,16 +73,11 @@ export const TourSummary: React.FC<TourSummaryProps> = ({
     collectAppointments(emptyTypePatients);
 
     return { hbCount: hb, naCount: na, tkCount: tk, emptyCount: empty };
-  }, [
-    sortedRoutePatients,
-    normalTkPatients,
-    emptyTypePatients,
-    getPatientAppointments,
-  ]);
+  }, [sortedRoutePatients, normalTkPatients, emptyTypePatients, getPatientAppointments]);
 
   return (
-    <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1 }}>
+    <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
         {hbCount > 0 && (
           <Chip
             size="small"

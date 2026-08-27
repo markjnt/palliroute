@@ -1,6 +1,6 @@
-import { api } from "@palliroute/shared";
-import { Appointment, Weekday } from "../../types/models";
-import { calendarWeekService } from "./calendarWeek";
+import { api } from '@palliroute/shared';
+import { Appointment, Weekday } from '../../types/models';
+import { calendarWeekService } from './calendarWeek';
 
 export const appointmentsApi = {
   // Get all appointments for current or latest available calendar week
@@ -9,12 +9,12 @@ export const appointmentsApi = {
       // Use the calendar week service to get the best week
       const weekToUse = await calendarWeekService.getBestWeek();
 
-      const response = await api.get("/appointments/", {
+      const response = await api.get('/appointments/', {
         params: { calendar_week: weekToUse },
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch appointments:", error);
+      console.error('Failed to fetch appointments:', error);
       throw error;
     }
   },
@@ -25,10 +25,7 @@ export const appointmentsApi = {
       const response = await api.get(`/appointments/?patient_id=${patientId}`);
       return response.data;
     } catch (error) {
-      console.error(
-        `Failed to fetch appointments for patient with ID ${patientId}:`,
-        error,
-      );
+      console.error(`Failed to fetch appointments for patient with ID ${patientId}:`, error);
       throw error;
     }
   },
@@ -44,10 +41,7 @@ export const appointmentsApi = {
       });
       return response.data;
     } catch (error) {
-      console.error(
-        `Failed to fetch appointments for weekday ${weekday}:`,
-        error,
-      );
+      console.error(`Failed to fetch appointments for weekday ${weekday}:`, error);
       throw error;
     }
   },
@@ -70,10 +64,7 @@ export const appointmentsApi = {
       });
       return response.data;
     } catch (error) {
-      console.error(
-        `Failed to update completed state for appointment ${id}:`,
-        error,
-      );
+      console.error(`Failed to update completed state for appointment ${id}:`, error);
       throw error;
     }
   },
@@ -83,7 +74,7 @@ export const appointmentsApi = {
     sourceEmployeeId?: number,
     targetEmployeeId?: number,
     sourceArea?: string,
-    targetArea?: string,
+    targetArea?: string
   ): Promise<void> {
     try {
       const payload: {
@@ -103,27 +94,24 @@ export const appointmentsApi = {
         payload.source_area = sourceArea;
         payload.target_area = targetArea;
       } else {
-        throw new Error("Either employee IDs or areas must be provided");
+        throw new Error('Either employee IDs or areas must be provided');
       }
 
-      await api.post("/appointments/move", payload);
+      await api.post('/appointments/move', payload);
     } catch (error) {
-      console.error("Fehler beim Verschieben des Termins:", error);
+      console.error('Fehler beim Verschieben des Termins:', error);
       throw error;
     }
   },
 
-  async batchMoveAppointments(
-    sourceEmployeeId: number,
-    targetEmployeeId: number,
-  ): Promise<void> {
+  async batchMoveAppointments(sourceEmployeeId: number, targetEmployeeId: number): Promise<void> {
     try {
-      await api.post("/appointments/batchmove", {
+      await api.post('/appointments/batchmove', {
         source_employee_id: sourceEmployeeId,
         target_employee_id: targetEmployeeId,
       });
     } catch (error) {
-      console.error("Fehler beim Batch-Verschieben der Termine:", error);
+      console.error('Fehler beim Batch-Verschieben der Termine:', error);
       throw error;
     }
   },

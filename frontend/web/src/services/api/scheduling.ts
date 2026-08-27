@@ -1,4 +1,4 @@
-import { api } from "@palliroute/shared";
+import { api } from '@palliroute/shared';
 import {
   ShiftDefinition,
   ShiftInstance,
@@ -10,7 +10,7 @@ import {
   ShiftTimeOfDay,
   CapacityType,
   AssignmentSource,
-} from "../../types/models";
+} from '../../types/models';
 
 // Query parameter types
 export interface ShiftDefinitionsQueryParams {
@@ -102,8 +102,8 @@ export interface UpdateAssignmentData {
   source?: AssignmentSource;
 }
 
-export type DutyPreference = "neutral" | "aw" | "rb";
-export type AwRhythm = "regular" | "irregular";
+export type DutyPreference = 'neutral' | 'aw' | 'rb';
+export type AwRhythm = 'regular' | 'irregular';
 
 export interface EmployeePlanningPreference {
   employee_id: number;
@@ -115,10 +115,7 @@ export interface EmployeePlanningPreference {
 }
 
 /** Persisted fields only (no per-run inclusion). */
-export type StoredEmployeePlanningPreference = Omit<
-  EmployeePlanningPreference,
-  "included"
->;
+export type StoredEmployeePlanningPreference = Omit<EmployeePlanningPreference, 'included'>;
 
 /** Which shift groups to include in this auto-planning run. */
 export interface AutoPlanScope {
@@ -147,7 +144,7 @@ export const isAutoPlanScopeEmpty = (scope: AutoPlanScope): boolean =>
 export interface AutoPlanData {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
-  existing_assignments_handling?: "overwrite" | "respect";
+  existing_assignments_handling?: 'overwrite' | 'respect';
   allow_overplanning?: boolean;
   include_aplano?: boolean;
   employee_preferences?: EmployeePlanningPreference[];
@@ -160,7 +157,7 @@ export interface ResetPlanningData {
 }
 
 export interface AplanoCompareEntry {
-  status: "equal" | "missing_in_aplano" | "different";
+  status: 'equal' | 'missing_in_aplano' | 'different';
   reason?: string | null;
   date: string;
   category: ShiftCategory;
@@ -188,70 +185,62 @@ export interface AplanoCompareResponse {
 
 export const schedulingApi = {
   // Shift Definitions
-  async getShiftDefinitions(
-    params?: ShiftDefinitionsQueryParams,
-  ): Promise<ShiftDefinition[]> {
+  async getShiftDefinitions(params?: ShiftDefinitionsQueryParams): Promise<ShiftDefinition[]> {
     try {
-      const response = await api.get("/scheduling/shift-definitions", {
+      const response = await api.get('/scheduling/shift-definitions', {
         params,
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch shift definitions:", error);
+      console.error('Failed to fetch shift definitions:', error);
       throw error;
     }
   },
 
-  async createShiftDefinition(
-    data: CreateShiftDefinitionData,
-  ): Promise<ShiftDefinition> {
+  async createShiftDefinition(data: CreateShiftDefinitionData): Promise<ShiftDefinition> {
     try {
-      const response = await api.post("/scheduling/shift-definitions", data);
+      const response = await api.post('/scheduling/shift-definitions', data);
       return response.data;
     } catch (error: any) {
       if (error.response?.status !== 400) {
-        console.error("Failed to create shift definition:", error);
+        console.error('Failed to create shift definition:', error);
       }
       throw error;
     }
   },
 
   // Shift Instances
-  async getShiftInstances(
-    params?: ShiftInstancesQueryParams,
-  ): Promise<ShiftInstance[]> {
+  async getShiftInstances(params?: ShiftInstancesQueryParams): Promise<ShiftInstance[]> {
     try {
-      const response = await api.get("/scheduling/shift-instances", { params });
+      const response = await api.get('/scheduling/shift-instances', { params });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch shift instances:", error);
+      console.error('Failed to fetch shift instances:', error);
       throw error;
     }
   },
 
   async getUnplannedShiftInstances(
-    params: UnplannedShiftInstancesQueryParams,
+    params: UnplannedShiftInstancesQueryParams
   ): Promise<ShiftInstance[]> {
     try {
-      const response = await api.get("/scheduling/shift-instances/unplanned", {
+      const response = await api.get('/scheduling/shift-instances/unplanned', {
         params,
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch unplanned shift instances:", error);
+      console.error('Failed to fetch unplanned shift instances:', error);
       throw error;
     }
   },
 
-  async createShiftInstance(
-    data: CreateShiftInstanceData,
-  ): Promise<ShiftInstance> {
+  async createShiftInstance(data: CreateShiftInstanceData): Promise<ShiftInstance> {
     try {
-      const response = await api.post("/scheduling/shift-instances", data);
+      const response = await api.post('/scheduling/shift-instances', data);
       return response.data;
     } catch (error: any) {
       if (error.response?.status !== 400) {
-        console.error("Failed to create shift instance:", error);
+        console.error('Failed to create shift instance:', error);
       }
       throw error;
     }
@@ -265,28 +254,23 @@ export const schedulingApi = {
     instances: Array<{ id: number; date: string; shift_definition_id: number }>;
   }> {
     try {
-      const response = await api.post(
-        "/scheduling/shift-instances/generate",
-        data,
-      );
+      const response = await api.post('/scheduling/shift-instances/generate', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to generate shift instances:", error);
+      console.error('Failed to generate shift instances:', error);
       throw error;
     }
   },
 
   // Employee Capacities
-  async getEmployeeCapacities(
-    params?: EmployeeCapacitiesQueryParams,
-  ): Promise<EmployeeCapacity[]> {
+  async getEmployeeCapacities(params?: EmployeeCapacitiesQueryParams): Promise<EmployeeCapacity[]> {
     try {
-      const response = await api.get("/scheduling/employee-capacities", {
+      const response = await api.get('/scheduling/employee-capacities', {
         params,
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch employee capacities:", error);
+      console.error('Failed to fetch employee capacities:', error);
       throw error;
     }
   },
@@ -294,30 +278,27 @@ export const schedulingApi = {
   // Assignments
   async getAssignments(params?: AssignmentsQueryParams): Promise<Assignment[]> {
     try {
-      const response = await api.get("/scheduling/assignments", { params });
+      const response = await api.get('/scheduling/assignments', { params });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch assignments:", error);
+      console.error('Failed to fetch assignments:', error);
       throw error;
     }
   },
 
   async createAssignment(data: CreateAssignmentData): Promise<Assignment> {
     try {
-      const response = await api.post("/scheduling/assignments", data);
+      const response = await api.post('/scheduling/assignments', data);
       return response.data;
     } catch (error: any) {
       if (error.response?.status !== 400) {
-        console.error("Failed to create assignment:", error);
+        console.error('Failed to create assignment:', error);
       }
       throw error;
     }
   },
 
-  async updateAssignment(
-    id: number,
-    data: UpdateAssignmentData,
-  ): Promise<Assignment> {
+  async updateAssignment(id: number, data: UpdateAssignmentData): Promise<Assignment> {
     try {
       const response = await api.put(`/scheduling/assignments/${id}`, data);
       return response.data;
@@ -338,84 +319,72 @@ export const schedulingApi = {
 
   // Upload Stundenkonto Excel (columns: Mitarbeiter, Stundenkonto); saves time_account on employees and stand date from filename
   async uploadTimeAccounts(
-    file: File,
+    file: File
   ): Promise<{ time_account_as_of: string; updated_count: number }> {
     const formData = new FormData();
-    formData.append("file", file);
-    const response = await api.post(
-      "/scheduling/time-accounts-upload",
-      formData,
-    );
+    formData.append('file', file);
+    const response = await api.post('/scheduling/time-accounts-upload', formData);
     return response.data;
   },
 
-  async getEmployeePlanningPreferences(): Promise<
-    StoredEmployeePlanningPreference[]
-  > {
+  async getEmployeePlanningPreferences(): Promise<StoredEmployeePlanningPreference[]> {
     try {
-      const response = await api.get(
-        "/scheduling/employee-planning-preferences",
-      );
+      const response = await api.get('/scheduling/employee-planning-preferences');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch employee planning preferences:", error);
+      console.error('Failed to fetch employee planning preferences:', error);
       throw error;
     }
   },
 
   async upsertEmployeePlanningPreferences(
-    preferences: StoredEmployeePlanningPreference[],
+    preferences: StoredEmployeePlanningPreference[]
   ): Promise<{ message: string; created: number; updated: number }> {
     try {
-      const response = await api.put(
-        "/scheduling/employee-planning-preferences",
-        preferences,
-      );
+      const response = await api.put('/scheduling/employee-planning-preferences', preferences);
       return response.data;
     } catch (error) {
-      console.error("Failed to save employee planning preferences:", error);
+      console.error('Failed to save employee planning preferences:', error);
       throw error;
     }
   },
 
   // Auto Plan
-  async autoPlan(
-    data: AutoPlanData,
-  ): Promise<{
+  async autoPlan(data: AutoPlanData): Promise<{
     message: string;
     assignments_created?: number;
     total_planned?: number;
   }> {
     try {
-      const response = await api.post("/scheduling/auto-plan", data);
+      const response = await api.post('/scheduling/auto-plan', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to start auto planning:", error);
+      console.error('Failed to start auto planning:', error);
       throw error;
     }
   },
 
   // Reset Planning
   async resetPlanning(
-    data: ResetPlanningData,
+    data: ResetPlanningData
   ): Promise<{ message: string; deleted_count: number }> {
     try {
-      const response = await api.post("/scheduling/reset-planning", data);
+      const response = await api.post('/scheduling/reset-planning', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to reset planning:", error);
+      console.error('Failed to reset planning:', error);
       throw error;
     }
   },
 
   async compareAplanoMonth(month: string): Promise<AplanoCompareResponse> {
     try {
-      const response = await api.get("/scheduling/aplano-compare", {
+      const response = await api.get('/scheduling/aplano-compare', {
         params: { month },
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to compare Aplano month:", error);
+      console.error('Failed to compare Aplano month:', error);
       throw error;
     }
   },

@@ -1,1 +1,1 @@
-export * from "@palliroute/models";
+export * from '@palliroute/models';

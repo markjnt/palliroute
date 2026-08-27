@@ -1,9 +1,6 @@
-import { patientsApi } from "./patients";
-import {
-  getBestCalendarWeek,
-  getCurrentCalendarWeek,
-} from "@palliroute/shared";
-import { useCalendarWeekStore } from "../../stores/useCalendarWeekStore";
+import { patientsApi } from './patients';
+import { getBestCalendarWeek, getCurrentCalendarWeek } from '@palliroute/shared';
+import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 
 /**
  * Service to manage calendar week selection across all APIs
@@ -37,9 +34,7 @@ class CalendarWeekService {
 
       // If no weeks available from backend, use current week as fallback
       if (weeks.length === 0) {
-        console.warn(
-          "No calendar weeks available from backend, using current week as fallback",
-        );
+        console.warn('No calendar weeks available from backend, using current week as fallback');
         const fallbackWeek = getCurrentCalendarWeek();
         setSelectedCalendarWeek(fallbackWeek);
         return fallbackWeek;
@@ -49,10 +44,10 @@ class CalendarWeekService {
       setSelectedCalendarWeek(bestWeek);
       return bestWeek;
     } catch (error) {
-      console.error("Failed to get best calendar week:", error);
+      console.error('Failed to get best calendar week:', error);
 
       // If no cache available, use current week as final fallback
-      console.warn("No cached week available, using current week as fallback");
+      console.warn('No cached week available, using current week as fallback');
       const fallbackWeek = getCurrentCalendarWeek();
       setSelectedCalendarWeek(fallbackWeek);
       return fallbackWeek;

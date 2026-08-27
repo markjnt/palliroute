@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface UserState {
   selectedUserId: number | null;
@@ -16,17 +16,14 @@ export const useUserStore = create<UserState>()(
     (set) => ({
       selectedUserId: null,
       selectedTourArea: null,
-      setSelectedUser: (userId: number | null) =>
-        set({ selectedUserId: userId }),
-      setSelectedTourArea: (area: string | null) =>
-        set({ selectedTourArea: area }),
+      setSelectedUser: (userId: number | null) => set({ selectedUserId: userId }),
+      setSelectedTourArea: (area: string | null) => set({ selectedTourArea: area }),
       clearSelectedUser: () => set({ selectedUserId: null }),
       clearSelectedTourArea: () => set({ selectedTourArea: null }),
-      clearAllSelections: () =>
-        set({ selectedUserId: null, selectedTourArea: null }),
+      clearAllSelections: () => set({ selectedUserId: null, selectedTourArea: null }),
     }),
     {
-      name: "user-storage-v2",
-    },
-  ),
+      name: 'user-storage-v2',
+    }
+  )
 );

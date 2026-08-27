@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { calendarWeekService } from "../api/calendarWeek";
-import { patientsApi } from "../api/patients";
+import { useQuery } from '@tanstack/react-query';
+import { calendarWeekService } from '../api/calendarWeek';
+import { patientsApi } from '../api/patients';
 
 // Keys für React Query Cache
 export const calendarWeekKeys = {
-  all: ["calendarWeek"] as const,
-  best: () => [...calendarWeekKeys.all, "best"] as const,
-  list: () => [...calendarWeekKeys.all, "list"] as const,
+  all: ['calendarWeek'] as const,
+  best: () => [...calendarWeekKeys.all, 'best'] as const,
+  list: () => [...calendarWeekKeys.all, 'list'] as const,
 };
 
 // Hook zum Laden der besten Kalenderwoche

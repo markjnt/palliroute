@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { getCurrentCalendarWeek as getIsoCalendarWeek } from "@palliroute/shared";
+import { create } from 'zustand';
+import { getCurrentCalendarWeek as getIsoCalendarWeek } from '@palliroute/shared';
 
 interface CalendarWeekStore {
   selectedCalendarWeek: number | null;
@@ -21,7 +21,7 @@ export const useCalendarWeekStore = create<CalendarWeekStore>()((set, get) => ({
       set({ selectedCalendarWeek: week });
     } else {
       console.warn(
-        `Calendar week ${week} is not available. Available weeks: ${currentState.availableCalendarWeeks.join(", ")}`,
+        `Calendar week ${week} is not available. Available weeks: ${currentState.availableCalendarWeeks.join(', ')}`
       );
     }
   },
@@ -41,7 +41,7 @@ export const useCalendarWeekStore = create<CalendarWeekStore>()((set, get) => ({
       const weekToSelect = weeks.includes(currentWeek) ? currentWeek : weeks[0];
       set({ selectedCalendarWeek: weekToSelect });
       console.warn(
-        `Selected calendar week ${currentState.selectedCalendarWeek} is no longer available. Switched to week ${weekToSelect}`,
+        `Selected calendar week ${currentState.selectedCalendarWeek} is no longer available. Switched to week ${weekToSelect}`
       );
     } else if (currentState.selectedCalendarWeek === null && weeks.length > 0) {
       // Wenn noch keine Woche ausgewählt ist, wähle die aktuelle Woche aus

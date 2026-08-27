@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -15,7 +15,7 @@ import {
   ListItemButton,
   ListItemText,
   CircularProgress,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Refresh as RefreshIcon,
   DateRange as DateRangeIcon,
@@ -27,45 +27,42 @@ import {
   ExpandMore as ExpandMoreIcon,
   RadioButtonChecked as RadioButtonCheckedIcon,
   WarningAmber as WarningIcon,
-} from "@mui/icons-material";
-import { Employee } from "../../types/models";
-import { Weekday } from "../../stores/useWeekdayStore";
-import { ToursView } from "./ToursView";
-import { useWeekdayStore, useCalendarWeekStore } from "../../stores";
-import { useEmployees } from "../../services/queries/useEmployees";
+} from '@mui/icons-material';
+import { Employee } from '../../types/models';
+import { Weekday } from '../../stores/useWeekdayStore';
+import { ToursView } from './ToursView';
+import { useWeekdayStore, useCalendarWeekStore } from '../../stores';
+import { useEmployees } from '../../services/queries/useEmployees';
 import {
   usePatients,
   usePatientImport,
   useCalendarWeeks,
-} from "../../services/queries/usePatients";
-import { useLastPatientImportTime } from "../../services/queries/useConfig";
-import {
-  useNrwpHolidayForTourDay,
-  useNrwpHolidayLookupForSelectedKw,
-} from "../../hooks";
-import { useAppointmentsByWeekday } from "../../services/queries/useAppointments";
+} from '../../services/queries/usePatients';
+import { useLastPatientImportTime } from '../../services/queries/useConfig';
+import { useNrwpHolidayForTourDay, useNrwpHolidayLookupForSelectedKw } from '../../hooks';
+import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
 import {
   useRoutes,
   useOptimizeRoutes,
   useOptimizeTourAreaRoutes,
-} from "../../services/queries/useRoutes";
-import { useNotificationStore } from "../../stores/useNotificationStore";
-import { useLastUpdateStore } from "../../stores/useLastUpdateStore";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouteVisibility } from "../../stores/useRouteVisibilityStore";
-import { MAP_HEADER_TOOLBAR_PX } from "../../theme/floatingControlSx";
+} from '../../services/queries/useRoutes';
+import { useNotificationStore } from '../../stores/useNotificationStore';
+import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouteVisibility } from '../../stores/useRouteVisibilityStore';
+import { MAP_HEADER_TOOLBAR_PX } from '../../theme/floatingControlSx';
 
 /** Zwei Buchstaben (Mo … So) + Icons — feste Breite, kein Zucken beim Wochentagswechsel. */
 const TOUR_WEEKDAY_BUTTON_WIDTH_PX = 104;
 
 const WEEKDAY_FULL_DE: Record<Weekday, string> = {
-  monday: "Montag",
-  tuesday: "Dienstag",
-  wednesday: "Mittwoch",
-  thursday: "Donnerstag",
-  friday: "Freitag",
-  saturday: "Samstag",
-  sunday: "Sonntag",
+  monday: 'Montag',
+  tuesday: 'Dienstag',
+  wednesday: 'Mittwoch',
+  thursday: 'Donnerstag',
+  friday: 'Freitag',
+  saturday: 'Samstag',
+  sunday: 'Sonntag',
 };
 
 interface TourPlanSidebarProps {
@@ -82,7 +79,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
     getCurrentCalendarWeek,
   } = useCalendarWeekStore();
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [kwAnchorEl, setKwAnchorEl] = useState<null | HTMLElement>(null);
   const [filteredResults, setFilteredResults] = useState<{
@@ -95,31 +92,25 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
     filteredDoctors: [],
   });
 
-  const { notification, setNotification, closeNotification } =
-    useNotificationStore();
-  const { lastPatientImportTime, setLastPatientImportTime } =
-    useLastUpdateStore();
+  const { notification, setNotification, closeNotification } = useNotificationStore();
+  const { lastPatientImportTime, setLastPatientImportTime } = useLastUpdateStore();
   const [showStaleImportDialog, setShowStaleImportDialog] = useState(false);
   const [staleWarningShown, setStaleWarningShown] = useState(false);
 
   // Format last update time for display
   const formatLastUpdateTime = (time: Date | null): string => {
-    if (!time) return "Noch nicht aktualisiert";
+    if (!time) return 'Noch nicht aktualisiert';
 
     return (
-      "zuletzt " +
-      time.toLocaleDateString("de-DE") +
-      " " +
-      time.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+      'zuletzt ' +
+      time.toLocaleDateString('de-DE') +
+      ' ' +
+      time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
     );
   };
   const queryClient = useQueryClient();
-  const {
-    hiddenPolylines,
-    hideAllPolylines,
-    showAllPolylines,
-    showAllMarkers,
-  } = useRouteVisibility();
+  const { hiddenPolylines, hideAllPolylines, showAllPolylines, showAllMarkers } =
+    useRouteVisibility();
 
   // React Query Hooks
   const { data: employees = [], isLoading: loadingEmployees } = useEmployees(); // Employees sind kalenderwochenunabhängig!
@@ -128,11 +119,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
   const { data: availableCalendarWeeksFromApi = [] } = useCalendarWeeks();
 
   // Gefilterte Patienten für die aktuelle Ansicht (verwendet automatisch selectedCalendarWeek)
-  const {
-    data: patients = [],
-    isLoading: loadingPatients,
-    error: patientsError,
-  } = usePatients();
+  const { data: patients = [], isLoading: loadingPatients, error: patientsError } = usePatients();
 
   const {
     data: dayAppointments = [],
@@ -156,9 +143,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
       ? new Date(lastImportTimeData.last_import_time)
       : null;
     if (fromApi && lastPatientImportTime) {
-      return fromApi.getTime() >= lastPatientImportTime.getTime()
-        ? fromApi
-        : lastPatientImportTime;
+      return fromApi.getTime() >= lastPatientImportTime.getTime() ? fromApi : lastPatientImportTime;
     }
     return fromApi || lastPatientImportTime;
   }, [lastImportTimeData, lastPatientImportTime]);
@@ -207,7 +192,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
       setSelectedWeekday(newWeekday);
       setAnchorEl(null);
     },
-    [setSelectedWeekday],
+    [setSelectedWeekday]
   );
 
   // Handle popover open/close
@@ -240,22 +225,22 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
         message += ` (KW ${result.calendar_week})`;
       }
 
-      setNotification(message, "success");
+      setNotification(message, 'success');
     } catch (error: any) {
-      console.error("Error importing patients:", error);
-      let message = "Fehler beim Importieren der Patienten";
+      console.error('Error importing patients:', error);
+      let message = 'Fehler beim Importieren der Patienten';
       if (error?.response?.data?.error) {
         message = error.response.data.error;
       } else if (error?.message) {
         message = error.message;
       }
-      setNotification(message, "error");
+      setNotification(message, 'error');
     }
   };
 
   // Handle clear search
   const handleClearSearch = () => {
-    setSearchTerm("");
+    setSearchTerm('');
   };
 
   // Memoize the filtered results change handler
@@ -267,32 +252,32 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
     }) => {
       setFilteredResults(results);
     },
-    [],
+    []
   );
 
   const getWeekdayAbbrev = useCallback((day: Weekday): string => {
     const abbrev: Record<Weekday, string> = {
-      monday: "Mo",
-      tuesday: "Di",
-      wednesday: "Mi",
-      thursday: "Do",
-      friday: "Fr",
-      saturday: "Sa",
-      sunday: "So",
+      monday: 'Mo',
+      tuesday: 'Di',
+      wednesday: 'Mi',
+      thursday: 'Do',
+      friday: 'Fr',
+      saturday: 'Sa',
+      sunday: 'So',
     };
-    return abbrev[day] || "?";
+    return abbrev[day] || '?';
   }, []);
 
   // Get current weekday
   const getCurrentWeekday = useCallback((): Weekday => {
     const days: Weekday[] = [
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
     ];
     return days[new Date().getDay()];
   }, []);
@@ -304,12 +289,10 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
 
   // Check if selected KW matches current KW
   const currentWeek = getCurrentCalendarWeek();
-  const isCurrentWeek =
-    selectedCalendarWeek && selectedCalendarWeek === currentWeek;
+  const isCurrentWeek = selectedCalendarWeek && selectedCalendarWeek === currentWeek;
 
   // Loading and error states
-  const isLoading =
-    loadingPatients || loadingEmployees || loadingAppointments || loadingRoutes;
+  const isLoading = loadingPatients || loadingEmployees || loadingAppointments || loadingRoutes;
 
   const error = (() => {
     if (patientsError instanceof Error) return patientsError.message;
@@ -324,66 +307,51 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
     setIsOptimizing(true);
     try {
       if (isAreaTourDay) {
-        const tourAreaLabels = ["Nord", "Mitte", "Süd"];
+        const tourAreaLabels = ['Nord', 'Mitte', 'Süd'];
         const optimizationPromises = tourAreaLabels.map((area) =>
           optimizeTourAreaRoutesMutation.mutateAsync({
             weekday: selectedWeekday.toLowerCase(),
             area: area,
-          }),
+          })
         );
         await Promise.all(optimizationPromises);
-        setNotification(
-          "Alle Wochenend-Routen wurden erfolgreich optimiert",
-          "success",
-        );
+        setNotification('Alle Wochenend-Routen wurden erfolgreich optimiert', 'success');
       } else {
         // Optimize weekday routes by employee
         const employeeIdsWithRoute = routes
-          .filter(
-            (route) =>
-              route.employee_id !== undefined && route.employee_id !== null,
-          )
+          .filter((route) => route.employee_id !== undefined && route.employee_id !== null)
           .map((route) => route.employee_id);
 
         const employeesWithRoute = employees.filter(
-          (emp) =>
-            emp.id !== undefined && employeeIdsWithRoute.includes(emp.id),
+          (emp) => emp.id !== undefined && employeeIdsWithRoute.includes(emp.id)
         );
 
         const optimizationPromises = employeesWithRoute.map((employee) =>
           optimizeRoutesMutation.mutateAsync({
             weekday: selectedWeekday.toLowerCase(),
             employeeId: employee.id as number,
-          }),
+          })
         );
 
         await Promise.all(optimizationPromises);
-        setNotification(
-          "Alle Routen für den Tag wurden erfolgreich optimiert",
-          "success",
-        );
+        setNotification('Alle Routen für den Tag wurden erfolgreich optimiert', 'success');
       }
 
       await queryClient.invalidateQueries();
     } catch (error) {
-      setNotification("Fehler beim Optimieren der Routen", "error");
+      setNotification('Fehler beim Optimieren der Routen', 'error');
     } finally {
       setIsOptimizing(false);
     }
   };
 
   // Check if there's any data
-  const hasData =
-    patients.length > 0 || dayAppointments.length > 0 || routes.length > 0;
+  const hasData = patients.length > 0 || dayAppointments.length > 0 || routes.length > 0;
 
   // Toggle all polylines visibility
   const allRouteIds = routes.map((r) => r.id);
-  const allHidden =
-    allRouteIds.length > 0 &&
-    allRouteIds.every((id) => hiddenPolylines.has(id));
-  const allVisible =
-    allRouteIds.length > 0 &&
-    allRouteIds.every((id) => !hiddenPolylines.has(id));
+  const allHidden = allRouteIds.length > 0 && allRouteIds.every((id) => hiddenPolylines.has(id));
+  const allVisible = allRouteIds.length > 0 && allRouteIds.every((id) => !hiddenPolylines.has(id));
   const handleToggleAllPolylines = () => {
     if (!allRouteIds.length) return;
     if (!allVisible) {
@@ -402,55 +370,48 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
   return (
     <Box
       sx={{
-        height: "100%",
-        width: "100%",
-        bgcolor: "background.paper",
-        display: "flex",
-        flexDirection: "column",
+        height: '100%',
+        width: '100%',
+        bgcolor: 'background.paper',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "nowrap",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'nowrap',
           pt: 2,
           pb: 2,
           pr: 2,
           pl: 8,
           height: 64,
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Typography
-          variant="h6"
-          component="h2"
-          sx={{ pl: 1, whiteSpace: "nowrap", flexShrink: 0 }}
-        >
+        <Typography variant="h6" component="h2" sx={{ pl: 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
           Touren
         </Typography>
 
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
           {/* Kalenderwoche: Toggle bei genau zwei KW, sonst Popover */}
           {selectedCalendarWeek && availableCalendarWeeks.length === 2 ? (
             <Box
               role="group"
               aria-label="Kalenderwoche wählen"
               sx={{
-                display: "inline-flex",
-                alignItems: "stretch",
+                display: 'inline-flex',
+                alignItems: 'stretch',
                 height: MAP_HEADER_TOOLBAR_PX,
-                boxSizing: "border-box",
+                boxSizing: 'border-box',
                 flexShrink: 0,
                 borderRadius: 2,
-                overflow: "hidden",
-                bgcolor: "background.paper",
-                boxShadow: (theme) =>
-                  `inset 0 0 0 1px ${theme.palette.divider}`,
+                overflow: 'hidden',
+                bgcolor: 'background.paper',
+                boxShadow: (theme) => `inset 0 0 0 1px ${theme.palette.divider}`,
               }}
             >
               {[...availableCalendarWeeks]
@@ -472,49 +433,46 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                       }
                       aria-pressed={selected}
                       sx={{
-                        alignSelf: "stretch",
-                        flex: "1 1 0",
+                        alignSelf: 'stretch',
+                        flex: '1 1 0',
                         minWidth: 0,
-                        height: "auto",
+                        height: 'auto',
                         minHeight: 0,
                         py: 0,
                         px: 1.25,
                         borderRadius: 4,
-                        border: "none",
-                        borderRight:
-                          idx === 0
-                            ? (t) => `1px solid ${t.palette.divider}`
-                            : "none",
-                        textTransform: "none",
+                        border: 'none',
+                        borderRight: idx === 0 ? (t) => `1px solid ${t.palette.divider}` : 'none',
+                        textTransform: 'none',
                         fontWeight: 600,
-                        fontSize: "0.8125rem",
-                        whiteSpace: "nowrap",
+                        fontSize: '0.8125rem',
+                        whiteSpace: 'nowrap',
                         lineHeight: 1.2,
                         ...(selected
                           ? isKwThisSegmentCurrentIso
                             ? {
-                                color: "success.contrastText",
-                                backgroundColor: "success.main",
+                                color: 'success.contrastText',
+                                backgroundColor: 'success.main',
                                 boxShadow: (theme) =>
-                                  `0 1px 2px ${theme.palette.mode === "dark" ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.12)"}`,
-                                "&:hover": {
-                                  backgroundColor: "success.dark",
+                                  `0 1px 2px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.12)'}`,
+                                '&:hover': {
+                                  backgroundColor: 'success.dark',
                                 },
                               }
                             : {
-                                color: "primary.contrastText",
-                                backgroundColor: "primary.main",
+                                color: 'primary.contrastText',
+                                backgroundColor: 'primary.main',
                                 boxShadow: (theme) =>
-                                  `0 1px 2px ${theme.palette.mode === "dark" ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.12)"}`,
-                                "&:hover": {
-                                  backgroundColor: "primary.dark",
+                                  `0 1px 2px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.12)'}`,
+                                '&:hover': {
+                                  backgroundColor: 'primary.dark',
                                 },
                               }
                           : {
-                              color: "text.secondary",
-                              backgroundColor: "transparent",
-                              "&:hover": {
-                                backgroundColor: "rgba(0, 0, 0, 0.06)",
+                              color: 'text.secondary',
+                              backgroundColor: 'transparent',
+                              '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.06)',
                               },
                             }),
                       }}
@@ -533,27 +491,23 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                 startIcon={<CalendarViewWeekIcon sx={{ fontSize: 18 }} />}
                 endIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
                 sx={{
-                  minWidth: "auto",
+                  minWidth: 'auto',
                   height: MAP_HEADER_TOOLBAR_PX,
                   minHeight: MAP_HEADER_TOOLBAR_PX,
                   maxHeight: MAP_HEADER_TOOLBAR_PX,
-                  boxSizing: "border-box",
+                  boxSizing: 'border-box',
                   py: 0,
                   px: 1.25,
-                  justifyContent: "space-between",
-                  textTransform: "none",
+                  justifyContent: 'space-between',
+                  textTransform: 'none',
                   fontWeight: 500,
-                  fontSize: "0.8125rem",
-                  borderColor: isCurrentWeek ? "success.main" : "primary.main",
-                  color: isCurrentWeek ? "success.main" : "primary.main",
-                  backgroundColor: isCurrentWeek ? "success.50" : "primary.50",
-                  "&:hover": {
-                    borderColor: isCurrentWeek
-                      ? "success.dark"
-                      : "primary.dark",
-                    backgroundColor: isCurrentWeek
-                      ? "success.100"
-                      : "primary.50",
+                  fontSize: '0.8125rem',
+                  borderColor: isCurrentWeek ? 'success.main' : 'primary.main',
+                  color: isCurrentWeek ? 'success.main' : 'primary.main',
+                  backgroundColor: isCurrentWeek ? 'success.50' : 'primary.50',
+                  '&:hover': {
+                    borderColor: isCurrentWeek ? 'success.dark' : 'primary.dark',
+                    backgroundColor: isCurrentWeek ? 'success.100' : 'primary.50',
                   },
                 }}
               >
@@ -579,19 +533,19 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
               height: MAP_HEADER_TOOLBAR_PX,
               minHeight: MAP_HEADER_TOOLBAR_PX,
               maxHeight: MAP_HEADER_TOOLBAR_PX,
-              boxSizing: "border-box",
+              boxSizing: 'border-box',
               py: 0,
               px: 1.25,
-              justifyContent: "space-between",
-              textTransform: "none",
-              fontSize: "0.8125rem",
+              justifyContent: 'space-between',
+              textTransform: 'none',
+              fontSize: '0.8125rem',
               fontWeight: currentWeekday === selectedWeekday ? 700 : 500,
-              borderColor: "primary.main",
-              color: "primary.main",
-              position: "relative",
-              "&:hover": {
-                borderColor: "primary.dark",
-                backgroundColor: "primary.50",
+              borderColor: 'primary.main',
+              color: 'primary.main',
+              position: 'relative',
+              '&:hover': {
+                borderColor: 'primary.dark',
+                backgroundColor: 'primary.50',
               },
             }}
           >
@@ -602,14 +556,14 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                 sx={{
                   width: 6,
                   height: 6,
-                  borderRadius: "50%",
-                  backgroundColor: "#007AFF",
-                  position: "absolute",
-                  top: "50%",
+                  borderRadius: '50%',
+                  backgroundColor: '#007AFF',
+                  position: 'absolute',
+                  top: '50%',
                   right: 26,
-                  transform: "translateY(-50%)",
-                  border: "1px solid rgba(0, 122, 255, 0.2)",
-                  boxShadow: "0 1px 2px rgba(0, 122, 255, 0.3)",
+                  transform: 'translateY(-50%)',
+                  border: '1px solid rgba(0, 122, 255, 0.2)',
+                  boxShadow: '0 1px 2px rgba(0, 122, 255, 0.3)',
                 }}
               />
             )}
@@ -623,12 +577,12 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
         anchorEl={anchorEl}
         onClose={handlePopoverClose}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
+          vertical: 'bottom',
+          horizontal: 'left',
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
+          vertical: 'top',
+          horizontal: 'left',
         }}
         PaperProps={{
           sx: {
@@ -642,13 +596,13 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
         <List sx={{ p: 1 }}>
           {(
             [
-              { value: "monday" as const, isWeekend: false },
-              { value: "tuesday" as const, isWeekend: false },
-              { value: "wednesday" as const, isWeekend: false },
-              { value: "thursday" as const, isWeekend: false },
-              { value: "friday" as const, isWeekend: false },
-              { value: "saturday" as const, isWeekend: true },
-              { value: "sunday" as const, isWeekend: true },
+              { value: 'monday' as const, isWeekend: false },
+              { value: 'tuesday' as const, isWeekend: false },
+              { value: 'wednesday' as const, isWeekend: false },
+              { value: 'thursday' as const, isWeekend: false },
+              { value: 'friday' as const, isWeekend: false },
+              { value: 'saturday' as const, isWeekend: true },
+              { value: 'sunday' as const, isWeekend: true },
             ] as const
           ).map((day) => {
             const holidayLabel = getHolidayName(day.value as Weekday);
@@ -661,35 +615,25 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                   sx={{
                     borderRadius: 1,
                     mb: 0.5,
-                    backgroundColor: useOrangeRow
-                      ? "warning.50"
-                      : "transparent",
-                    position: "relative",
-                    alignItems: "flex-start",
+                    backgroundColor: useOrangeRow ? 'warning.50' : 'transparent',
+                    position: 'relative',
+                    alignItems: 'flex-start',
                     py: holidayLabel ? 1 : 0.5,
-                    "&.Mui-selected": {
-                      backgroundColor: useOrangeRow
-                        ? "warning.main"
-                        : "primary.main",
-                      color: "white",
-                      "&:hover": {
-                        backgroundColor: useOrangeRow
-                          ? "warning.dark"
-                          : "primary.dark",
+                    '&.Mui-selected': {
+                      backgroundColor: useOrangeRow ? 'warning.main' : 'primary.main',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: useOrangeRow ? 'warning.dark' : 'primary.dark',
                       },
                     },
-                    "&:hover": {
-                      backgroundColor: useOrangeRow
-                        ? "warning.100"
-                        : "primary.50",
+                    '&:hover': {
+                      backgroundColor: useOrangeRow ? 'warning.100' : 'primary.50',
                     },
                   }}
                 >
                   <ListItemText
                     primary={WEEKDAY_FULL_DE[day.value]}
-                    secondary={
-                      holidayLabel ? `Feiertag: ${holidayLabel}` : undefined
-                    }
+                    secondary={holidayLabel ? `Feiertag: ${holidayLabel}` : undefined}
                     primaryTypographyProps={{
                       fontWeight:
                         selectedWeekday === day.value
@@ -697,23 +641,21 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                           : currentWeekday === day.value
                             ? 500
                             : 400,
-                      fontSize: "0.875rem",
+                      fontSize: '0.875rem',
                       color:
-                        useOrangeRow && selectedWeekday !== day.value
-                          ? "warning.dark"
-                          : "inherit",
+                        useOrangeRow && selectedWeekday !== day.value ? 'warning.dark' : 'inherit',
                     }}
                     secondaryTypographyProps={
                       holidayLabel
                         ? {
-                            fontSize: "0.72rem",
+                            fontSize: '0.72rem',
                             lineHeight: 1.2,
                             sx: {
                               mt: 0.35,
                               color:
                                 selectedWeekday === day.value
-                                  ? "rgba(255, 255, 255, 0.9)"
-                                  : "warning.dark",
+                                  ? 'rgba(255, 255, 255, 0.9)'
+                                  : 'warning.dark',
                             },
                           }
                         : undefined
@@ -725,14 +667,14 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                       sx={{
                         width: 6,
                         height: 6,
-                        borderRadius: "50%",
-                        backgroundColor: "#007AFF",
-                        position: "absolute",
-                        top: "50%",
+                        borderRadius: '50%',
+                        backgroundColor: '#007AFF',
+                        position: 'absolute',
+                        top: '50%',
                         right: 8,
-                        transform: "translateY(-50%)",
-                        border: "1px solid rgba(0, 122, 255, 0.2)",
-                        boxShadow: "0 1px 2px rgba(0, 122, 255, 0.3)",
+                        transform: 'translateY(-50%)',
+                        border: '1px solid rgba(0, 122, 255, 0.2)',
+                        boxShadow: '0 1px 2px rgba(0, 122, 255, 0.3)',
                       }}
                     />
                   )}
@@ -750,12 +692,12 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
           anchorEl={kwAnchorEl}
           onClose={handleKwPopoverClose}
           anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "left",
+            vertical: 'bottom',
+            horizontal: 'left',
           }}
           transformOrigin={{
-            vertical: "top",
-            horizontal: "left",
+            vertical: 'top',
+            horizontal: 'left',
           }}
           PaperProps={{
             sx: {
@@ -782,24 +724,16 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                     sx={{
                       borderRadius: 1,
                       mb: 0.5,
-                      backgroundColor: isCurrentWeekItem
-                        ? "success.50"
-                        : "transparent",
-                      "&.Mui-selected": {
-                        backgroundColor: isCurrentWeekItem
-                          ? "success.main"
-                          : "primary.main",
-                        color: "white",
-                        "&:hover": {
-                          backgroundColor: isCurrentWeekItem
-                            ? "success.dark"
-                            : "primary.dark",
+                      backgroundColor: isCurrentWeekItem ? 'success.50' : 'transparent',
+                      '&.Mui-selected': {
+                        backgroundColor: isCurrentWeekItem ? 'success.main' : 'primary.main',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: isCurrentWeekItem ? 'success.dark' : 'primary.dark',
                         },
                       },
-                      "&:hover": {
-                        backgroundColor: isCurrentWeekItem
-                          ? "success.100"
-                          : "primary.50",
+                      '&:hover': {
+                        backgroundColor: isCurrentWeekItem ? 'success.100' : 'primary.50',
                       },
                     }}
                   >
@@ -807,11 +741,8 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                       primary={`KW ${week}`}
                       primaryTypographyProps={{
                         fontWeight: isSelected ? 600 : 400,
-                        fontSize: "0.875rem",
-                        color:
-                          isCurrentWeekItem && !isSelected
-                            ? "success.dark"
-                            : "inherit",
+                        fontSize: '0.875rem',
+                        color: isCurrentWeekItem && !isSelected ? 'success.dark' : 'inherit',
                       }}
                     />
                     {isCurrentWeekItem && (
@@ -819,10 +750,8 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
                         sx={{
                           width: 8,
                           height: 8,
-                          borderRadius: "50%",
-                          backgroundColor: isSelected
-                            ? "white"
-                            : "success.main",
+                          borderRadius: '50%',
+                          backgroundColor: isSelected ? 'white' : 'success.main',
                           ml: 1,
                           opacity: 0.9,
                         }}
@@ -836,8 +765,8 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
         </Popover>
       )}
 
-      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-        <Box sx={{ display: "flex", gap: 1 }}>
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
             variant="contained"
             fullWidth
@@ -852,11 +781,11 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
             disabled={!employees.length || patientImportMutation.isPending}
           >
             {patientImportMutation.isPending
-              ? "Importiere..."
-              : `PalliDOC Import${displayImportTime ? ` (${formatLastUpdateTime(displayImportTime)})` : ""}`}
+              ? 'Importiere...'
+              : `PalliDOC Import${displayImportTime ? ` (${formatLastUpdateTime(displayImportTime)})` : ''}`}
           </Button>
         </Box>
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
             variant="outlined"
             fullWidth
@@ -864,7 +793,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
             onClick={handleOptimizeAllRoutes}
             disabled={isOptimizing || !routes.length}
           >
-            {isOptimizing ? "Optimierung läuft..." : "Alle Routen optimieren"}
+            {isOptimizing ? 'Optimierung läuft...' : 'Alle Routen optimieren'}
           </Button>
           <Button
             variant="outlined"
@@ -873,14 +802,14 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
             onClick={handleToggleAllPolylines}
             disabled={!routes.length}
           >
-            {!allVisible ? "Alle Routen einblenden" : "Alle Routen ausblenden"}
+            {!allVisible ? 'Alle Routen einblenden' : 'Alle Routen ausblenden'}
           </Button>
         </Box>
       </Box>
 
       <Divider />
 
-      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+      <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
         <ToursView
           selectedDay={selectedWeekday}
           searchTerm={searchTerm}
@@ -892,25 +821,19 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
       </Box>
 
       {/* Dialog: Warnung bei altem Import mit Möglichkeit zum direkten PalliDOC Import */}
-      <Dialog
-        open={showStaleImportDialog}
-        onClose={() => setShowStaleImportDialog(false)}
-      >
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Dialog open={showStaleImportDialog} onClose={() => setShowStaleImportDialog(false)}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <WarningIcon color="warning" />
           PalliDOC-Import ist veraltet
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Der letzte PalliDOC-Import liegt mehr als zwei Stunden zurück.
-            Möchten Sie jetzt einen PalliDOC-Import starten, um mit aktuellen
-            Daten zu arbeiten?
+            Der letzte PalliDOC-Import liegt mehr als zwei Stunden zurück. Möchten Sie jetzt einen
+            PalliDOC-Import starten, um mit aktuellen Daten zu arbeiten?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowStaleImportDialog(false)}>
-            Später
-          </Button>
+          <Button onClick={() => setShowStaleImportDialog(false)}>Später</Button>
           <Button
             variant="contained"
             color="primary"

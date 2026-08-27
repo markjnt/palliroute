@@ -1,10 +1,10 @@
-import React from "react";
-import { Box, Button, Tooltip } from "@mui/material";
+import React from 'react';
+import { Box, Button, Tooltip } from '@mui/material';
 import {
   Route as RouteIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 interface OptimizeState {
   isOptimizing: boolean;
@@ -32,17 +32,17 @@ export const TourControls: React.FC<TourControlsProps> = ({
   if (!expanded) return null;
 
   const controlHoverSx = {
-    "&:hover": {
-      backgroundColor: "primary.light",
-      color: "primary.contrastText",
+    '&:hover': {
+      backgroundColor: 'primary.light',
+      color: 'primary.contrastText',
     },
   } as const;
 
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 1,
         mt: 0.5,
         mb: 2,
@@ -59,14 +59,11 @@ export const TourControls: React.FC<TourControlsProps> = ({
           ...controlHoverSx,
         }}
       >
-        {optimizeState.isOptimizing ? "Optimiert..." : "Optimieren"}
+        {optimizeState.isOptimizing ? 'Optimiert...' : 'Optimieren'}
       </Button>
 
       {routeId !== undefined && (
-        <Tooltip
-          title={isVisible ? "Route ausblenden" : "Route einblenden"}
-          arrow
-        >
+        <Tooltip title={isVisible ? 'Route ausblenden' : 'Route einblenden'} arrow>
           <span>
             <Button
               variant="outlined"

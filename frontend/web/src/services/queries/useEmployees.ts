@@ -1,24 +1,20 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Employee,
-  EmployeeFormData,
-  EmployeeImportResponse,
-} from "../../types/models";
-import { employeesApi } from "../api/employees";
-import { patientsApi } from "../api/patients";
-import { patientKeys } from "./usePatients";
-import { appointmentKeys } from "./useAppointments";
-import { routeKeys } from "./useRoutes";
-import { useLastUpdateStore } from "../../stores/useLastUpdateStore";
-import { useCalendarWeekStore } from "../../stores/useCalendarWeekStore";
-import { employeePlanningKeys } from "./useEmployeePlanning";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Employee, EmployeeFormData, EmployeeImportResponse } from '../../types/models';
+import { employeesApi } from '../api/employees';
+import { patientsApi } from '../api/patients';
+import { patientKeys } from './usePatients';
+import { appointmentKeys } from './useAppointments';
+import { routeKeys } from './useRoutes';
+import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
+import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
+import { employeePlanningKeys } from './useEmployeePlanning';
 
 // Keys for React Query cache
 export const employeeKeys = {
-  all: ["employees"] as const,
-  lists: () => [...employeeKeys.all, "list"] as const,
+  all: ['employees'] as const,
+  lists: () => [...employeeKeys.all, 'list'] as const,
   list: (filters: string) => [...employeeKeys.lists(), { filters }] as const,
-  details: () => [...employeeKeys.all, "detail"] as const,
+  details: () => [...employeeKeys.all, 'detail'] as const,
   detail: (id: number) => [...employeeKeys.details(), id] as const,
 };
 
@@ -44,17 +40,16 @@ export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (employeeData: EmployeeFormData) =>
-      employeesApi.create(employeeData),
+    mutationFn: (employeeData: EmployeeFormData) => employeesApi.create(employeeData),
     onSuccess: (newEmployee) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
 
       // Optionally update the cache directly
-      queryClient.setQueryData(
-        employeeKeys.lists(),
-        (oldEmployees: Employee[] = []) => [...oldEmployees, newEmployee],
-      );
+      queryClient.setQueryData(employeeKeys.lists(), (oldEmployees: Employee[] = []) => [
+        ...oldEmployees,
+        newEmployee,
+      ]);
     },
   });
 };
@@ -64,13 +59,8 @@ export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      employeeData,
-    }: {
-      id: number;
-      employeeData: Partial<EmployeeFormData>;
-    }) => employeesApi.update(id, employeeData),
+    mutationFn: ({ id, employeeData }: { id: number; employeeData: Partial<EmployeeFormData> }) =>
+      employeesApi.update(id, employeeData),
     onSuccess: (updatedEmployee) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
@@ -79,12 +69,10 @@ export const useUpdateEmployee = () => {
       });
 
       // Optionally update the cache directly
-      queryClient.setQueryData(
-        employeeKeys.lists(),
-        (oldEmployees: Employee[] = []) =>
-          oldEmployees.map((employee) =>
-            employee.id === updatedEmployee.id ? updatedEmployee : employee,
-          ),
+      queryClient.setQueryData(employeeKeys.lists(), (oldEmployees: Employee[] = []) =>
+        oldEmployees.map((employee) =>
+          employee.id === updatedEmployee.id ? updatedEmployee : employee
+        )
       );
     },
   });
@@ -104,10 +92,8 @@ export const useDeleteEmployee = () => {
       queryClient.removeQueries({ queryKey: employeeKeys.detail(id) });
 
       // Optionally update the list cache directly
-      queryClient.setQueryData(
-        employeeKeys.lists(),
-        (oldEmployees: Employee[] = []) =>
-          oldEmployees.filter((employee) => employee.id !== id),
+      queryClient.setQueryData(employeeKeys.lists(), (oldEmployees: Employee[] = []) =>
+        oldEmployees.filter((employee) => employee.id !== id)
       );
     },
   });
@@ -139,10 +125,7 @@ export const useImportEmployees = () => {
         const calendarWeeks = await patientsApi.getCalendarWeeks();
         setAvailableCalendarWeeks(calendarWeeks);
       } catch (error) {
-        console.error(
-          "Failed to load calendar weeks after employee import:",
-          error,
-        );
+        console.error('Failed to load calendar weeks after employee import:', error);
       }
     },
   });

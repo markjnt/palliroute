@@ -1,18 +1,14 @@
-import { api } from "@palliroute/shared";
-import {
-  Employee,
-  EmployeeFormData,
-  EmployeeImportResponse,
-} from "../../types/models";
+import { api } from '@palliroute/shared';
+import { Employee, EmployeeFormData, EmployeeImportResponse } from '../../types/models';
 
 export const employeesApi = {
   // Get all employees
   async getAll(): Promise<Employee[]> {
     try {
-      const response = await api.get("/employees/");
+      const response = await api.get('/employees/');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch employees:", error);
+      console.error('Failed to fetch employees:', error);
       throw error;
     }
   },
@@ -31,22 +27,19 @@ export const employeesApi = {
   // Create new employee
   async create(employeeData: EmployeeFormData): Promise<Employee> {
     try {
-      const response = await api.post("/employees/", employeeData);
+      const response = await api.post('/employees/', employeeData);
       return response.data;
     } catch (error: any) {
       // Don't log expected errors (like duplicate employee)
       if (error.response?.status !== 400) {
-        console.error("Failed to create employee:", error);
+        console.error('Failed to create employee:', error);
       }
       throw error;
     }
   },
 
   // Update existing employee
-  async update(
-    id: number,
-    employeeData: Partial<EmployeeFormData>,
-  ): Promise<Employee> {
+  async update(id: number, employeeData: Partial<EmployeeFormData>): Promise<Employee> {
     try {
       const response = await api.put(`/employees/${id}`, employeeData);
       return response.data;
@@ -69,10 +62,10 @@ export const employeesApi = {
   // Import employees from Excel file
   async import(): Promise<EmployeeImportResponse> {
     try {
-      const response = await api.post("/employees/import");
+      const response = await api.post('/employees/import');
       return response.data;
     } catch (error) {
-      console.error("Failed to import employees from Excel:", error);
+      console.error('Failed to import employees from Excel:', error);
       throw error;
     }
   },

@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 const UNHOVER_DELAY_MS = 80;
 

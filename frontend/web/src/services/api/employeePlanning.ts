@@ -1,4 +1,4 @@
-import { api } from "@palliroute/shared";
+import { api } from '@palliroute/shared';
 
 export interface EmployeePlanningData {
   id?: number;
@@ -25,7 +25,7 @@ export interface EmployeePlanningData {
 export const employeePlanningApi = {
   // Get all planning entries for current week
   getAll: (calendarWeek?: number) => {
-    const params = calendarWeek ? `?calendar_week=${calendarWeek}` : "";
+    const params = calendarWeek ? `?calendar_week=${calendarWeek}` : '';
     return api.get(`/employee-planning/${params}`);
   },
 
@@ -36,11 +36,8 @@ export const employeePlanningApi = {
     data: {
       replacement_id?: number;
       calendar_week?: number;
-    },
+    }
   ) => {
-    return api.put(
-      `/employee-planning/${employeeId}/${weekday}/replacement`,
-      data,
-    );
+    return api.put(`/employee-planning/${employeeId}/${weekday}/replacement`, data);
   },
 };

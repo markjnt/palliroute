@@ -1,5 +1,5 @@
-import { api } from "@palliroute/shared";
-import type { Employee } from "@palliroute/models";
+import { api } from '@palliroute/shared';
+import type { Employee } from '@palliroute/models';
 
 export interface AuthMeUnmapped {
   code: string;
@@ -12,7 +12,7 @@ export interface AuthMeUnmapped {
 }
 
 export interface AuthMeResponse {
-  auth_mode: "jwt" | "internal" | "disabled";
+  auth_mode: 'jwt' | 'internal' | 'disabled';
   oid?: string;
   email?: string;
   name?: string;
@@ -22,6 +22,6 @@ export interface AuthMeResponse {
 }
 
 export async function fetchAuthMe(): Promise<AuthMeResponse> {
-  const response = await api.get<AuthMeResponse>("/auth/me");
+  const response = await api.get<AuthMeResponse>('/auth/me');
   return response.data;
 }

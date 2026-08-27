@@ -1,19 +1,11 @@
-import React from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Avatar,
-  Chip,
-  IconButton,
-} from "@mui/material";
+import React from 'react';
+import { Box, Card, CardContent, Typography, Avatar, Chip, IconButton } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
-} from "@mui/icons-material";
-import { Employee } from "../../types/models";
-import { employeeTypeColors, getTourAreaColor } from "@palliroute/shared";
+} from '@mui/icons-material';
+import { Employee } from '../../types/models';
+import { employeeTypeColors, getTourAreaColor } from '@palliroute/shared';
 
 interface EmployeePickCardProps {
   employee: Employee;
@@ -31,27 +23,24 @@ export const EmployeePickCard: React.FC<EmployeePickCardProps> = ({
   accentColor,
   onClick,
 }) => {
-  const color = accentColor || "#007AFF";
-  const functionColor =
-    employeeTypeColors[employee.function] || employeeTypeColors.default;
+  const color = accentColor || '#007AFF';
+  const functionColor = employeeTypeColors[employee.function] || employeeTypeColors.default;
 
   return (
     <Card
       onClick={onClick}
       sx={{
-        cursor: "pointer",
+        cursor: 'pointer',
         borderRadius: 2,
-        border: selected
-          ? `2px solid ${color}`
-          : "1px solid rgba(0, 0, 0, 0.08)",
+        border: selected ? `2px solid ${color}` : '1px solid rgba(0, 0, 0, 0.08)',
         background: selected
-          ? "linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)"
-          : "linear-gradient(135deg, #ffffff 0%, #fafafa 100%)",
-        transition: "all 0.2s ease-in-out",
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: "0 8px 25px rgba(0, 0, 0, 0.1)",
-          borderColor: selected ? color : "rgba(0, 122, 255, 0.3)",
+          ? 'linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)'
+          : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+          borderColor: selected ? color : 'rgba(0, 122, 255, 0.3)',
         },
       }}
     >
@@ -61,10 +50,10 @@ export const EmployeePickCard: React.FC<EmployeePickCardProps> = ({
             sx={{
               width: 36,
               height: 36,
-              bgcolor: selected ? color : "#f0f0f0",
-              color: selected ? "white" : "#666",
+              bgcolor: selected ? color : '#f0f0f0',
+              color: selected ? 'white' : '#666',
               mr: 1.5,
-              fontSize: "1rem",
+              fontSize: '1rem',
               fontWeight: 600,
             }}
           >
@@ -76,8 +65,8 @@ export const EmployeePickCard: React.FC<EmployeePickCardProps> = ({
               component="h3"
               sx={{
                 fontWeight: 600,
-                color: "#1d1d1f",
-                fontSize: "0.95rem",
+                color: '#1d1d1f',
+                fontSize: '0.95rem',
                 lineHeight: 1.3,
                 mb: 0.25,
               }}
@@ -91,11 +80,11 @@ export const EmployeePickCard: React.FC<EmployeePickCardProps> = ({
                   size="small"
                   sx={{
                     bgcolor: functionColor,
-                    color: "white",
-                    fontSize: "0.7rem",
+                    color: 'white',
+                    fontSize: '0.7rem',
                     fontWeight: 500,
                     height: 18,
-                    "& .MuiChip-label": { px: 0.75 },
+                    '& .MuiChip-label': { px: 0.75 },
                   }}
                 />
               )}
@@ -105,10 +94,10 @@ export const EmployeePickCard: React.FC<EmployeePickCardProps> = ({
                   size="small"
                   variant="outlined"
                   sx={{
-                    fontSize: "0.7rem",
-                    borderColor: "rgba(0, 0, 0, 0.12)",
+                    fontSize: '0.7rem',
+                    borderColor: 'rgba(0, 0, 0, 0.12)',
                     height: 18,
-                    "& .MuiChip-label": { px: 0.75 },
+                    '& .MuiChip-label': { px: 0.75 },
                   }}
                 />
               )}
@@ -117,9 +106,9 @@ export const EmployeePickCard: React.FC<EmployeePickCardProps> = ({
           <IconButton
             size="small"
             sx={{
-              color: selected ? color : "rgba(0, 0, 0, 0.3)",
+              color: selected ? color : 'rgba(0, 0, 0, 0.3)',
               ml: 0.5,
-              "& .MuiSvgIcon-root": { fontSize: "1.2rem" },
+              '& .MuiSvgIcon-root': { fontSize: '1.2rem' },
             }}
           >
             {selected ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
@@ -149,15 +138,13 @@ export const AreaPickCard: React.FC<AreaPickCardProps> = ({
     <Card
       onClick={onClick}
       sx={{
-        cursor: "pointer",
+        cursor: 'pointer',
         borderRadius: 2,
-        border: selected
-          ? `2px solid ${color}`
-          : "1px solid rgba(0, 0, 0, 0.08)",
+        border: selected ? `2px solid ${color}` : '1px solid rgba(0, 0, 0, 0.08)',
         background: selected
-          ? "linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)"
-          : "linear-gradient(135deg, #ffffff 0%, #fafafa 100%)",
-        boxShadow: "none",
+          ? 'linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%)'
+          : 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+        boxShadow: 'none',
       }}
     >
       <CardContent sx={{ p: 1.5 }}>
@@ -166,10 +153,10 @@ export const AreaPickCard: React.FC<AreaPickCardProps> = ({
             sx={{
               width: 36,
               height: 36,
-              bgcolor: selected ? color : "#f0f0f0",
-              color: selected ? "white" : "#666",
+              bgcolor: selected ? color : '#f0f0f0',
+              color: selected ? 'white' : '#666',
               mr: 1.5,
-              fontSize: "1rem",
+              fontSize: '1rem',
               fontWeight: 600,
             }}
           >
@@ -181,8 +168,8 @@ export const AreaPickCard: React.FC<AreaPickCardProps> = ({
               component="h3"
               sx={{
                 fontWeight: 600,
-                color: "#1d1d1f",
-                fontSize: "0.95rem",
+                color: '#1d1d1f',
+                fontSize: '0.95rem',
                 lineHeight: 1.3,
                 mb: 0.25,
               }}
@@ -190,25 +177,25 @@ export const AreaPickCard: React.FC<AreaPickCardProps> = ({
               {area}
             </Typography>
             <Chip
-              label={assignedName || "Nicht zugewiesen"}
+              label={assignedName || 'Nicht zugewiesen'}
               size="small"
               sx={{
-                bgcolor: assignedName ? color : "transparent",
-                color: assignedName ? "white" : "text.secondary",
-                border: assignedName ? "none" : "1px solid rgba(0, 0, 0, 0.12)",
-                fontSize: "0.7rem",
+                bgcolor: assignedName ? color : 'transparent',
+                color: assignedName ? 'white' : 'text.secondary',
+                border: assignedName ? 'none' : '1px solid rgba(0, 0, 0, 0.12)',
+                fontSize: '0.7rem',
                 fontWeight: 500,
                 height: 18,
-                "& .MuiChip-label": { px: 0.75 },
+                '& .MuiChip-label': { px: 0.75 },
               }}
             />
           </Box>
           <IconButton
             size="small"
             sx={{
-              color: selected ? color : "rgba(0, 0, 0, 0.3)",
+              color: selected ? color : 'rgba(0, 0, 0, 0.3)',
               ml: 0.5,
-              "& .MuiSvgIcon-root": { fontSize: "1.2rem" },
+              '& .MuiSvgIcon-root': { fontSize: '1.2rem' },
             }}
           >
             {selected ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
@@ -226,30 +213,28 @@ export const EmployeeFilterChips: React.FC<{
   trailing?: React.ReactNode;
 }> = ({ activeFilter, onChange, filters, trailing }) => {
   const items = filters || [
-    { id: "all", label: "Alle" },
+    { id: 'all', label: 'Alle' },
     {
-      id: "pflege-nord",
-      label: "Pflege Nord",
+      id: 'pflege-nord',
+      label: 'Pflege Nord',
       color: employeeTypeColors.default,
     },
     {
-      id: "pflege-sued",
-      label: "Pflege Süd",
+      id: 'pflege-sued',
+      label: 'Pflege Süd',
       color: employeeTypeColors.default,
     },
-    { id: "arzt", label: "Arzt", color: employeeTypeColors.Arzt },
+    { id: 'arzt', label: 'Arzt', color: employeeTypeColors.Arzt },
     {
-      id: "honorararzt",
-      label: "Honorararzt",
+      id: 'honorararzt',
+      label: 'Honorararzt',
       color: employeeTypeColors.Honorararzt,
     },
   ];
 
   return (
-    <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
-      <Box
-        sx={{ display: "flex", flexWrap: "wrap", gap: 1, flex: 1, minWidth: 0 }}
-      >
+    <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, flex: 1, minWidth: 0 }}>
         {items.map((item) => {
           const selected = activeFilter === item.id;
           return (
@@ -257,13 +242,13 @@ export const EmployeeFilterChips: React.FC<{
               key={item.id}
               label={item.label}
               onClick={() => onChange(item.id)}
-              color={selected ? "primary" : "default"}
-              variant={selected ? "filled" : "outlined"}
+              color={selected ? 'primary' : 'default'}
+              variant={selected ? 'filled' : 'outlined'}
               sx={{
                 fontWeight: selected ? 600 : 400,
                 bgcolor: selected && item.color ? item.color : undefined,
-                color: selected && item.color ? "white" : undefined,
-                "&:hover": {
+                color: selected && item.color ? 'white' : undefined,
+                '&:hover': {
                   bgcolor: selected && item.color ? item.color : undefined,
                 },
               }}

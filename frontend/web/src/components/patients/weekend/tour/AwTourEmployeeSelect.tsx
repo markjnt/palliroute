@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
-import { Autocomplete, TextField, Box, Typography } from "@mui/material";
-import { Employee, Route } from "../../../../types/models";
+import React, { useMemo } from 'react';
+import { Autocomplete, TextField, Box, Typography } from '@mui/material';
+import { Employee, Route } from '../../../../types/models';
 
 interface AwTourEmployeeSelectProps {
   route?: Route;
@@ -39,13 +39,12 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
         }
         return `${a.last_name} ${a.first_name}`.localeCompare(
           `${b.last_name} ${b.first_name}`,
-          "de",
+          'de'
         );
       });
   }, [employees]);
 
-  const selectedEmployee =
-    sortedEmployees.find((emp) => emp.id === route?.employee_id) ?? null;
+  const selectedEmployee = sortedEmployees.find((emp) => emp.id === route?.employee_id) ?? null;
   const isOverride = Boolean(route?.employee_override);
 
   return (
@@ -73,8 +72,8 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
           const name = `${emp.first_name} ${emp.last_name}`.toLowerCase();
           return (
             name.includes(query) ||
-            (emp.function || "").toLowerCase().includes(query) ||
-            (emp.area || "").toLowerCase().includes(query)
+            (emp.function || '').toLowerCase().includes(query) ||
+            (emp.area || '').toLowerCase().includes(query)
           );
         });
       }}
@@ -83,29 +82,27 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
         const isAplanoSuggestion = emp.id === route?.aplano_employee_id;
         return (
           <Box component="li" key={key} {...optionProps}>
-            <Box sx={{ display: "flex", flexDirection: "column" }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="body2">
                 {emp.first_name} {emp.last_name}
-                {isAplanoSuggestion ? " · Aplano" : ""}
+                {isAplanoSuggestion ? ' · Aplano' : ''}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {[emp.function, emp.area].filter(Boolean).join(" · ")}
+                {[emp.function, emp.area].filter(Boolean).join(' · ')}
               </Typography>
             </Box>
           </Box>
         );
       }}
-      renderInput={(params) => (
-        <TextField {...params} label="Mitarbeiter" placeholder="Suchen…" />
-      )}
+      renderInput={(params) => <TextField {...params} label="Mitarbeiter" placeholder="Suchen…" />}
       sx={{
         flex: 1,
         minWidth: 0,
-        width: "100%",
-        "& .MuiOutlinedInput-root": isOverride
+        width: '100%',
+        '& .MuiOutlinedInput-root': isOverride
           ? {
-              bgcolor: "warning.50",
-              "& fieldset": { borderColor: "warning.main" },
+              bgcolor: 'warning.50',
+              '& fieldset': { borderColor: 'warning.main' },
             }
           : undefined,
       }}

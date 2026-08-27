@@ -1,16 +1,12 @@
-import React from "react";
-import { Box, Typography, Chip } from "@mui/material";
-import { AccessTime as TimeIcon } from "@mui/icons-material";
-import { getColorForVisitType } from "../../utils/mapUtils";
-import { useUserStore } from "../../stores/useUserStore";
-import { useAdditionalRoutesStore } from "../../stores/useAdditionalRoutesStore";
-import {
-  StopMapsButton,
-  StopCallButton,
-  StopInfoIcon,
-} from "./StopActionButtons";
-import { AppointmentCheckControl } from "./AppointmentCheckControl";
-import { openMaps, callPhone } from "./stopContactActions";
+import React from 'react';
+import { Box, Typography, Chip } from '@mui/material';
+import { AccessTime as TimeIcon } from '@mui/icons-material';
+import { getColorForVisitType } from '../../utils/mapUtils';
+import { useUserStore } from '../../stores/useUserStore';
+import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
+import { StopMapsButton, StopCallButton, StopInfoIcon } from './StopActionButtons';
+import { AppointmentCheckControl } from './AppointmentCheckControl';
+import { openMaps, callPhone } from './stopContactActions';
 
 interface RouteStop {
   id: number;
@@ -42,12 +38,12 @@ interface RouteStopItemProps {
 }
 
 const clickableTextSx = {
-  color: "#8E8E93",
-  fontSize: { xs: "0.7rem", sm: "0.75rem" },
-  cursor: "pointer",
+  color: '#8E8E93',
+  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+  cursor: 'pointer',
   lineHeight: 1.35,
-  "&:active": {
-    color: "#1d1d1f",
+  '&:active': {
+    color: '#1d1d1f',
   },
 } as const;
 
@@ -67,19 +63,19 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
   };
 
   const employeeLinkSx = {
-    color: "#007AFF",
-    fontSize: "0.75rem",
+    color: '#007AFF',
+    fontSize: '0.75rem',
     fontWeight: 600,
-    cursor: "pointer",
+    cursor: 'pointer',
     borderRadius: 1,
     px: 0.5,
     py: 0.25,
-    transition: "background-color 0.2s ease",
-    "&:hover": {
-      bgcolor: "rgba(0, 122, 255, 0.1)",
+    transition: 'background-color 0.2s ease',
+    '&:hover': {
+      bgcolor: 'rgba(0, 122, 255, 0.1)',
     },
-    "&:active": {
-      bgcolor: "rgba(0, 122, 255, 0.2)",
+    '&:active': {
+      bgcolor: 'rgba(0, 122, 255, 0.2)',
     },
   };
 
@@ -87,7 +83,7 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
     <Box
       sx={{
         opacity: stop.isTourEmployeeAppointment ? 0.5 : completed ? 0.72 : 1,
-        filter: stop.isTourEmployeeAppointment ? "grayscale(0.3)" : "none",
+        filter: stop.isTourEmployeeAppointment ? 'grayscale(0.3)' : 'none',
         borderRadius: 1,
         mx: 0.5,
         my: 0.25,
@@ -95,8 +91,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
     >
       <Box
         sx={{
-          display: "flex",
-          alignItems: "stretch",
+          display: 'flex',
+          alignItems: 'stretch',
           p: { xs: 1.25, sm: 1.5 },
         }}
       >
@@ -105,18 +101,18 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             sx={{
               width: { xs: 32, sm: 36 },
               height: { xs: 32, sm: 36 },
-              borderRadius: "50%",
-              bgcolor: "#007AFF",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: { xs: "0.875rem", sm: "1rem" },
+              borderRadius: '50%',
+              bgcolor: '#007AFF',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               fontWeight: 700,
               mr: { xs: 1.5, sm: 2 },
               flexShrink: 0,
-              alignSelf: "center",
-              boxShadow: "0 2px 8px rgba(0, 122, 255, 0.25)",
+              alignSelf: 'center',
+              boxShadow: '0 2px 8px rgba(0, 122, 255, 0.25)',
             }}
           >
             {stop.position}
@@ -127,19 +123,19 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           sx={{
             flex: 1,
             minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "stretch",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
           }}
         >
           <Typography
             variant="body2"
             sx={{
               fontWeight: 600,
-              color: completed ? "#8E8E93" : "#1d1d1f",
-              fontSize: { xs: "0.875rem", sm: "1rem" },
+              color: completed ? '#8E8E93' : '#1d1d1f',
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               lineHeight: 1.3,
-              textDecoration: completed ? "line-through" : "none",
+              textDecoration: completed ? 'line-through' : 'none',
               mb: 0.75,
             }}
           >
@@ -147,12 +143,10 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           </Typography>
 
           {stop.responsibleEmployeeName && (
-            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
                 variant="caption"
-                onClick={() =>
-                  showAsAdditionalRoute(stop.responsibleEmployeeId)
-                }
+                onClick={() => showAsAdditionalRoute(stop.responsibleEmployeeId)}
                 sx={employeeLinkSx}
               >
                 Zuständig: {stop.responsibleEmployeeName}
@@ -161,7 +155,7 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           )}
 
           {stop.tourEmployeeName && (
-            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
                 variant="caption"
                 onClick={() => showAsAdditionalRoute(stop.tourEmployeeId)}
@@ -173,12 +167,12 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           )}
 
           {stop.originEmployeeName && (
-            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography
                 variant="caption"
                 sx={{
-                  color: "#007AFF",
-                  fontSize: "0.75rem",
+                  color: '#007AFF',
+                  fontSize: '0.75rem',
                   fontWeight: 600,
                 }}
               >
@@ -187,31 +181,26 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
             </Box>
           )}
 
-          {stop.otherResponsibleEmployees &&
-            stop.otherResponsibleEmployees.length > 0 && (
-              <>
-                {stop.otherResponsibleEmployees.map((item, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
+          {stop.otherResponsibleEmployees && stop.otherResponsibleEmployees.length > 0 && (
+            <>
+              {stop.otherResponsibleEmployees.map((item, idx) => (
+                <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    onClick={() => showAsAdditionalRoute(item.employee.id)}
+                    sx={employeeLinkSx}
                   >
-                    <Typography
-                      variant="caption"
-                      onClick={() => showAsAdditionalRoute(item.employee.id)}
-                      sx={employeeLinkSx}
-                    >
-                      Gemeinsam mit: {item.employee.first_name}{" "}
-                      {item.employee.last_name}
-                    </Typography>
-                  </Box>
-                ))}
-              </>
-            )}
+                    Gemeinsam mit: {item.employee.first_name} {item.employee.last_name}
+                  </Typography>
+                </Box>
+              ))}
+            </>
+          )}
 
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 0.75,
               minWidth: 0,
             }}
@@ -227,13 +216,13 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           </Box>
 
           {stop.time && (
-            <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
-              <TimeIcon sx={{ fontSize: 14, color: "#8E8E93", mr: 0.5 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+              <TimeIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
               <Typography
                 variant="caption"
                 sx={{
-                  color: "#8E8E93",
-                  fontSize: "0.75rem",
+                  color: '#8E8E93',
+                  fontSize: '0.75rem',
                 }}
               >
                 {stop.time}
@@ -244,8 +233,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           {(stop.phone1 || stop.phone2) && (
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 0.5,
                 mt: 0.5,
               }}
@@ -253,8 +242,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               {stop.phone1 && (
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 0.75,
                     minWidth: 0,
                   }}
@@ -272,8 +261,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               {stop.phone2 && (
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 0.75,
                     minWidth: 0,
                   }}
@@ -294,8 +283,8 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           {stop.info && (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 0.75,
                 minWidth: 0,
                 mt: 0.5,
@@ -305,9 +294,9 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
               <Typography
                 variant="caption"
                 sx={{
-                  color: "#007AFF",
-                  fontSize: "0.75rem",
-                  bgcolor: "rgba(0, 122, 255, 0.1)",
+                  color: '#007AFF',
+                  fontSize: '0.75rem',
+                  bgcolor: 'rgba(0, 122, 255, 0.1)',
                   px: 1,
                   py: 0.25,
                   borderRadius: 1,
@@ -324,21 +313,21 @@ export const RouteStopItem: React.FC<RouteStopItemProps> = ({
           sx={{
             ml: 0.75,
             flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             gap: 0.5,
             minWidth: 44,
-            alignSelf: "flex-start",
+            alignSelf: 'flex-start',
           }}
         >
           <Chip
-            label={stop.visitType === "HB" ? "HB" : stop.visitType}
+            label={stop.visitType === 'HB' ? 'HB' : stop.visitType}
             size="small"
             sx={{
               bgcolor: `${getColorForVisitType(stop.visitType)}15`,
               color: getColorForVisitType(stop.visitType),
-              fontSize: { xs: "0.7rem", sm: "0.75rem" },
+              fontSize: { xs: '0.7rem', sm: '0.75rem' },
               height: { xs: 18, sm: 20 },
               fontWeight: 600,
               border: `1px solid ${getColorForVisitType(stop.visitType)}30`,

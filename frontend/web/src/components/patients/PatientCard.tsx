@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -12,7 +12,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Phone as PhoneIcon,
   Home as HomeIcon,
@@ -20,19 +20,19 @@ import {
   Navigation as NavigationIcon,
   SwapHoriz as SwapHorizIcon,
   Person as PersonIcon,
-} from "@mui/icons-material";
-import { Patient, Appointment, Weekday } from "../../types/models";
-import { useEmployees } from "../../services/queries/useEmployees";
-import { getColorForTour, employeeTypeColors } from "@palliroute/shared";
-import { useAppointmentsByPatient } from "../../services/queries/useAppointments";
-import WeekdayOverview from "./WeekdayOverview";
-import { useAppointmentManagement } from "../../hooks";
-import { ReplacementConfirmationDialog } from "./MoveConfirmationDialog";
+} from '@mui/icons-material';
+import { Patient, Appointment, Weekday } from '../../types/models';
+import { useEmployees } from '../../services/queries/useEmployees';
+import { getColorForTour, employeeTypeColors } from '@palliroute/shared';
+import { useAppointmentsByPatient } from '../../services/queries/useAppointments';
+import WeekdayOverview from './WeekdayOverview';
+import { useAppointmentManagement } from '../../hooks';
+import { ReplacementConfirmationDialog } from './MoveConfirmationDialog';
 
 interface PatientCardProps {
   patient: Patient;
   appointments: Appointment[];
-  visitType: "HB" | "NA" | "TK" | "none";
+  visitType: 'HB' | 'NA' | 'TK' | 'none';
   index?: number; // For numbered list of HB visits
   compact?: boolean; // For more compact display in TK, NA, and no-appointment sections
   selectedDay: Weekday; // Der ausgewählte Wochentag
@@ -81,9 +81,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   // Get current employee ID from the selected day appointment
   // If appointmentId is provided, use that specific appointment, otherwise use the first one
   const selectedDayAppointment = appointmentId
-    ? patientAppointments.find(
-        (app) => app.id === appointmentId && app.weekday === selectedDay,
-      )
+    ? patientAppointments.find((app) => app.id === appointmentId && app.weekday === selectedDay)
     : patientAppointments.find((app) => app.weekday === selectedDay);
   const selectedDayEmployeeId = selectedDayAppointment?.employee_id;
 
@@ -93,9 +91,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   // Check if there are multiple appointments for this patient on the same day (Multi-Assignment)
   const hasMultipleAppointments = React.useMemo(() => {
     if (!selectedDayAppointment) return false;
-    const allDayAppointments = patientAppointments.filter(
-      (app) => app.weekday === selectedDay,
-    );
+    const allDayAppointments = patientAppointments.filter((app) => app.weekday === selectedDay);
     return allDayAppointments.length > 1;
   }, [patientAppointments, selectedDay, selectedDayAppointment]);
 
@@ -126,20 +122,14 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         return emp ? { employee: emp, appointmentId: app.id } : null;
       })
       .filter(
-        (
-          item,
-        ): item is { employee: (typeof employees)[0]; appointmentId: number } =>
-          item !== null,
+        (item): item is { employee: (typeof employees)[0]; appointmentId: number } => item !== null
       )
       .filter((item) => item.employee.id !== selectedDayEmployeeId); // Exclude current employee
   }, [multipleAppointments, employees, selectedDayEmployeeId]);
 
   // Get tour employee employees for this patient (to show "Zuständig" in normal route appointments)
   const tourEmployeeEmployees = React.useMemo(() => {
-    if (
-      !tourEmployeeAppointmentsForPatient ||
-      tourEmployeeAppointmentsForPatient.length === 0
-    )
+    if (!tourEmployeeAppointmentsForPatient || tourEmployeeAppointmentsForPatient.length === 0)
       return [];
     if (isTourEmployeeAppointment) return []; // Don't show for tour employee appointments themselves
 
@@ -149,16 +139,9 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         return emp ? { employee: emp, appointmentId: app.id } : null;
       })
       .filter(
-        (
-          item,
-        ): item is { employee: (typeof employees)[0]; appointmentId: number } =>
-          item !== null,
+        (item): item is { employee: (typeof employees)[0]; appointmentId: number } => item !== null
       );
-  }, [
-    tourEmployeeAppointmentsForPatient,
-    employees,
-    isTourEmployeeAppointment,
-  ]);
+  }, [tourEmployeeAppointmentsForPatient, employees, isTourEmployeeAppointment]);
 
   // Get other responsible employees when tourEmployee is shown (Ursprungstour)
   // These are all appointments for the same patient on the same day, excluding the current appointment
@@ -167,9 +150,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     if (!selectedDayAppointment) return [];
 
     // Get all appointments for this patient on the selected day
-    const allDayAppointments = patientAppointments.filter(
-      (app) => app.weekday === selectedDay,
-    );
+    const allDayAppointments = patientAppointments.filter((app) => app.weekday === selectedDay);
 
     // Only show if there are multiple appointments (Multi-Assignment scenario)
     if (allDayAppointments.length <= 1) return [];
@@ -186,7 +167,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             app.id !== selectedDayAppointment.id &&
             app.employee_id !== selectedDayAppointment.employee_id &&
             app.employee_id !== null &&
-            app.employee_id !== undefined,
+            app.employee_id !== undefined
         )
         .map((app) => {
           const emp = employees.find((e) => e.id === app.employee_id);
@@ -194,16 +175,15 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         })
         .filter(
           (
-            item,
+            item
           ): item is {
             employee: (typeof employees)[0];
             appointmentId: number;
-          } => item !== null,
+          } => item !== null
         )
         // Remove duplicates (same employee_id) - additional safety check
         .filter(
-          (item, index, self) =>
-            index === self.findIndex((t) => t.employee.id === item.employee.id),
+          (item, index, self) => index === self.findIndex((t) => t.employee.id === item.employee.id)
         )
     );
   }, [selectedDayAppointment, patientAppointments, selectedDay, employees]);
@@ -223,28 +203,28 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     const element = document.getElementById(`tour-container-${employeeId}`);
     if (element) {
       element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+        behavior: 'smooth',
+        block: 'center',
       });
       // Highlight the element briefly
-      element.style.transition = "box-shadow 0.3s ease";
-      element.style.boxShadow = "0 0 20px rgba(25, 118, 210, 0.5)";
+      element.style.transition = 'box-shadow 0.3s ease';
+      element.style.boxShadow = '0 0 20px rgba(25, 118, 210, 0.5)';
       setTimeout(() => {
-        element.style.boxShadow = "";
+        element.style.boxShadow = '';
       }, 2000);
     }
   };
 
   const getBgColor = () => {
     switch (visitType) {
-      case "HB":
-        return "rgba(25, 118, 210, 0.08)"; // Light blue
-      case "NA":
-        return "rgba(156, 39, 176, 0.08)"; // Light purple
-      case "TK":
-        return "rgba(76, 175, 80, 0.08)"; // Light green
+      case 'HB':
+        return 'rgba(25, 118, 210, 0.08)'; // Light blue
+      case 'NA':
+        return 'rgba(156, 39, 176, 0.08)'; // Light purple
+      case 'TK':
+        return 'rgba(76, 175, 80, 0.08)'; // Light green
       default:
-        return "rgba(158, 158, 158, 0.08)"; // Light gray with same opacity as others
+        return 'rgba(158, 158, 158, 0.08)'; // Light gray with same opacity as others
     }
   };
 
@@ -256,7 +236,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
 
     // Find the appointment for the selected day
     const appointmentForSelectedDay = patientAppointments.find(
-      (app) => app.weekday === selectedDay,
+      (app) => app.weekday === selectedDay
     );
     if (!appointmentForSelectedDay) {
       return;
@@ -269,7 +249,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     }
 
     const appointmentId = appointmentForSelectedDay.id;
-    if (typeof appointmentId !== "number") {
+    if (typeof appointmentId !== 'number') {
       return;
     }
 
@@ -277,7 +257,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
       // Check if target employee has a replacement
       const replacementInfo = await appointmentManagement.checkReplacement(
         employeeId,
-        selectedDay.toLowerCase(),
+        selectedDay.toLowerCase()
       );
 
       if (replacementInfo.has_replacement) {
@@ -299,7 +279,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         });
       }
     } catch (error) {
-      console.error("Fehler beim Prüfen der Vertretung:", error);
+      console.error('Fehler beim Prüfen der Vertretung:', error);
       // Fallback: move directly without checking replacement
       await appointmentManagement.moveAppointment({
         appointmentId,
@@ -316,9 +296,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     setReplacementDialog({ open: false });
   };
 
-  const handleReplacementDialogConfirm = async (
-    respectReplacement: boolean,
-  ) => {
+  const handleReplacementDialogConfirm = async (respectReplacement: boolean) => {
     if (
       replacementDialog.appointmentId &&
       replacementDialog.sourceEmployeeId &&
@@ -368,14 +346,14 @@ export const PatientCard: React.FC<PatientCardProps> = ({
       sx={{
         mb: 2,
         backgroundColor: getBgColor(),
-        position: "relative",
-        width: "100%",
+        position: 'relative',
+        width: '100%',
         opacity: isTourEmployeeAppointment ? 0.5 : 1,
-        transition: "all 0.2s ease",
-        filter: isTourEmployeeAppointment ? "grayscale(0.3)" : "none",
-        "&:hover": {
+        transition: 'all 0.2s ease',
+        filter: isTourEmployeeAppointment ? 'grayscale(0.3)' : 'none',
+        '&:hover': {
           boxShadow: isTourEmployeeAppointment ? 1 : 2,
-          transform: isTourEmployeeAppointment ? "none" : "translateY(-2px)",
+          transform: isTourEmployeeAppointment ? 'none' : 'translateY(-2px)',
         },
       }}
     >
@@ -383,17 +361,17 @@ export const PatientCard: React.FC<PatientCardProps> = ({
       {!isTourEmployeeAppointment && (
         <Box
           sx={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
             zIndex: 1,
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 0.5,
             borderRadius: 1,
-            backgroundColor: "rgba(255, 255, 255, 0.8)",
-            padding: "2px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            padding: '2px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}
         >
           <Tooltip title="Tour zuweisen" arrow placement="top">
@@ -402,13 +380,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({
               onClick={handleMenuOpen}
               aria-label="Zuweisen"
               sx={{
-                color: "text.secondary",
+                color: 'text.secondary',
                 width: 24,
                 height: 24,
                 minWidth: 24,
-                "&:hover": {
-                  backgroundColor: "transparent",
-                  color: "primary.main",
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: 'primary.main',
                 },
               }}
             >
@@ -424,10 +402,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         sx={{
-          "& .MuiPaper-root": {
+          '& .MuiPaper-root': {
             maxHeight: 300,
-            overflow: "auto",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+            overflow: 'auto',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
             borderRadius: 2,
           },
         }}
@@ -439,23 +417,23 @@ export const PatientCard: React.FC<PatientCardProps> = ({
               onClick={() => employee.id && handleAssignEmployee(employee.id)}
               sx={{
                 py: 1,
-                "&:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
                 },
               }}
             >
               <ListItemText>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Chip
                     label={`${employee.first_name} ${employee.last_name}`}
                     size="small"
                     sx={{
                       height: 20,
                       bgcolor: getColorForTour(employee.id),
-                      color: "white",
-                      "& .MuiChip-label": {
+                      color: 'white',
+                      '& .MuiChip-label': {
                         px: 1,
-                        fontSize: "0.75rem",
+                        fontSize: '0.75rem',
                       },
                     }}
                   />
@@ -465,16 +443,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                     variant="outlined"
                     sx={{
                       height: 20,
-                      fontSize: "0.7rem",
+                      fontSize: '0.7rem',
                       borderColor:
-                        employeeTypeColors[employee.function] ||
-                        employeeTypeColors.default,
-                      color:
-                        employeeTypeColors[employee.function] ||
-                        employeeTypeColors.default,
-                      "& .MuiChip-label": {
+                        employeeTypeColors[employee.function] || employeeTypeColors.default,
+                      color: employeeTypeColors[employee.function] || employeeTypeColors.default,
+                      '& .MuiChip-label': {
                         px: 1,
-                        fontSize: "0.7rem",
+                        fontSize: '0.7rem',
                       },
                     }}
                   />
@@ -486,39 +461,37 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         })}
       </Menu>
 
-      <CardContent
-        sx={{ py: 2, px: 2, "&:last-child": { pb: 2 }, position: "relative" }}
-      >
+      <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 }, position: 'relative' }}>
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
           }}
         >
-          <Box sx={{ width: "100%" }}>
+          <Box sx={{ width: '100%' }}>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 mb: 0.5,
-                position: "relative",
+                position: 'relative',
               }}
             >
               {index !== undefined && !isTourEmployeeAppointment && (
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "30px",
-                    height: "30px",
-                    borderRadius: "50%",
-                    bgcolor: "primary.main",
-                    color: "white",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'white',
                     mr: 1,
-                    fontSize: "0.9rem",
-                    fontWeight: "bold",
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
                     flexShrink: 0,
                   }}
                 >
@@ -531,8 +504,8 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                 fontWeight="bold"
                 sx={{
                   lineHeight: 1.2,
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   flex: 1,
                 }}
               >
@@ -541,21 +514,21 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             </Box>
 
             {patient.area && (
-              <Box sx={{ mb: 0.5, display: "flex", alignItems: "center" }}>
+              <Box sx={{ mb: 0.5, display: 'flex', alignItems: 'center' }}>
                 <Tooltip title={patient.area}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <NavigationIcon
                       fontSize="small"
                       sx={{
                         mr: 0.5,
-                        color: "text.secondary",
-                        transform: patient.area.includes("Nordkreis")
-                          ? "rotate(0deg)"
-                          : "rotate(180deg)",
+                        color: 'text.secondary',
+                        transform: patient.area.includes('Nordkreis')
+                          ? 'rotate(0deg)'
+                          : 'rotate(180deg)',
                       }}
                     />
                     <Typography variant="body2" color="text.secondary">
-                      {patient.area.includes("Nordkreis") ? "N" : "S"}
+                      {patient.area.includes('Nordkreis') ? 'N' : 'S'}
                     </Typography>
                   </Box>
                 </Tooltip>
@@ -563,22 +536,16 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             )}
 
             {/* Adresse immer mit Haussymbol anzeigen */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-              <HomeIcon
-                fontSize="small"
-                sx={{ mr: 1, color: "text.secondary" }}
-              />
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <HomeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
               <Typography variant="body2" color="text.secondary">
                 {patient.street}, {patient.zip_code} {patient.city}
               </Typography>
             </Box>
 
             {patient.phone1 && (
-              <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-                <PhoneIcon
-                  fontSize="small"
-                  sx={{ mr: 1, color: "text.secondary" }}
-                />
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                <PhoneIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography variant="body2" color="text.secondary">
                   {patient.phone1}
                 </Typography>
@@ -586,18 +553,11 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             )}
 
             {/* Info für den ausgewählten Tag anzeigen */}
-            {patientAppointments.find((a) => a.weekday === selectedDay)
-              ?.info && (
-              <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-                <InfoIcon
-                  fontSize="small"
-                  sx={{ mr: 1, color: "text.secondary" }}
-                />
+            {patientAppointments.find((a) => a.weekday === selectedDay)?.info && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                <InfoIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography variant="body2" color="text.secondary">
-                  {
-                    patientAppointments.find((a) => a.weekday === selectedDay)
-                      ?.info
-                  }
+                  {patientAppointments.find((a) => a.weekday === selectedDay)?.info}
                 </Typography>
               </Box>
             )}
@@ -615,9 +575,9 @@ export const PatientCard: React.FC<PatientCardProps> = ({
               <Box
                 sx={{
                   mt: 1,
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
                 }}
               >
                 <Typography
@@ -625,24 +585,21 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                   color="primary.main"
                   onClick={() => scrollToEmployee(responsibleEmployee.id)}
                   sx={{
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: 'pointer',
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    transition: "background-color 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "primary.light",
-                      color: "primary.contrastText",
+                    transition: 'background-color 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'primary.light',
+                      color: 'primary.contrastText',
                     },
                   }}
                 >
-                  {isFirstTourEmployeeAppointment
-                    ? "Zuständig"
-                    : "Gemeinsam mit"}
-                  : {responsibleEmployee.first_name}{" "}
-                  {responsibleEmployee.last_name}
+                  {isFirstTourEmployeeAppointment ? 'Zuständig' : 'Gemeinsam mit'}:{' '}
+                  {responsibleEmployee.first_name} {responsibleEmployee.last_name}
                 </Typography>
               </Box>
             )}
@@ -652,9 +609,9 @@ export const PatientCard: React.FC<PatientCardProps> = ({
               <Box
                 sx={{
                   mt: 1,
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
                 }}
               >
                 <Typography
@@ -662,21 +619,20 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                   color="primary.main"
                   onClick={() => scrollToEmployee(tourEmployee.id)}
                   sx={{
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: 'pointer',
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    transition: "background-color 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "primary.light",
-                      color: "primary.contrastText",
+                    transition: 'background-color 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'primary.light',
+                      color: 'primary.contrastText',
                     },
                   }}
                 >
-                  Ursprungstour: {tourEmployee.first_name}{" "}
-                  {tourEmployee.last_name}
+                  Ursprungstour: {tourEmployee.first_name} {tourEmployee.last_name}
                 </Typography>
               </Box>
             )}
@@ -689,9 +645,9 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                     key={idx}
                     sx={{
                       mt: 1,
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      alignItems: "center",
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
                     }}
                   >
                     <Typography
@@ -699,21 +655,20 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                       color="primary.main"
                       onClick={() => scrollToEmployee(item.employee.id)}
                       sx={{
-                        fontSize: "0.875rem",
+                        fontSize: '0.875rem',
                         fontWeight: 600,
-                        cursor: "pointer",
+                        cursor: 'pointer',
                         px: 1.5,
                         py: 0.5,
                         borderRadius: 1,
-                        transition: "background-color 0.2s ease",
-                        "&:hover": {
-                          backgroundColor: "primary.light",
-                          color: "primary.contrastText",
+                        transition: 'background-color 0.2s ease',
+                        '&:hover': {
+                          backgroundColor: 'primary.light',
+                          color: 'primary.contrastText',
                         },
                       }}
                     >
-                      Gemeinsam mit: {item.employee.first_name}{" "}
-                      {item.employee.last_name}
+                      Gemeinsam mit: {item.employee.first_name} {item.employee.last_name}
                     </Typography>
                   </Box>
                 ))}
@@ -728,12 +683,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         onClose={handleReplacementDialogClose}
         onConfirm={handleReplacementDialogConfirm}
         sourceEmployee={
-          employees.find((e) => e.id === replacementDialog.sourceEmployeeId) ||
-          employees[0]
+          employees.find((e) => e.id === replacementDialog.sourceEmployeeId) || employees[0]
         }
         targetEmployee={
-          employees.find((e) => e.id === replacementDialog.targetEmployeeId) ||
-          employees[0]
+          employees.find((e) => e.id === replacementDialog.targetEmployeeId) || employees[0]
         }
         replacementEmployee={replacementDialog.replacementEmployee}
         patientName={`${patient.first_name} ${patient.last_name}`}

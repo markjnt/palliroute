@@ -1,35 +1,26 @@
-import type { Weekday } from "../types/models";
+import type { Weekday } from '../types/models';
 
 export const KW_WEEKDAYS: Weekday[] = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
 ];
 
-export function isAwCalendarDay(
-  weekday: Weekday,
-  holidayName: string | null | undefined,
-): boolean {
-  return weekday === "saturday" || weekday === "sunday" || Boolean(holidayName);
+export function isAwCalendarDay(weekday: Weekday, holidayName: string | null | undefined): boolean {
+  return weekday === 'saturday' || weekday === 'sunday' || Boolean(holidayName);
 }
 
-function nearestMatching(
-  from: Weekday,
-  isMatch: (weekday: Weekday) => boolean,
-): Weekday | null {
+function nearestMatching(from: Weekday, isMatch: (weekday: Weekday) => boolean): Weekday | null {
   const fromIndex = KW_WEEKDAYS.indexOf(from);
   if (fromIndex < 0) return null;
 
   for (let distance = 1; distance < KW_WEEKDAYS.length; distance += 1) {
     const forwardIndex = fromIndex + distance;
-    if (
-      forwardIndex < KW_WEEKDAYS.length &&
-      isMatch(KW_WEEKDAYS[forwardIndex])
-    ) {
+    if (forwardIndex < KW_WEEKDAYS.length && isMatch(KW_WEEKDAYS[forwardIndex])) {
       return KW_WEEKDAYS[forwardIndex];
     }
     const backwardIndex = fromIndex - distance;
@@ -81,13 +72,13 @@ export function resolveWeekdayAfterWeekChange({
 export function routesReadyForSelectedWeek(
   routes: Array<{ calendar_week?: number | null }>,
   week: number,
-  isFetching: boolean,
+  isFetching: boolean
 ): boolean {
   const matchesWeek = routes.some((route) => route.calendar_week === week);
   if (matchesWeek) return true;
 
   const fromOtherWeeks = routes.some(
-    (route) => route.calendar_week != null && route.calendar_week !== week,
+    (route) => route.calendar_week != null && route.calendar_week !== week
   );
   if (fromOtherWeeks) {
     return false;

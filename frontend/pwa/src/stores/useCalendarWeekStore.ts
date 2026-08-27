@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface CalendarWeekState {
   selectedCalendarWeek: number | null;
@@ -11,10 +11,8 @@ interface CalendarWeekState {
 export const useCalendarWeekStore = create<CalendarWeekState>()((set) => ({
   selectedCalendarWeek: null,
   availableCalendarWeeks: [],
-  setSelectedCalendarWeek: (week: number) =>
-    set({ selectedCalendarWeek: week }),
-  setAvailableCalendarWeeks: (weeks: number[]) =>
-    set({ availableCalendarWeeks: weeks }),
+  setSelectedCalendarWeek: (week: number) => set({ selectedCalendarWeek: week }),
+  setAvailableCalendarWeeks: (weeks: number[]) => set({ availableCalendarWeeks: weeks }),
   clearSelectedCalendarWeek: () =>
     set({
       selectedCalendarWeek: null,

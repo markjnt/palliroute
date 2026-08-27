@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Route, Weekday } from "../../types/models";
-import { routesApi } from "../api/routes";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Route, Weekday } from '../../types/models';
+import { routesApi } from '../api/routes';
 
 export const PWA_LIVE_REFETCH_INTERVAL_MS = 60_000;
 
@@ -13,12 +13,12 @@ export const liveListQueryOptions = {
 
 // Keys for React Query cache
 export const routeKeys = {
-  all: ["routes"] as const,
-  lists: () => [...routeKeys.all, "list"] as const,
+  all: ['routes'] as const,
+  lists: () => [...routeKeys.all, 'list'] as const,
   list: (filters: any) => [...routeKeys.lists(), { filters }] as const,
-  details: () => [...routeKeys.all, "detail"] as const,
+  details: () => [...routeKeys.all, 'detail'] as const,
   detail: (id: number) => [...routeKeys.details(), id] as const,
-  byDay: () => [...routeKeys.all, "byDay"] as const,
+  byDay: () => [...routeKeys.all, 'byDay'] as const,
   forDay: (date: string, employeeId?: number) =>
     [...routeKeys.byDay(), date, { employeeId }] as const,
 };
@@ -60,13 +60,8 @@ export const useOptimizeRoutes = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      weekday,
-      employeeId,
-    }: {
-      weekday: string;
-      employeeId: number;
-    }) => routesApi.optimizeRoutes(weekday, employeeId),
+    mutationFn: ({ weekday, employeeId }: { weekday: string; employeeId: number }) =>
+      routesApi.optimizeRoutes(weekday, employeeId),
     onSuccess: () => {
       // Invalidate all route queries as they might be affected
       queryClient.invalidateQueries({
@@ -99,13 +94,8 @@ export const useAssignAwTourEmployee = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      routeId,
-      employeeId,
-    }: {
-      routeId: number;
-      employeeId: number | null;
-    }) => routesApi.assignAwTourEmployee(routeId, employeeId),
+    mutationFn: ({ routeId, employeeId }: { routeId: number; employeeId: number | null }) =>
+      routesApi.assignAwTourEmployee(routeId, employeeId),
     onSuccess: (result) => {
       queryClient.invalidateQueries({
         queryKey: routeKeys.detail(result.route.id),
@@ -135,7 +125,7 @@ export const useReorderAppointment = () => {
     }: {
       routeId: number;
       appointmentId: number;
-      direction?: "up" | "down";
+      direction?: 'up' | 'down';
       index?: number;
     }) =>
       routesApi.reorderAppointment(routeId, appointmentId, {
@@ -161,13 +151,8 @@ export const useSetCustomOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      routeId,
-      appointmentIds,
-    }: {
-      routeId: number;
-      appointmentIds: number[];
-    }) => routesApi.setCustomOrder(routeId, appointmentIds),
+    mutationFn: ({ routeId, appointmentIds }: { routeId: number; appointmentIds: number[] }) =>
+      routesApi.setCustomOrder(routeId, appointmentIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: routeKeys.all });
     },

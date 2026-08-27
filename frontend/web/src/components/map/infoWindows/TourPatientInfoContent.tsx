@@ -1,25 +1,22 @@
-import React from "react";
-import { Box, Typography, Chip } from "@mui/material";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import ScheduleIcon from "@mui/icons-material/Schedule";
-import InfoIcon from "@mui/icons-material/Info";
-import { MarkerData } from "../../../types/mapTypes";
-import { Appointment, Patient, Route } from "../../../types/models";
-import { getColorForVisitType } from "../../../utils/mapUtils";
-import { getTourAreaColor } from "@palliroute/shared";
-import { TourInfoBox } from "./TourInfoBox";
+import React from 'react';
+import { Box, Typography, Chip } from '@mui/material';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import InfoIcon from '@mui/icons-material/Info';
+import { MarkerData } from '../../../types/mapTypes';
+import { Appointment, Patient, Route } from '../../../types/models';
+import { getColorForVisitType } from '../../../utils/mapUtils';
+import { getTourAreaColor } from '@palliroute/shared';
+import { TourInfoBox } from './TourInfoBox';
 
 const visitTypeLabels: Record<string, string> = {
-  HB: "Hausbesuch",
-  TK: "Telefonkontakt",
-  NA: "Neuaufnahme",
+  HB: 'Hausbesuch',
+  TK: 'Telefonkontakt',
+  NA: 'Neuaufnahme',
 };
 
 const openMaps = (address: string) => {
-  window.open(
-    `https://maps.google.com/?q=${encodeURIComponent(address)}`,
-    "_blank",
-  );
+  window.open(`https://maps.google.com/?q=${encodeURIComponent(address)}`, '_blank');
 };
 
 interface TourPatientInfoContentProps {
@@ -40,7 +37,7 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
 
   const appointment = appointments.find((a) => a.id === marker.appointmentId);
   const route = routes.find((r) => r.id === marker.routeId);
-  const area = marker.area || "";
+  const area = marker.area || '';
   const tourColor = getTourAreaColor(area);
 
   let utilization: number | undefined;
@@ -49,8 +46,7 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
   if (route && route.total_duration) {
     targetMinutes = 315;
     durationMinutes = route.total_duration;
-    utilization =
-      targetMinutes > 0 ? (durationMinutes / targetMinutes) * 100 : undefined;
+    utilization = targetMinutes > 0 ? (durationMinutes / targetMinutes) * 100 : undefined;
   }
 
   const address = `${patient.street}, ${patient.zip_code} ${patient.city}`;
@@ -60,8 +56,8 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
     <>
       <Box
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
+          display: 'flex',
+          alignItems: 'flex-start',
           gap: 1,
           mb: 1.25,
           pr: 4.5,
@@ -72,13 +68,13 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
             sx={{
               width: 28,
               height: 28,
-              borderRadius: "50%",
+              borderRadius: '50%',
               bgcolor: tourColor,
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "0.8rem",
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.8rem',
               fontWeight: 700,
               flexShrink: 0,
               mt: 0.15,
@@ -92,9 +88,9 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
             variant="subtitle1"
             sx={{
               fontWeight: 600,
-              color: "#1d1d1f",
+              color: '#1d1d1f',
               lineHeight: 1.25,
-              fontSize: "1rem",
+              fontSize: '1rem',
             }}
           >
             {patient.first_name} {patient.last_name}
@@ -107,7 +103,7 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
                 mt: 0.5,
                 bgcolor: `${getColorForVisitType(visitType)}20`,
                 color: getColorForVisitType(visitType),
-                fontSize: "0.7rem",
+                fontSize: '0.7rem',
                 height: 20,
                 fontWeight: 600,
               }}
@@ -116,23 +112,21 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "flex-start", mb: 1.25 }}>
-        <LocationOnIcon
-          sx={{ fontSize: 18, color: "#8E8E93", mr: 1.25, mt: 0.15 }}
-        />
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.25 }}>
+        <LocationOnIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.25, mt: 0.15 }} />
         <Typography
           variant="body2"
-          sx={{ color: "#1d1d1f", fontWeight: 500, cursor: "pointer" }}
+          sx={{ color: '#1d1d1f', fontWeight: 500, cursor: 'pointer' }}
           onClick={() => openMaps(address)}
         >
           {patient.street}
           <Box
             component="span"
             sx={{
-              display: "block",
-              color: "#8E8E93",
+              display: 'block',
+              color: '#8E8E93',
               fontWeight: 400,
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
           >
             {patient.zip_code} {patient.city}
@@ -141,27 +135,22 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
       </Box>
 
       {appointment?.time ? (
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1.25 }}>
-          <ScheduleIcon sx={{ fontSize: 18, color: "#8E8E93", mr: 1.25 }} />
-          <Typography
-            variant="body2"
-            sx={{ color: "#1d1d1f", fontWeight: 500 }}
-          >
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.25 }}>
+          <ScheduleIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.25 }} />
+          <Typography variant="body2" sx={{ color: '#1d1d1f', fontWeight: 500 }}>
             {appointment.time} Uhr
           </Typography>
         </Box>
       ) : null}
 
       {appointment?.info ? (
-        <Box sx={{ display: "flex", alignItems: "flex-start", mb: 1.25 }}>
-          <InfoIcon
-            sx={{ fontSize: 18, color: "#007AFF", mr: 1.25, mt: 0.15 }}
-          />
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.25 }}>
+          <InfoIcon sx={{ fontSize: 18, color: '#007AFF', mr: 1.25, mt: 0.15 }} />
           <Typography
             variant="body2"
             sx={{
-              color: "#007AFF",
-              bgcolor: "rgba(0, 122, 255, 0.1)",
+              color: '#007AFF',
+              bgcolor: 'rgba(0, 122, 255, 0.1)',
               px: 1,
               py: 0.5,
               borderRadius: 1,

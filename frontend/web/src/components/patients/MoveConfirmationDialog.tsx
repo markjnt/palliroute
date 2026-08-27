@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,24 +9,21 @@ import {
   Box,
   Chip,
   Alert,
-} from "@mui/material";
-import {
-  Person as PersonIcon,
-  SwapHoriz as SwapHorizIcon,
-} from "@mui/icons-material";
-import { Employee } from "../../types/models";
-import { getColorForTour } from "@palliroute/shared";
+} from '@mui/material';
+import { Person as PersonIcon, SwapHoriz as SwapHorizIcon } from '@mui/icons-material';
+import { Employee } from '../../types/models';
+import { getColorForTour } from '@palliroute/shared';
 
 // Helper function to translate weekdays to German
 const translateWeekday = (weekday: string): string => {
   const weekdayMap: { [key: string]: string } = {
-    monday: "Montag",
-    tuesday: "Dienstag",
-    wednesday: "Mittwoch",
-    thursday: "Donnerstag",
-    friday: "Freitag",
-    saturday: "Samstag",
-    sunday: "Sonntag",
+    monday: 'Montag',
+    tuesday: 'Dienstag',
+    wednesday: 'Mittwoch',
+    thursday: 'Donnerstag',
+    friday: 'Freitag',
+    saturday: 'Samstag',
+    sunday: 'Sonntag',
   };
   return weekdayMap[weekday.toLowerCase()] || weekday;
 };
@@ -42,9 +39,7 @@ interface ReplacementConfirmationDialogProps {
   weekday: string;
 }
 
-export const ReplacementConfirmationDialog: React.FC<
-  ReplacementConfirmationDialogProps
-> = ({
+export const ReplacementConfirmationDialog: React.FC<ReplacementConfirmationDialogProps> = ({
   open,
   onClose,
   onConfirm,
@@ -73,12 +68,12 @@ export const ReplacementConfirmationDialog: React.FC<
       PaperProps={{
         sx: {
           borderRadius: 2,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
         },
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <SwapHorizIcon color="primary" />
           <Typography variant="h6" component="div">
             Vertretung berücksichtigen?
@@ -88,22 +83,22 @@ export const ReplacementConfirmationDialog: React.FC<
 
       <DialogContent sx={{ pt: 1 }}>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          Sie möchten den Termin für <strong>{patientName}</strong> am{" "}
+          Sie möchten den Termin für <strong>{patientName}</strong> am{' '}
           <strong>{translateWeekday(weekday)}</strong> verschieben:
         </Typography>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <PersonIcon color="action" />
             <Chip
               label={`${sourceEmployee.first_name} ${sourceEmployee.last_name}`}
               size="small"
               sx={{
                 bgcolor: getColorForTour(sourceEmployee.id || 0),
-                color: "white",
-                "& .MuiChip-label": {
+                color: 'white',
+                '& .MuiChip-label': {
                   px: 1.5,
-                  fontSize: "0.875rem",
+                  fontSize: '0.875rem',
                 },
               }}
             />
@@ -111,17 +106,17 @@ export const ReplacementConfirmationDialog: React.FC<
 
           <SwapHorizIcon color="action" />
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <PersonIcon color="action" />
             <Chip
               label={`${targetEmployee.first_name} ${targetEmployee.last_name}`}
               size="small"
               sx={{
                 bgcolor: getColorForTour(targetEmployee.id || 0),
-                color: "white",
-                "& .MuiChip-label": {
+                color: 'white',
+                '& .MuiChip-label': {
                   px: 1.5,
-                  fontSize: "0.875rem",
+                  fontSize: '0.875rem',
                 },
               }}
             />
@@ -133,19 +128,19 @@ export const ReplacementConfirmationDialog: React.FC<
             <Typography variant="body2">
               <strong>
                 {targetEmployee.first_name} {targetEmployee.last_name}
-              </strong>{" "}
+              </strong>{' '}
               hat eine Vertretung:
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
               <PersonIcon fontSize="small" />
               <Chip
                 label={`${replacementEmployee.first_name} ${replacementEmployee.last_name}`}
                 size="small"
                 color="info"
                 sx={{
-                  "& .MuiChip-label": {
+                  '& .MuiChip-label': {
                     px: 1,
-                    fontSize: "0.75rem",
+                    fontSize: '0.75rem',
                   },
                 }}
               />
@@ -154,17 +149,13 @@ export const ReplacementConfirmationDialog: React.FC<
         )}
 
         <Typography variant="body2" color="text.secondary">
-          Möchten Sie die Vertretung berücksichtigen oder den Termin direkt dem
-          ursprünglich gewählten Mitarbeiter zuweisen?
+          Möchten Sie die Vertretung berücksichtigen oder den Termin direkt dem ursprünglich
+          gewählten Mitarbeiter zuweisen?
         </Typography>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          sx={{ textTransform: "none" }}
-        >
+        <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
           Abbrechen
         </Button>
 
@@ -172,7 +163,7 @@ export const ReplacementConfirmationDialog: React.FC<
           onClick={handleIgnoreReplacement}
           variant="outlined"
           color="warning"
-          sx={{ textTransform: "none" }}
+          sx={{ textTransform: 'none' }}
         >
           Direkt zuweisen
         </Button>
@@ -180,7 +171,7 @@ export const ReplacementConfirmationDialog: React.FC<
         <Button
           onClick={handleRespectReplacement}
           variant="contained"
-          sx={{ textTransform: "none" }}
+          sx={{ textTransform: 'none' }}
         >
           Vertretung berücksichtigen
         </Button>

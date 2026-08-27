@@ -1,44 +1,28 @@
-import React, { useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import {
-  CssBaseline,
-  ThemeProvider,
-  createTheme,
-  Box,
-  Typography,
-} from "@mui/material";
-import {
-  ProtectedRoute,
-  useAuth,
-  LogoutButton,
-  isAuthConfigured,
-} from "@palliroute/auth";
-import InstallPrompt from "./components/install/InstallPrompt";
-import MainLayout from "./components/layout/MainLayout";
-import { useAuthMe } from "./services/queries/useAuthMe";
-import { useUserStore } from "./stores/useUserStore";
-import type { AuthMeResponse } from "./services/api/auth";
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { CssBaseline, ThemeProvider, createTheme, Box, Typography } from '@mui/material';
+import { ProtectedRoute, useAuth, LogoutButton, isAuthConfigured } from '@palliroute/auth';
+import InstallPrompt from './components/install/InstallPrompt';
+import MainLayout from './components/layout/MainLayout';
+import { useAuthMe } from './services/queries/useAuthMe';
+import { useUserStore } from './stores/useUserStore';
+import type { AuthMeResponse } from './services/api/auth';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#007AFF",
+      main: '#007AFF',
     },
     secondary: {
-      main: "#FF3B30",
+      main: '#FF3B30',
     },
     background: {
-      default: "#f8f9fa",
-      paper: "#ffffff",
+      default: '#f8f9fa',
+      paper: '#ffffff',
     },
     text: {
-      primary: "#1d1d1f",
-      secondary: "#86868b",
+      primary: '#1d1d1f',
+      secondary: '#86868b',
     },
   },
   typography: {
@@ -62,7 +46,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          textTransform: "none",
+          textTransform: 'none',
           fontWeight: 500,
         },
       },
@@ -71,7 +55,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
         },
       },
     },
@@ -84,9 +68,9 @@ interface NavigatorWithStandalone extends Navigator {
 
 function isPwaInstalled(): boolean {
   return (
-    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as NavigatorWithStandalone).standalone === true ||
-    document.referrer.includes("android-app://")
+    document.referrer.includes('android-app://')
   );
 }
 
@@ -100,34 +84,25 @@ function AccountDetail({
   mono?: boolean;
 }) {
   return (
-    <Box sx={{ textAlign: "left" }}>
+    <Box sx={{ textAlign: 'left' }}>
       <Typography variant="caption" color="text.secondary" display="block">
         {label}
       </Typography>
       <Typography
         variant="body2"
         sx={{
-          fontFamily:
-            mono && value
-              ? "ui-monospace, SFMono-Regular, Menlo, monospace"
-              : undefined,
-          wordBreak: "break-all",
-          color: value ? "text.primary" : "text.secondary",
+          fontFamily: mono && value ? 'ui-monospace, SFMono-Regular, Menlo, monospace' : undefined,
+          wordBreak: 'break-all',
+          color: value ? 'text.primary' : 'text.secondary',
         }}
       >
-        {value || "nicht im Konto enthalten"}
+        {value || 'nicht im Konto enthalten'}
       </Typography>
     </Box>
   );
 }
 
-function AuthStatusScreen({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function AuthStatusScreen({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Box
       display="flex"
@@ -159,37 +134,29 @@ function UnmappedEmployeeScreen({ me }: { me: AuthMeResponse }) {
     <AuthStatusScreen title="Kein Mitarbeiter hinterlegt">
       <Typography color="text.secondary" textAlign="center" maxWidth={420}>
         {unmapped?.detail ||
-          "Ihr Microsoft-Konto (Entra ID) ist keinem Mitarbeiter in PalliRoute zugeordnet."}
+          'Ihr Microsoft-Konto (Entra ID) ist keinem Mitarbeiter in PalliRoute zugeordnet.'}
       </Typography>
       <Box
         sx={{
-          width: "100%",
+          width: '100%',
           maxWidth: 420,
           p: 2,
           borderRadius: 2,
-          bgcolor: "background.paper",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-          display: "flex",
-          flexDirection: "column",
+          bgcolor: 'background.paper',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
           gap: 1.5,
         }}
       >
         <AccountDetail label="Name" value={name} />
         <AccountDetail label="Entra-E-Mail" value={email} mono />
         <AccountDetail label="Entra-OID" value={oid} mono />
-        {pattern ? (
-          <AccountDetail label="Erwartetes Namensmuster" value={pattern} mono />
-        ) : null}
+        {pattern ? <AccountDetail label="Erwartetes Namensmuster" value={pattern} mono /> : null}
       </Box>
-      <Typography
-        color="text.secondary"
-        textAlign="center"
-        maxWidth={420}
-        variant="body2"
-      >
-        Bitte wenden Sie sich an einen Admin und geben Sie diese Angaben weiter.
-        Der Mitarbeiter muss in der Excel stehen und über E-Mail oder
-        Namensmuster zu diesem Konto passen.
+      <Typography color="text.secondary" textAlign="center" maxWidth={420} variant="body2">
+        Bitte wenden Sie sich an einen Admin und geben Sie diese Angaben weiter. Der Mitarbeiter
+        muss in der Excel stehen und über E-Mail oder Namensmuster zu diesem Konto passen.
       </Typography>
     </AuthStatusScreen>
   );

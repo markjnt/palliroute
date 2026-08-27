@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,14 +7,14 @@ import {
   Typography,
   Box,
   Chip,
-} from "@mui/material";
-import { Close as CloseIcon } from "@mui/icons-material";
-import { Employee, EmployeeCapacity } from "../../../types/models";
-import { CapacityOverview } from "../capacity/CapacityOverview";
-import { formatMonthYear } from "../../../utils/oncall/dateUtils";
-import { employeeTypeColors } from "@palliroute/shared";
+} from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { Employee, EmployeeCapacity } from '../../../types/models';
+import { CapacityOverview } from '../capacity/CapacityOverview';
+import { formatMonthYear } from '../../../utils/oncall/dateUtils';
+import { employeeTypeColors } from '@palliroute/shared';
 
-type FilterType = "all" | "pflege" | "arzt";
+type FilterType = 'all' | 'pflege' | 'arzt';
 
 interface CapacityOverviewDialogProps {
   open: boolean;
@@ -31,7 +31,7 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
   currentDate,
   onClose,
 }) => {
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   return (
     <Dialog
       open={open}
@@ -41,22 +41,22 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
       PaperProps={{
         sx: {
           borderRadius: 3,
-          maxHeight: "90vh",
+          maxHeight: '90vh',
         },
       }}
     >
       <DialogTitle
         sx={{
           pb: 2,
-          borderBottom: "1px solid",
-          borderColor: "divider",
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             mb: 2,
           }}
         >
@@ -65,8 +65,8 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
               variant="h6"
               sx={{
                 fontWeight: 600,
-                fontSize: "1.25rem",
-                letterSpacing: "-0.01em",
+                fontSize: '1.25rem',
+                letterSpacing: '-0.01em',
               }}
             >
               Kapazitätsübersicht
@@ -75,7 +75,7 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
               variant="body2"
               color="text.secondary"
               sx={{
-                fontSize: "0.875rem",
+                fontSize: '0.875rem',
                 fontWeight: 500,
                 mt: 0.5,
               }}
@@ -87,9 +87,9 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
             onClick={onClose}
             size="small"
             sx={{
-              color: "text.secondary",
-              "&:hover": {
-                backgroundColor: "action.hover",
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
               },
             }}
           >
@@ -98,86 +98,74 @@ export const CapacityOverviewDialog: React.FC<CapacityOverviewDialogProps> = ({
         </Box>
 
         {/* Filter Chips */}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
           <Chip
             label="Alle"
-            onClick={() => setActiveFilter("all")}
+            onClick={() => setActiveFilter('all')}
             sx={{
-              fontWeight: activeFilter === "all" ? 600 : 500,
-              fontSize: "0.875rem",
+              fontWeight: activeFilter === 'all' ? 600 : 500,
+              fontSize: '0.875rem',
               height: 32,
               borderRadius: 2.5,
-              backgroundColor:
-                activeFilter === "all" ? "primary.main" : "rgba(0, 0, 0, 0.04)",
-              color: activeFilter === "all" ? "white" : "text.primary",
-              border: activeFilter === "all" ? "none" : "1px solid",
-              borderColor: "rgba(0, 0, 0, 0.1)",
-              transition: "all 0.2s ease",
-              "&:hover": {
-                backgroundColor:
-                  activeFilter === "all"
-                    ? "primary.dark"
-                    : "rgba(0, 0, 0, 0.08)",
-                transform: "translateY(-1px)",
+              backgroundColor: activeFilter === 'all' ? 'primary.main' : 'rgba(0, 0, 0, 0.04)',
+              color: activeFilter === 'all' ? 'white' : 'text.primary',
+              border: activeFilter === 'all' ? 'none' : '1px solid',
+              borderColor: 'rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: activeFilter === 'all' ? 'primary.dark' : 'rgba(0, 0, 0, 0.08)',
+                transform: 'translateY(-1px)',
               },
-              "&:active": {
-                transform: "translateY(0)",
+              '&:active': {
+                transform: 'translateY(0)',
               },
             }}
           />
           <Chip
             label="Pflege"
-            onClick={() => setActiveFilter("pflege")}
+            onClick={() => setActiveFilter('pflege')}
             sx={{
-              fontWeight: activeFilter === "pflege" ? 600 : 500,
-              fontSize: "0.875rem",
+              fontWeight: activeFilter === 'pflege' ? 600 : 500,
+              fontSize: '0.875rem',
               height: 32,
               borderRadius: 2.5,
               backgroundColor:
-                activeFilter === "pflege"
-                  ? employeeTypeColors.default
-                  : "rgba(0, 0, 0, 0.04)",
-              color: activeFilter === "pflege" ? "white" : "text.primary",
-              border: activeFilter === "pflege" ? "none" : "1px solid",
-              borderColor: "rgba(0, 0, 0, 0.1)",
-              transition: "all 0.2s ease",
-              "&:hover": {
+                activeFilter === 'pflege' ? employeeTypeColors.default : 'rgba(0, 0, 0, 0.04)',
+              color: activeFilter === 'pflege' ? 'white' : 'text.primary',
+              border: activeFilter === 'pflege' ? 'none' : '1px solid',
+              borderColor: 'rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
                 backgroundColor:
-                  activeFilter === "pflege"
-                    ? employeeTypeColors.default
-                    : "rgba(0, 0, 0, 0.08)",
-                transform: "translateY(-1px)",
+                  activeFilter === 'pflege' ? employeeTypeColors.default : 'rgba(0, 0, 0, 0.08)',
+                transform: 'translateY(-1px)',
               },
-              "&:active": {
-                transform: "translateY(0)",
+              '&:active': {
+                transform: 'translateY(0)',
               },
             }}
           />
           <Chip
             label="Ärzte"
-            onClick={() => setActiveFilter("arzt")}
+            onClick={() => setActiveFilter('arzt')}
             sx={{
-              fontWeight: activeFilter === "arzt" ? 600 : 500,
-              fontSize: "0.875rem",
+              fontWeight: activeFilter === 'arzt' ? 600 : 500,
+              fontSize: '0.875rem',
               height: 32,
               borderRadius: 2.5,
               backgroundColor:
-                activeFilter === "arzt"
-                  ? employeeTypeColors.Arzt
-                  : "rgba(0, 0, 0, 0.04)",
-              color: activeFilter === "arzt" ? "white" : "text.primary",
-              border: activeFilter === "arzt" ? "none" : "1px solid",
-              borderColor: "rgba(0, 0, 0, 0.1)",
-              transition: "all 0.2s ease",
-              "&:hover": {
+                activeFilter === 'arzt' ? employeeTypeColors.Arzt : 'rgba(0, 0, 0, 0.04)',
+              color: activeFilter === 'arzt' ? 'white' : 'text.primary',
+              border: activeFilter === 'arzt' ? 'none' : '1px solid',
+              borderColor: 'rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
                 backgroundColor:
-                  activeFilter === "arzt"
-                    ? employeeTypeColors.Arzt
-                    : "rgba(0, 0, 0, 0.08)",
-                transform: "translateY(-1px)",
+                  activeFilter === 'arzt' ? employeeTypeColors.Arzt : 'rgba(0, 0, 0, 0.08)',
+                transform: 'translateY(-1px)',
               },
-              "&:active": {
-                transform: "translateY(0)",
+              '&:active': {
+                transform: 'translateY(0)',
               },
             }}
           />

@@ -1,7 +1,7 @@
-import React from "react";
-import { Box, Typography, Chip } from "@mui/material";
-import { Employee, Route } from "../../../types/models";
-import { getColorForTour, employeeTypeColors } from "@palliroute/shared";
+import React from 'react';
+import { Box, Typography, Chip } from '@mui/material';
+import { Employee, Route } from '../../../types/models';
+import { getColorForTour, employeeTypeColors } from '@palliroute/shared';
 
 interface TourHeaderProps {
   employee: Employee;
@@ -10,21 +10,19 @@ interface TourHeaderProps {
 
 export const TourHeader: React.FC<TourHeaderProps> = ({ employee, route }) => {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {/* Area chip (N/S) */}
         {route && route.area && (
           <Chip
-            label={route.area.includes("Nordkreis") ? "N" : "S"}
+            label={route.area.includes('Nordkreis') ? 'N' : 'S'}
             size="small"
             sx={{
-              height: "20px",
-              fontSize: "0.7rem",
-              bgcolor: route.area.includes("Nordkreis")
-                ? "primary.main"
-                : "secondary.main",
-              color: "white",
-              fontWeight: "bold",
+              height: '20px',
+              fontSize: '0.7rem',
+              bgcolor: route.area.includes('Nordkreis') ? 'primary.main' : 'secondary.main',
+              color: 'white',
+              fontWeight: 'bold',
               mr: 0.5,
             }}
           />
@@ -35,8 +33,8 @@ export const TourHeader: React.FC<TourHeaderProps> = ({ employee, route }) => {
           variant="h6"
           component="h3"
           sx={{
-            fontWeight: "bold",
-            color: employee.id ? getColorForTour(employee.id) : "text.primary",
+            fontWeight: 'bold',
+            color: employee.id ? getColorForTour(employee.id) : 'text.primary',
           }}
         >
           {employee.first_name} {employee.last_name}
@@ -46,8 +44,8 @@ export const TourHeader: React.FC<TourHeaderProps> = ({ employee, route }) => {
       {/* Employee function chip */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 1,
           mt: 0.5,
         }}
@@ -56,12 +54,10 @@ export const TourHeader: React.FC<TourHeaderProps> = ({ employee, route }) => {
           label={employee.function}
           size="small"
           sx={{
-            height: "20px",
-            fontSize: "0.7rem",
-            backgroundColor:
-              employeeTypeColors[employee.function] ||
-              employeeTypeColors.default,
-            color: "white",
+            height: '20px',
+            fontSize: '0.7rem',
+            backgroundColor: employeeTypeColors[employee.function] || employeeTypeColors.default,
+            color: 'white',
           }}
         />
       </Box>

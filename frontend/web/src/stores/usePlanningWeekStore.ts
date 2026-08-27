@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface PlanningWeekStore {
   selectedPlanningWeek: number | null;
@@ -16,9 +16,7 @@ export const usePlanningWeekStore = create<PlanningWeekStore>()((set, get) => ({
     if (week >= 1 && week <= 52) {
       set({ selectedPlanningWeek: week });
     } else {
-      console.warn(
-        `Planning week ${week} is not valid. Must be between 1 and 52.`,
-      );
+      console.warn(`Planning week ${week} is not valid. Must be between 1 and 52.`);
     }
   },
 
@@ -37,9 +35,7 @@ export const usePlanningWeekStore = create<PlanningWeekStore>()((set, get) => ({
     const yearStart = new Date(date.getFullYear(), 0, 1);
 
     // Calculate full weeks to nearest Thursday
-    const weekNumber = Math.ceil(
-      ((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
-    );
+    const weekNumber = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 
     return weekNumber;
   },

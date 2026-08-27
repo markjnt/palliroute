@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,10 +11,10 @@ import {
   Chip,
   Avatar,
   CircularProgress,
-} from "@mui/material";
-import { Employee } from "../../types/models";
-import { getColorForTour } from "@palliroute/shared";
-import { useNotificationStore } from "../../stores/useNotificationStore";
+} from '@mui/material';
+import { Employee } from '../../types/models';
+import { getColorForTour } from '@palliroute/shared';
+import { useNotificationStore } from '../../stores/useNotificationStore';
 
 interface ReplacementConfirmationDialogProps {
   open: boolean;
@@ -29,9 +29,7 @@ interface ReplacementConfirmationDialogProps {
   isRemovingReplacement: boolean;
 }
 
-export const ReplacementConfirmationDialog: React.FC<
-  ReplacementConfirmationDialogProps
-> = ({
+export const ReplacementConfirmationDialog: React.FC<ReplacementConfirmationDialogProps> = ({
   open,
   onClose,
   onConfirm,
@@ -53,10 +51,10 @@ export const ReplacementConfirmationDialog: React.FC<
       // which will automatically move appointments in the backend
       onConfirm();
     } catch (error) {
-      console.error("Error confirming replacement:", error);
+      console.error('Error confirming replacement:', error);
       setNotification(
-        "Fehler beim Bestätigen der Vertretung. Bitte versuchen Sie es erneut.",
-        "error",
+        'Fehler beim Bestätigen der Vertretung. Bitte versuchen Sie es erneut.',
+        'error'
       );
     } finally {
       setIsMoving(false);
@@ -72,7 +70,7 @@ export const ReplacementConfirmationDialog: React.FC<
 
   const getWarningText = () => {
     if (targetPatientCount > 0) {
-      return `Warnung: ${targetEmployee?.first_name} ${targetEmployee?.last_name} hat bereits ${targetPatientCount} ${targetPatientCount === 1 ? "Patient" : "Patienten"} am ${weekday}.`;
+      return `Warnung: ${targetEmployee?.first_name} ${targetEmployee?.last_name} hat bereits ${targetPatientCount} ${targetPatientCount === 1 ? 'Patient' : 'Patienten'} am ${weekday}.`;
     }
     return null;
   };
@@ -84,11 +82,11 @@ export const ReplacementConfirmationDialog: React.FC<
       <DialogTitle sx={{ p: 0, pb: 2 }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
             p: 2,
-            backgroundColor: getColorForTour(sourceEmployee.id) + "50",
+            backgroundColor: getColorForTour(sourceEmployee.id) + '50',
           }}
         >
           <Avatar
@@ -96,16 +94,14 @@ export const ReplacementConfirmationDialog: React.FC<
               width: 32,
               height: 32,
               bgcolor: getColorForTour(sourceEmployee.id),
-              fontSize: "0.875rem",
+              fontSize: '0.875rem',
             }}
           >
             {`${sourceEmployee.first_name[0]}${sourceEmployee.last_name[0]}`.toUpperCase()}
           </Avatar>
           <Box>
             <Typography variant="h6" fontWeight="medium">
-              {isRemovingReplacement
-                ? "Vertretung entfernen"
-                : "Vertretung einstellen"}
+              {isRemovingReplacement ? 'Vertretung entfernen' : 'Vertretung einstellen'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               für {sourceEmployee.first_name} {sourceEmployee.last_name}
@@ -116,14 +112,14 @@ export const ReplacementConfirmationDialog: React.FC<
 
       <DialogContent>
         {/* Employee Movement */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Avatar
               sx={{
                 width: 32,
                 height: 32,
                 bgcolor: getColorForTour(currentEmployee.id),
-                fontSize: "0.875rem",
+                fontSize: '0.875rem',
               }}
             >
               {`${currentEmployee.first_name[0]}${currentEmployee.last_name[0]}`.toUpperCase()}
@@ -143,13 +139,13 @@ export const ReplacementConfirmationDialog: React.FC<
           </Typography>
 
           {targetEmployee && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Avatar
                 sx={{
                   width: 32,
                   height: 32,
                   bgcolor: getColorForTour(targetEmployee.id),
-                  fontSize: "0.875rem",
+                  fontSize: '0.875rem',
                 }}
               >
                 {`${targetEmployee.first_name[0]}${targetEmployee.last_name[0]}`.toUpperCase()}
@@ -169,14 +165,14 @@ export const ReplacementConfirmationDialog: React.FC<
         {/* Patient Count Info */}
         <Box sx={{ mb: 2 }}>
           <Chip
-            label={`${patientCount} ${patientCount === 1 ? "Patient" : "Patienten"} verschieben`}
+            label={`${patientCount} ${patientCount === 1 ? 'Patient' : 'Patienten'} verschieben`}
             color="primary"
             variant="outlined"
             sx={{ mr: 1 }}
           />
           {targetPatientCount > 0 && (
             <Chip
-              label={`${targetPatientCount} ${targetPatientCount === 1 ? "Patient" : "Patienten"} bereits vorhanden`}
+              label={`${targetPatientCount} ${targetPatientCount === 1 ? 'Patient' : 'Patienten'} bereits vorhanden`}
               color="warning"
               variant="outlined"
             />
@@ -198,11 +194,11 @@ export const ReplacementConfirmationDialog: React.FC<
         <Button
           onClick={handleConfirm}
           variant="contained"
-          color={hasWarning ? "warning" : "primary"}
+          color={hasWarning ? 'warning' : 'primary'}
           disabled={isMoving || !targetEmployee}
           startIcon={isMoving ? <CircularProgress size={16} /> : null}
         >
-          {isMoving ? "Verschiebe..." : "Bestätigen"}
+          {isMoving ? 'Verschiebe...' : 'Bestätigen'}
         </Button>
       </DialogActions>
     </Dialog>

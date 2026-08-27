@@ -1,11 +1,8 @@
-import { api } from "@palliroute/shared";
-import { Route, Weekday } from "../../types/models";
-import {
-  getCurrentCalendarWeek,
-  getBestCalendarWeek,
-} from "@palliroute/shared";
-import { patientsApi } from "./patients";
-import { calendarWeekService } from "./calendarWeek";
+import { api } from '@palliroute/shared';
+import { Route, Weekday } from '../../types/models';
+import { getCurrentCalendarWeek, getBestCalendarWeek } from '@palliroute/shared';
+import { patientsApi } from './patients';
+import { calendarWeekService } from './calendarWeek';
 
 export const routesApi = {
   // Get all routes with optional filtering for current or latest available calendar week
@@ -19,10 +16,10 @@ export const routesApi = {
       // Use the calendar week service to get the best week
       const weekToUse = await calendarWeekService.getBestWeek();
       const queryParams = { ...params, calendar_week: weekToUse };
-      const response = await api.get("/routes/", { params: queryParams });
+      const response = await api.get('/routes/', { params: queryParams });
       return response.data.routes || [];
     } catch (error) {
-      console.error("Failed to fetch routes:", error);
+      console.error('Failed to fetch routes:', error);
       throw error;
     }
   },
@@ -55,7 +52,7 @@ export const routesApi = {
       if (employee_id) {
         params.employee_id = employee_id;
       }
-      const response = await api.get("/routes", { params });
+      const response = await api.get('/routes', { params });
       return response.data.routes || [];
     } catch (error) {
       console.error(`Failed to fetch routes for date ${date}:`, error);
@@ -76,7 +73,7 @@ export const routesApi = {
     } catch (error) {
       console.error(
         `Failed to optimize routes for weekday ${weekday} and employee ${employeeId}:`,
-        error,
+        error
       );
       throw error;
     }
@@ -94,7 +91,7 @@ export const routesApi = {
     } catch (error) {
       console.error(
         `Failed to optimize tour-area routes for weekday ${weekday} and area ${area}:`,
-        error,
+        error
       );
       throw error;
     }
@@ -102,7 +99,7 @@ export const routesApi = {
 
   async assignAwTourEmployee(
     routeId: number,
-    employeeId: number | null,
+    employeeId: number | null
   ): Promise<{ route: Route; planning_failed?: boolean }> {
     try {
       const body: { employee_id: number | null; reset_to_aplano?: boolean } = {
@@ -111,10 +108,7 @@ export const routesApi = {
       if (employeeId === null) {
         body.reset_to_aplano = true;
       }
-      const response = await api.put(
-        `/routes/${routeId}/assign-employee`,
-        body,
-      );
+      const response = await api.put(`/routes/${routeId}/assign-employee`, body);
       return {
         route: response.data.route,
         planning_failed: Boolean(response.data.planning_failed),
@@ -129,7 +123,7 @@ export const routesApi = {
   async reorderAppointment(
     routeId: number,
     appointmentId: number,
-    options: { direction?: "up" | "down"; index?: number },
+    options: { direction?: 'up' | 'down'; index?: number }
   ): Promise<Route> {
     try {
       const payload: {
@@ -145,24 +139,18 @@ export const routesApi = {
       } else if (options.index !== undefined) {
         payload.index = options.index;
       } else {
-        throw new Error("Either direction or index must be provided");
+        throw new Error('Either direction or index must be provided');
       }
 
       const response = await api.put(`/routes/${routeId}`, payload);
       return response.data.route;
     } catch (error) {
-      console.error(
-        `Failed to reorder appointment in route ${routeId}:`,
-        error,
-      );
+      console.error(`Failed to reorder appointment in route ${routeId}:`, error);
       throw error;
     }
   },
 
-  async setCustomOrder(
-    routeId: number,
-    appointmentIds: number[],
-  ): Promise<Route> {
+  async setCustomOrder(routeId: number, appointmentIds: number[]): Promise<Route> {
     const response = await api.put(`/routes/${routeId}/custom-order`, {
       appointment_ids: appointmentIds,
     });

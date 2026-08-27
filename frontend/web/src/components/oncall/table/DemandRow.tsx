@@ -1,18 +1,15 @@
-import React, { useCallback, useMemo } from "react";
-import { Box, Typography, Chip, Tooltip, Divider } from "@mui/material";
-import { Assignment, DutyType, OnCallArea } from "../../../types/models";
-import { formatDate, isWeekend } from "../../../utils/oncall/dateUtils";
-import {
-  WEEKDAY_DUTIES,
-  WEEKEND_DUTIES,
-} from "../../../utils/oncall/constants";
-import { getDutyColor } from "../../../utils/oncall/colorUtils";
-import { shiftDefinitionToDutyType } from "../../../utils/oncall/shiftMapping";
+import React, { useCallback, useMemo } from 'react';
+import { Box, Typography, Chip, Tooltip, Divider } from '@mui/material';
+import { Assignment, DutyType, OnCallArea } from '../../../types/models';
+import { formatDate, isWeekend } from '../../../utils/oncall/dateUtils';
+import { WEEKDAY_DUTIES, WEEKEND_DUTIES } from '../../../utils/oncall/constants';
+import { getDutyColor } from '../../../utils/oncall/colorUtils';
+import { shiftDefinitionToDutyType } from '../../../utils/oncall/shiftMapping';
 
 interface DemandRowProps {
   dates: Date[];
   assignments: Assignment[];
-  viewMode: "month" | "week";
+  viewMode: 'month' | 'week';
   gridTemplateColumns: string;
   employeeColumnWidth: number;
   /** Sa–So oder Feiertags-Mo–Fr: Wochenend-Bedarf (AW/RB-WE). Standard: nur Kalender-Wochenende. */
@@ -42,49 +39,49 @@ export const DemandRow: React.FC<DemandRowProps> = ({
         return dutyMapping?.dutyType === dutyType && dutyMapping?.area === area;
       });
     },
-    [assignments],
+    [assignments]
   );
 
   return (
     <Box
       sx={{
-        display: "grid",
+        display: 'grid',
         gridTemplateColumns,
         ...(isSticky && {
-          position: "sticky" as const,
+          position: 'sticky' as const,
           top: stickyTop,
           zIndex: 1,
         }),
-        backgroundColor: "background.paper",
-        minWidth: "fit-content",
-        borderBottom: "1px solid",
-        borderColor: "divider",
+        backgroundColor: 'background.paper',
+        minWidth: 'fit-content',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
       }}
     >
       {/* Employee column header for Bedarf – sticky links, fester Hintergrund */}
       <Box
         sx={{
-          px: viewMode === "month" ? 1 : 1.5,
+          px: viewMode === 'month' ? 1 : 1.5,
           py: 1,
-          position: "sticky",
+          position: 'sticky',
           left: 0,
-          backgroundColor: "background.paper",
+          backgroundColor: 'background.paper',
           zIndex: 2,
-          borderRight: "1px solid",
-          borderColor: "divider",
-          boxShadow: "2px 0 4px rgba(0,0,0,0.06)",
-          display: "flex",
-          alignItems: "center",
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <Typography
           variant="subtitle2"
           sx={{
             fontWeight: 600,
-            color: "text.secondary",
-            textTransform: "uppercase",
-            fontSize: viewMode === "month" ? "0.7rem" : "0.75rem",
-            letterSpacing: "0.05em",
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            fontSize: viewMode === 'month' ? '0.7rem' : '0.75rem',
+            letterSpacing: '0.05em',
           }}
         >
           Bedarf
@@ -101,36 +98,32 @@ export const DemandRow: React.FC<DemandRowProps> = ({
         let rbDuties: typeof availableDuties = [];
 
         if (isWeekendDay) {
-          awDuties = availableDuties.filter((duty) =>
-            duty.type.includes("aw_nursing"),
-          );
-          rbDuties = availableDuties.filter(
-            (duty) => !duty.type.includes("aw_nursing"),
-          );
+          awDuties = availableDuties.filter((duty) => duty.type.includes('aw_nursing'));
+          rbDuties = availableDuties.filter((duty) => !duty.type.includes('aw_nursing'));
         } else {
           rbDuties = availableDuties;
         }
 
         const renderDutyChip = (duty: (typeof availableDuties)[0]) => {
           const isAssigned = isDutyAssigned(date, duty.type, duty.area);
-          const statusColor = isAssigned ? "#4caf50" : "#f44336"; // Grün wenn zugewiesen, Rot wenn nicht
+          const statusColor = isAssigned ? '#4caf50' : '#f44336'; // Grün wenn zugewiesen, Rot wenn nicht
           const chipColor = getDutyColor(duty.type, duty.area, isAssigned);
 
           return (
             <Tooltip
-              key={`${duty.type}_${duty.area || ""}`}
+              key={`${duty.type}_${duty.area || ''}`}
               title={duty.label}
               arrow
               placement="top"
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 0.5,
-                  width: "100%",
+                  width: '100%',
                   minWidth: 0,
-                  maxWidth: "100%",
+                  maxWidth: '100%',
                 }}
               >
                 {/* Status Punkt */}
@@ -138,7 +131,7 @@ export const DemandRow: React.FC<DemandRowProps> = ({
                   sx={{
                     width: 8,
                     height: 8,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     backgroundColor: statusColor,
                     flexShrink: 0,
                     mt: 0.5,
@@ -149,23 +142,23 @@ export const DemandRow: React.FC<DemandRowProps> = ({
                   label={duty.label}
                   size="small"
                   sx={{
-                    fontSize: viewMode === "month" ? "0.6rem" : "0.65rem",
-                    height: viewMode === "month" ? 20 : 22,
+                    fontSize: viewMode === 'month' ? '0.6rem' : '0.65rem',
+                    height: viewMode === 'month' ? 20 : 22,
                     fontWeight: 500,
-                    cursor: "help",
+                    cursor: 'help',
                     bgcolor: chipColor,
-                    color: isAssigned ? "white" : "text.primary",
-                    border: isAssigned ? "none" : `1px solid ${chipColor}`,
-                    width: "100%",
-                    maxWidth: "100%",
+                    color: isAssigned ? 'white' : 'text.primary',
+                    border: isAssigned ? 'none' : `1px solid ${chipColor}`,
+                    width: '100%',
+                    maxWidth: '100%',
                     minWidth: 0,
-                    "& .MuiChip-label": {
+                    '& .MuiChip-label': {
                       px: 0.75,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      maxWidth: "100%",
-                      display: "block",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                      display: 'block',
                     },
                   }}
                 />
@@ -178,23 +171,21 @@ export const DemandRow: React.FC<DemandRowProps> = ({
           <Box
             key={date.toISOString()}
             sx={{
-              px: viewMode === "month" ? 0.25 : 0.5,
-              py: viewMode === "month" ? 0.5 : 0.75,
-              backgroundColor: isWeekendDay
-                ? "rgba(255, 152, 0, 0.08)"
-                : "transparent",
-              borderRight: idx < dates.length - 1 ? "1px solid" : "none",
-              borderColor: "divider",
-              display: "flex",
-              flexDirection: "column",
+              px: viewMode === 'month' ? 0.25 : 0.5,
+              py: viewMode === 'month' ? 0.5 : 0.75,
+              backgroundColor: isWeekendDay ? 'rgba(255, 152, 0, 0.08)' : 'transparent',
+              borderRight: idx < dates.length - 1 ? '1px solid' : 'none',
+              borderColor: 'divider',
+              display: 'flex',
+              flexDirection: 'column',
               gap: 0.5,
-              alignItems: "flex-start",
-              justifyContent: "flex-start",
-              width: "100%",
+              alignItems: 'flex-start',
+              justifyContent: 'flex-start',
+              width: '100%',
               minWidth: 0,
-              maxWidth: "100%",
-              overflow: "hidden",
-              boxSizing: "border-box",
+              maxWidth: '100%',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
             }}
           >
             {isWeekendDay ? (
@@ -205,8 +196,8 @@ export const DemandRow: React.FC<DemandRowProps> = ({
                   <Divider
                     sx={{
                       my: 0.25,
-                      width: "100%",
-                      borderColor: "divider",
+                      width: '100%',
+                      borderColor: 'divider',
                       opacity: 0.5,
                     }}
                   />

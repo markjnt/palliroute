@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Box,
   Button,
@@ -10,15 +10,15 @@ import {
   DialogTitle,
   DialogContent,
   Alert,
-} from "@mui/material";
-import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+} from '@mui/material';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Close as CloseIcon,
   Add as AddIcon,
-} from "@mui/icons-material";
-import { Employee } from "../../types/models";
+} from '@mui/icons-material';
+import { Employee } from '../../types/models';
 
 interface EmployeeTablePopupProps {
   open: boolean;
@@ -45,83 +45,81 @@ export const EmployeeTablePopup: React.FC<EmployeeTablePopupProps> = ({
 }) => {
   const columns: GridColDef[] = [
     {
-      field: "last_name",
-      headerName: "Nachname",
+      field: 'last_name',
+      headerName: 'Nachname',
       flex: 1,
       minWidth: 120,
       filterable: true,
     },
     {
-      field: "first_name",
-      headerName: "Vorname",
+      field: 'first_name',
+      headerName: 'Vorname',
       flex: 1,
       minWidth: 120,
       filterable: true,
     },
     {
-      field: "area",
-      headerName: "Gebiet",
+      field: 'area',
+      headerName: 'Gebiet',
       width: 120,
       filterable: true,
-      type: "singleSelect",
-      valueOptions: ["Nordkreis", "Südkreis"],
+      type: 'singleSelect',
+      valueOptions: ['Nordkreis', 'Südkreis'],
     },
     {
-      field: "street",
-      headerName: "Straße",
+      field: 'street',
+      headerName: 'Straße',
       flex: 1.5,
       minWidth: 150,
       filterable: true,
     },
     {
-      field: "zip_code",
-      headerName: "PLZ",
+      field: 'zip_code',
+      headerName: 'PLZ',
       width: 80,
       filterable: true,
     },
     {
-      field: "city",
-      headerName: "Ort",
+      field: 'city',
+      headerName: 'Ort',
       flex: 1,
       minWidth: 120,
       filterable: true,
     },
     {
-      field: "function",
-      headerName: "Funktion",
+      field: 'function',
+      headerName: 'Funktion',
       flex: 1,
       minWidth: 120,
       filterable: true,
     },
     {
-      field: "work_hours",
-      headerName: "Stellenumfang",
+      field: 'work_hours',
+      headerName: 'Stellenumfang',
       width: 110,
       filterable: true,
-      type: "number",
+      type: 'number',
       renderCell: (params: GridRenderCellParams) =>
-        params.value === undefined || params.value === null
-          ? "-"
-          : `${params.value} %`,
+        params.value === undefined || params.value === null ? '-' : `${params.value} %`,
     },
     {
-      field: "alias",
-      headerName: "Alias",
+      field: 'alias',
+      headerName: 'Alias',
       width: 150,
       filterable: true,
-      renderCell: (params: GridRenderCellParams) => params.value || "-",
+      renderCell: (params: GridRenderCellParams) => params.value || '-',
     },
     {
-      field: "email",
-      headerName: "E-Mail",
+      field: 'email',
+      headerName: 'E-Mail',
       flex: 1,
       minWidth: 160,
       filterable: true,
-      renderCell: (params: GridRenderCellParams) => params.value || "-",
+      renderCell: (params: GridRenderCellParams) => params.value || '-',
     },
     {
-      field: "actions",
-      headerName: "Aktionen",
+      field: 'actions',
+      headerName: 'Aktionen',
       width: 100,
       renderCell: (params: GridRenderCellParams) => (
         <Box>
@@ -153,30 +151,25 @@ export const EmployeeTablePopup: React.FC<EmployeeTablePopupProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          height: "90vh",
-          maxHeight: "90vh",
+          height: '90vh',
+          maxHeight: '90vh',
         },
       }}
     >
       <DialogTitle
         component="div"
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           pb: 1,
         }}
       >
-        <Box component="h2" sx={{ fontSize: "1.25rem", fontWeight: 600, m: 0 }}>
+        <Box component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, m: 0 }}>
           Mitarbeiterübersicht
         </Box>
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          <Button
-            variant="contained"
-            onClick={onAdd}
-            startIcon={<AddIcon />}
-            size="small"
-          >
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Button variant="contained" onClick={onAdd} startIcon={<AddIcon />} size="small">
             Mitarbeiter hinzufügen
           </Button>
           <IconButton onClick={onClose} size="small">
@@ -185,8 +178,8 @@ export const EmployeeTablePopup: React.FC<EmployeeTablePopupProps> = ({
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0, height: "100%" }}>
-        <Box sx={{ height: "100%", p: 2 }}>
+      <DialogContent sx={{ p: 0, height: '100%' }}>
+        <Box sx={{ height: '100%', p: 2 }}>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error.message}
@@ -194,65 +187,65 @@ export const EmployeeTablePopup: React.FC<EmployeeTablePopupProps> = ({
           )}
 
           {isLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
               <CircularProgress />
             </Box>
           ) : (
-            <Box sx={{ height: "100%", minHeight: 0 }}>
+            <Box sx={{ height: '100%', minHeight: 0 }}>
               <DataGrid
                 rows={employees}
                 columns={columns}
                 hideFooter={false}
                 disableRowSelectionOnClick
                 localeText={{
-                  noRowsLabel: "Keine Einträge",
-                  filterPanelAddFilter: "Filter hinzufügen",
-                  filterPanelDeleteIconLabel: "Löschen",
-                  filterPanelInputLabel: "Wert",
-                  filterPanelInputPlaceholder: "Filterwert",
-                  filterOperatorContains: "enthält",
-                  filterOperatorEquals: "ist gleich",
-                  filterOperatorStartsWith: "beginnt mit",
-                  filterOperatorEndsWith: "endet mit",
-                  filterOperatorIsEmpty: "ist leer",
-                  filterOperatorIsNotEmpty: "ist nicht leer",
-                  filterOperatorIs: "ist",
-                  filterOperatorNot: "ist nicht",
-                  filterOperatorAfter: "ist nach",
-                  filterOperatorOnOrAfter: "ist am oder nach",
-                  filterOperatorBefore: "ist vor",
-                  filterOperatorOnOrBefore: "ist am oder vor",
-                  columnMenuFilter: "Filter",
-                  columnMenuHideColumn: "Spalte ausblenden",
-                  columnMenuShowColumns: "Spalten anzeigen",
-                  columnMenuManageColumns: "Spalten verwalten",
-                  columnMenuSortAsc: "Aufsteigend sortieren",
-                  columnMenuSortDesc: "Absteigend sortieren",
-                  columnMenuUnsort: "Sortierung aufheben",
+                  noRowsLabel: 'Keine Einträge',
+                  filterPanelAddFilter: 'Filter hinzufügen',
+                  filterPanelDeleteIconLabel: 'Löschen',
+                  filterPanelInputLabel: 'Wert',
+                  filterPanelInputPlaceholder: 'Filterwert',
+                  filterOperatorContains: 'enthält',
+                  filterOperatorEquals: 'ist gleich',
+                  filterOperatorStartsWith: 'beginnt mit',
+                  filterOperatorEndsWith: 'endet mit',
+                  filterOperatorIsEmpty: 'ist leer',
+                  filterOperatorIsNotEmpty: 'ist nicht leer',
+                  filterOperatorIs: 'ist',
+                  filterOperatorNot: 'ist nicht',
+                  filterOperatorAfter: 'ist nach',
+                  filterOperatorOnOrAfter: 'ist am oder nach',
+                  filterOperatorBefore: 'ist vor',
+                  filterOperatorOnOrBefore: 'ist am oder vor',
+                  columnMenuFilter: 'Filter',
+                  columnMenuHideColumn: 'Spalte ausblenden',
+                  columnMenuShowColumns: 'Spalten anzeigen',
+                  columnMenuManageColumns: 'Spalten verwalten',
+                  columnMenuSortAsc: 'Aufsteigend sortieren',
+                  columnMenuSortDesc: 'Absteigend sortieren',
+                  columnMenuUnsort: 'Sortierung aufheben',
                 }}
                 sx={{
-                  "& .MuiDataGrid-cell": {
+                  '& .MuiDataGrid-cell': {
                     py: 1,
                   },
-                  "& .MuiDataGrid-main": {
-                    overflow: "auto",
-                    width: "auto",
-                    minWidth: "100%",
+                  '& .MuiDataGrid-main': {
+                    overflow: 'auto',
+                    width: 'auto',
+                    minWidth: '100%',
                   },
-                  "& .MuiDataGrid-virtualScroller": {
-                    overflow: "auto !important",
+                  '& .MuiDataGrid-virtualScroller': {
+                    overflow: 'auto !important',
                   },
-                  "& .MuiDataGrid-filterIcon": {
+                  '& .MuiDataGrid-filterIcon': {
                     opacity: 1,
                   },
-                  height: "100%",
-                  border: "none",
+                  height: '100%',
+                  border: 'none',
                 }}
                 initialState={{
                   filter: {
                     filterModel: {
                       items: [],
-                      quickFilterValues: [""],
+                      quickFilterValues: [''],
                     },
                   },
                 }}
