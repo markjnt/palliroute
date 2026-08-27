@@ -8,6 +8,8 @@ interface AwTourEmployeeSelectProps {
   disabled?: boolean;
   isAssigning?: boolean;
   onAssign: (employeeId: number | null) => void;
+  /** Clear / X: reset to current Aplano assignee (not empty). */
+  onResetToAplano: () => void;
 }
 
 const FUNCTION_PRIORITY: Record<string, number> = {
@@ -24,6 +26,7 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
   disabled = false,
   isAssigning = false,
   onAssign,
+  onResetToAplano,
 }) => {
   const sortedEmployees = useMemo(() => {
     return [...employees]
@@ -42,6 +45,7 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
   }, [employees]);
 
   const selectedEmployee = sortedEmployees.find((emp) => emp.id === route?.employee_id) ?? null;
+  const isOverride = Boolean(route?.employee_override);
 
   return (
     <Autocomplete
@@ -49,7 +53,13 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
       size="small"
       options={sortedEmployees}
       value={selectedEmployee}
-      onChange={(_, value) => onAssign(value?.id ?? null)}
+      onChange={(_, value) => {
+        if (value == null) {
+          onResetToAplano();
+          return;
+        }
+        onAssign(value.id ?? null);
+      }}
       getOptionLabel={(emp) => `${emp.first_name} ${emp.last_name}`}
       isOptionEqualToValue={(a, b) => a.id === b.id}
       disabled={disabled || !route?.id || isAssigning}
@@ -69,11 +79,13 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
       }}
       renderOption={(props, emp) => {
         const { key, ...optionProps } = props;
+        const isAplanoSuggestion = emp.id === route?.aplano_employee_id;
         return (
           <Box component="li" key={key} {...optionProps}>
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="body2">
                 {emp.first_name} {emp.last_name}
+                {isAplanoSuggestion ? ' · Aplano' : ''}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {[emp.function, emp.area].filter(Boolean).join(' · ')}
@@ -82,8 +94,20 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
           </Box>
         );
       }}
-      renderInput={(params) => <TextField {...params} label="Mitarbeiter" placeholder="Suchen…" />}
-      sx={{ flex: 1, minWidth: 0, width: '100%' }}
+      renderInput={(params) => (
+        <TextField {...params} label="Mitarbeiter" placeholder="Suchen…" />
+      )}
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        width: '100%',
+        '& .MuiOutlinedInput-root': isOverride
+          ? {
+              bgcolor: 'warning.50',
+              '& fieldset': { borderColor: 'warning.main' },
+            }
+          : undefined,
+      }}
     />
   );
 };

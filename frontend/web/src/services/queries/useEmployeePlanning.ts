@@ -40,6 +40,7 @@ function normalizeEmployeePlanningResponse(
 export const useEmployeePlanning = () => {
   const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
   const { setNotification, setLoading, resetLoading } = useNotificationStore();
+  const queryClient = useQueryClient();
   const currentWeek = selectedPlanningWeek || getCurrentPlanningWeek();
 
   return useQuery({
@@ -48,6 +49,8 @@ export const useEmployeePlanning = () => {
       try {
         setLoading('Synchronisiere mit Aplano...');
         const response = await employeePlanningApi.getAll(currentWeek);
+        // AW-Tour-Zuweisungen werden serverseitig aus Aplano übernommen
+        queryClient.invalidateQueries({ queryKey: routeKeys.all });
         return normalizeEmployeePlanningResponse(response.data, setNotification);
       } finally {
         resetLoading();

@@ -104,6 +104,10 @@ export interface PatientImportResponse {
 export interface Route {
   id: number;
   employee_id: number | null;
+  /** True when AW assignee was set manually (not from Aplano). */
+  employee_override?: boolean;
+  /** Aplano-suggested employee for this AW area day (null if none). */
+  aplano_employee_id?: number | null;
   weekday: string;
   route_order: number[];
   total_duration: number;

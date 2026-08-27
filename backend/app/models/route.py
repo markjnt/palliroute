@@ -36,6 +36,8 @@ class Route(db.Model):
     employee_id = db.Column(
         db.Integer, db.ForeignKey("employees.id"), nullable=True
     )  # Nullable for weekend routes
+    # True = manual AW assignee; False = follow Aplano (see aw_tour_aplano)
+    employee_override = db.Column(db.Boolean, nullable=False, default=False)
     weekday = db.Column(db.String(20), nullable=False)
     route_order = db.Column(db.Text, nullable=False)  # JSON Array of appointment ids
     total_duration = db.Column(db.Integer, nullable=False)  # in minutes
@@ -102,10 +104,17 @@ class Route(db.Model):
         else:
             self.custom_order = json.dumps(order)
 
-    def to_dict(self):
-        return {
+    def to_dict(self, *, aplano_lookup=None):
+        """
+        Serialize route.
+
+        For AW area routes, pass aplano_lookup={(weekday, area): employee_id}
+        when serializing many routes (see serialize_routes) to avoid N+1 queries.
+        """
+        payload = {
             "id": self.id,
             "employee_id": self.employee_id,
+            "employee_override": bool(self.employee_override),
             "weekday": self.weekday,
             "route_order": self.get_route_order(),
             "total_duration": self.total_duration,
@@ -121,3 +130,18 @@ class Route(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+        # Aplano suggestion for AW tours (for UI reset / override hint)
+        if self.area in ("Nord", "Mitte", "Süd") and self.calendar_week is not None:
+            if aplano_lookup is not None:
+                payload["aplano_employee_id"] = aplano_lookup.get(
+                    (self.weekday, self.area)
+                )
+            else:
+                from app.services.aw_tour_aplano import resolve_aplano_aw_employee_id
+
+                payload["aplano_employee_id"] = resolve_aplano_aw_employee_id(
+                    self.calendar_week, self.weekday, self.area
+                )
+        else:
+            payload["aplano_employee_id"] = None
+        return payload

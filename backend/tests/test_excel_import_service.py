@@ -25,9 +25,21 @@ def test_batch_geocode_uses_cache_without_api(monkeypatch):
 
 
 def test_aw_tour_employee_snapshot_roundtrip():
-    snapshots = [(34, "saturday", "Nord", 7), (34, "sunday", "Mitte", 12)]
+    snapshots = [
+        (34, "saturday", "Nord", 7, False),
+        (34, "sunday", "Mitte", 12, True),
+    ]
     raw = ExcelImportService._serialize_aw_tour_employee_snapshot(snapshots)
     assert ExcelImportService._deserialize_aw_tour_employee_snapshot(raw) == snapshots
+
+
+def test_aw_tour_employee_snapshot_legacy_defaults_override_true():
+    raw = json.dumps(
+        [{"calendar_week": 34, "weekday": "saturday", "area": "Nord", "employee_id": 7}]
+    )
+    assert ExcelImportService._deserialize_aw_tour_employee_snapshot(raw) == [
+        (34, "saturday", "Nord", 7, True)
+    ]
 
 
 def test_aw_tour_employee_snapshot_ignores_invalid_payload():

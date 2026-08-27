@@ -166,7 +166,11 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
       return;
     }
     try {
-      const result = await assignAwTourEmployee.mutateAsync({ routeId, employeeId });
+      const result = await assignAwTourEmployee.mutateAsync({
+        routeId,
+        employeeId,
+        resetToAplano: employeeId === null,
+      });
       if (result.planning_failed) {
         setNotification(
           'Mitarbeiter zugewiesen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.',
@@ -174,7 +178,9 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
         );
       } else {
         setNotification(
-          employeeId ? 'Mitarbeiter der AW-Tour zugewiesen' : 'Mitarbeiterzuweisung entfernt',
+          employeeId
+            ? 'Mitarbeiter der AW-Tour zugewiesen (manuell)'
+            : 'Zuweisung auf Aplano zurückgesetzt',
           'success'
         );
       }
@@ -182,6 +188,10 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
       console.error('Fehler beim Zuweisen des Mitarbeiters:', error);
       setNotification('Mitarbeiter konnte nicht zugewiesen werden', 'error');
     }
+  };
+
+  const handleResetToAplano = async () => {
+    await handleAssignEmployee(null);
   };
 
   return (
@@ -222,6 +232,7 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
               employees={employees}
               isAssigning={assignAwTourEmployee.isPending}
               onAssign={handleAssignEmployee}
+              onResetToAplano={handleResetToAplano}
             />
           </WeekendTourHeader>
 

@@ -98,9 +98,13 @@ export const routesApi = {
     employeeId: number | null
   ): Promise<{ route: Route; planning_failed?: boolean }> {
     try {
-      const response = await api.put(`/routes/${routeId}/assign-employee`, {
+      const body: { employee_id: number | null; reset_to_aplano?: boolean } = {
         employee_id: employeeId,
-      });
+      };
+      if (employeeId === null) {
+        body.reset_to_aplano = true;
+      }
+      const response = await api.put(`/routes/${routeId}/assign-employee`, body);
       return {
         route: response.data.route,
         planning_failed: Boolean(response.data.planning_failed),

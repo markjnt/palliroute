@@ -7,6 +7,7 @@ from ..auth.decorators import require_auth
 from ..models.employee import Employee
 from ..models.route import Route, same_appointment_ids
 from ..services.aplano_sync import sync_employee_planning
+from ..services.aw_tour_aplano import reset_aw_tour_employee_to_aplano, serialize_routes
 from ..services.holiday_service import is_aw_area_assignment_day
 from ..services.pdf_generator import PDFGenerator
 from ..services.route_optimizer import RouteOptimizer
@@ -79,8 +80,18 @@ def get_routes():
             except ValueError:
                 return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
 
+        # Keep AW assignee in sync with Aplano (throttled fetch + apply)
+        if tour_area_day and calendar_week:
+            try:
+                sync_employee_planning(calendar_week, force=False)
+            except Exception as sync_error:
+                print(
+                    f"[get_routes] AW tour aplano sync failed for KW {calendar_week}: {sync_error}"
+                )
+
         routes = query.all()
-        return jsonify({"routes": [route.to_dict() for route in routes]})
+        # Batched Aplano lookup — avoids N+1 from Route.to_dict per AW route
+        return jsonify({"routes": serialize_routes(routes)})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -269,11 +280,14 @@ def get_route(route_id):
 def assign_employee_to_aw_tour(route_id):
     """
     Assign or unassign an employee to an AW tour for this day and area.
-    Expected JSON body: { "employee_id": 1 } or { "employee_id": null }
+    Expected JSON body:
+      { "employee_id": 1 } — manual override
+      { "reset_to_aplano": true } — clear override and restore Aplano assignee
+      { "employee_id": null } — same as reset_to_aplano (clear button)
 
     Web (internal key) may assign any employee. PWA JWT may only self-claim:
     employee_id must be g.employee.id. Admins may assign any employee.
-    Unassign (null) is allowed for the current assignee or as admin.
+    Reset/unassign is allowed for the current assignee or as admin.
     """
     try:
         route = Route.query.get_or_404(route_id)
@@ -287,17 +301,28 @@ def assign_employee_to_aw_tour(route_id):
             ), 400
 
         data = request.get_json()
-        if not data or "employee_id" not in data:
-            return jsonify({"error": "employee_id is required (number or null)"}), 400
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
 
-        employee_id = data.get("employee_id")
+        reset_to_aplano = bool(data.get("reset_to_aplano"))
+        has_employee_id = "employee_id" in data
+        if not reset_to_aplano and not has_employee_id:
+            return jsonify(
+                {"error": "employee_id is required (number or null), or reset_to_aplano"}
+            ), 400
+
+        employee_id = data.get("employee_id") if has_employee_id else None
+        # Clear (null) without explicit reset flag still resets to Aplano
+        if has_employee_id and employee_id is None:
+            reset_to_aplano = True
+
         is_internal = getattr(g, "auth_mode", None) in ("internal", "disabled")
         is_admin = bool(getattr(g, "is_admin", False))
         caller_employee = getattr(g, "employee", None)
         caller_id = getattr(caller_employee, "id", None) if caller_employee is not None else None
 
         if not is_internal:
-            if employee_id is None:
+            if reset_to_aplano:
                 if not is_admin and (caller_id is None or route.employee_id != caller_id):
                     return jsonify({"error": "Forbidden"}), 403
             else:
@@ -308,15 +333,26 @@ def assign_employee_to_aw_tour(route_id):
                 if not is_admin and (caller_id is None or requested_id != caller_id):
                     return jsonify({"error": "Forbidden"}), 403
 
-        if employee_id is None:
-            route.employee_id = None
+        if reset_to_aplano:
+            reset_aw_tour_employee_to_aplano(route)
         else:
             employee = Employee.query.get(employee_id)
             if not employee:
                 return jsonify({"error": "Employee not found"}), 404
-            route.employee_id = employee.id
+            from app.services.aw_tour_aplano import resolve_aplano_aw_employee_id
 
-        route.updated_at = datetime.utcnow()
+            route.employee_id = employee.id
+            aplano_id = (
+                resolve_aplano_aw_employee_id(
+                    route.calendar_week, route.weekday, route.area
+                )
+                if route.calendar_week is not None
+                else None
+            )
+            # Same person as Aplano → not an override
+            route.employee_override = employee.id != aplano_id
+            route.updated_at = datetime.utcnow()
+
         db.session.commit()
 
         planning_failed = False

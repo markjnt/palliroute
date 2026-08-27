@@ -209,20 +209,28 @@ class ExcelImportService:
             raise Exception(f"Error deleting patient data: {str(e)}")
 
     @staticmethod
-    def _snapshot_aw_tour_employees() -> list[tuple[int, str, str, int]]:
+    def _snapshot_aw_tour_employees() -> list[tuple[int, str, str, int, bool]]:
         """Preserve AW tour employee assignments across patient re-import."""
         routes = Route.query.filter(
             Route.area.in_(AW_TOUR_AREAS),
             Route.employee_id.isnot(None),
         ).all()
         return [
-            (route.calendar_week, route.weekday, route.area, route.employee_id)
+            (
+                route.calendar_week,
+                route.weekday,
+                route.area,
+                route.employee_id,
+                bool(route.employee_override),
+            )
             for route in routes
             if route.calendar_week and route.weekday and route.area and route.employee_id
         ]
 
     @staticmethod
-    def _serialize_aw_tour_employee_snapshot(snapshots: list[tuple[int, str, str, int]]) -> str:
+    def _serialize_aw_tour_employee_snapshot(
+        snapshots: list[tuple[int, str, str, int, bool]],
+    ) -> str:
         return json.dumps(
             [
                 {
@@ -230,13 +238,16 @@ class ExcelImportService:
                     "weekday": weekday,
                     "area": area,
                     "employee_id": employee_id,
+                    "employee_override": employee_override,
                 }
-                for calendar_week, weekday, area, employee_id in snapshots
+                for calendar_week, weekday, area, employee_id, employee_override in snapshots
             ]
         )
 
     @staticmethod
-    def _deserialize_aw_tour_employee_snapshot(raw: str | None) -> list[tuple[int, str, str, int]]:
+    def _deserialize_aw_tour_employee_snapshot(
+        raw: str | None,
+    ) -> list[tuple[int, str, str, int, bool]]:
         if not raw:
             return []
         try:
@@ -245,7 +256,7 @@ class ExcelImportService:
             return []
         if not isinstance(data, list):
             return []
-        snapshots: list[tuple[int, str, str, int]] = []
+        snapshots: list[tuple[int, str, str, int, bool]] = []
         for item in data:
             if not isinstance(item, dict):
                 continue
@@ -255,16 +266,28 @@ class ExcelImportService:
             employee_id = item.get("employee_id")
             if calendar_week is None or not weekday or not area or employee_id is None:
                 continue
-            snapshots.append((int(calendar_week), str(weekday), str(area), int(employee_id)))
+            # Legacy snapshots without override: treat as manual to preserve assignment
+            employee_override = bool(item.get("employee_override", True))
+            snapshots.append(
+                (
+                    int(calendar_week),
+                    str(weekday),
+                    str(area),
+                    int(employee_id),
+                    employee_override,
+                )
+            )
         return snapshots
 
     @staticmethod
-    def _load_persisted_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int]]:
+    def _load_persisted_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int, bool]]:
         raw = SystemInfo.get_value(ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY)
         return ExcelImportService._deserialize_aw_tour_employee_snapshot(raw)
 
     @staticmethod
-    def _persist_aw_tour_employee_snapshot(snapshots: list[tuple[int, str, str, int]]) -> None:
+    def _persist_aw_tour_employee_snapshot(
+        snapshots: list[tuple[int, str, str, int, bool]],
+    ) -> None:
         SystemInfo.set_value(
             ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY,
             ExcelImportService._serialize_aw_tour_employee_snapshot(snapshots),
@@ -275,7 +298,7 @@ class ExcelImportService:
         SystemInfo.set_value(ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY, "[]")
 
     @staticmethod
-    def _prepare_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int]]:
+    def _prepare_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int, bool]]:
         """
         Live DB assignments win. If routes were already wiped by a failed import,
         fall back to the last persisted snapshot.
@@ -288,15 +311,16 @@ class ExcelImportService:
         return merged
 
     @staticmethod
-    def _restore_aw_tour_employees(snapshots: list[tuple[int, str, str, int]]) -> int:
+    def _restore_aw_tour_employees(snapshots: list[tuple[int, str, str, int, bool]]) -> int:
         """Re-apply AW tour employee assignments after routes were recreated."""
         restored = 0
-        for calendar_week, weekday, area, employee_id in snapshots:
+        for calendar_week, weekday, area, employee_id, employee_override in snapshots:
             if not Employee.query.get(employee_id):
                 continue
             route = find_aw_tour_route(weekday, area, calendar_week)
             if route:
                 route.employee_id = employee_id
+                route.employee_override = employee_override
                 route.updated_at = datetime.utcnow()
                 restored += 1
         if restored:
