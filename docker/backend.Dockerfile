@@ -10,8 +10,11 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /scheduler
 
+# Bust this layer daily in CI/CD so apt security updates are not stuck behind BuildKit cache.
+ARG OS_SEC_UPDATE=0
 # hadolint ignore=DL3005
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+RUN echo "OS_SEC_UPDATE=${OS_SEC_UPDATE}" \
+    && apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements-scheduler.txt .
 RUN pip install --no-cache-dir -r requirements-scheduler.txt
@@ -30,9 +33,12 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 WORKDIR /backend
 
+# Bust this layer daily in CI/CD so apt security updates are not stuck behind BuildKit cache.
+ARG OS_SEC_UPDATE=0
 # Native libs for pip weasyprint; upgrade picks up util-linux CVE-2026-53615
 # hadolint ignore=DL3005,DL3008
-RUN apt-get update \
+RUN echo "OS_SEC_UPDATE=${OS_SEC_UPDATE}" \
+    && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         libcairo2 \
