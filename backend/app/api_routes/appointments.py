@@ -91,9 +91,10 @@ def set_appointment_completed(appointment_id):
         appointment.completed = completed
         db.session.commit()
         return jsonify(appointment.to_dict())
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        appointments_bp.logger.exception("Failed to set appointment completion status")
+        return jsonify({"error": "An internal error has occurred"}), 500
 
 
 @appointments_bp.route("/move", methods=["POST"])
