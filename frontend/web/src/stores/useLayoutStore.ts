@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 // Constants
 const DEFAULT_SIDEBAR_WIDTH = 425;
@@ -123,7 +123,7 @@ export const useLayoutStore = create<LayoutState>()(
         }),
     }),
     {
-      name: 'layout-storage', // Name for localStorage entry
+      name: "layout-storage", // Name for localStorage entry
       merge: (persistedState, currentState) => {
         const p = persistedState as Partial<LayoutState> | undefined;
         if (!p) return currentState;
@@ -136,11 +136,11 @@ export const useLayoutStore = create<LayoutState>()(
             ...p.rightSidebar,
             width: Math.max(
               MIN_RIGHT_SIDEBAR_WIDTH,
-              p.rightSidebar?.width ?? currentState.rightSidebar.width
+              p.rightSidebar?.width ?? currentState.rightSidebar.width,
             ),
           },
         };
       },
-    }
-  )
+    },
+  ),
 );

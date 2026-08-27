@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Route, Weekday } from '../../types/models';
-import { routesApi } from '../api/routes';
-import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Route, Weekday } from "../../types/models";
+import { routesApi } from "../api/routes";
+import { useCalendarWeekStore } from "../../stores/useCalendarWeekStore";
 
 export const WEB_LIVE_REFETCH_INTERVAL_MS = 60_000;
 
@@ -15,12 +15,12 @@ export const liveListQueryOptions = {
 
 // Keys for React Query cache
 export const routeKeys = {
-  all: ['routes'] as const,
-  lists: () => [...routeKeys.all, 'list'] as const,
+  all: ["routes"] as const,
+  lists: () => [...routeKeys.all, "list"] as const,
   list: (filters: any) => [...routeKeys.lists(), { filters }] as const,
-  details: () => [...routeKeys.all, 'detail'] as const,
+  details: () => [...routeKeys.all, "detail"] as const,
   detail: (id: number) => [...routeKeys.details(), id] as const,
-  byDay: () => [...routeKeys.all, 'byDay'] as const,
+  byDay: () => [...routeKeys.all, "byDay"] as const,
   forDay: (date: string, employeeId?: number) =>
     [...routeKeys.byDay(), date, { employeeId }] as const,
 };
@@ -89,7 +89,7 @@ export const useOptimizeRoutes = () => {
       routesApi.optimizeRoutes(
         weekday,
         employeeId,
-        calendarWeek || selectedCalendarWeek || undefined
+        calendarWeek || selectedCalendarWeek || undefined,
       ),
     onSuccess: () => {
       // Invalidate all route queries as they might be affected
@@ -119,7 +119,7 @@ export const useOptimizeTourAreaRoutes = () => {
       routesApi.optimizeTourAreaRoutes(
         weekday,
         area,
-        calendarWeek || selectedCalendarWeek || undefined
+        calendarWeek || selectedCalendarWeek || undefined,
       ),
     onSuccess: () => {
       // Invalidate all route queries as they might be affected
@@ -144,7 +144,8 @@ export const useAssignAwTourEmployee = () => {
       routeId: number;
       employeeId: number | null;
       resetToAplano?: boolean;
-    }) => routesApi.assignAwTourEmployee(routeId, employeeId, { resetToAplano }),
+    }) =>
+      routesApi.assignAwTourEmployee(routeId, employeeId, { resetToAplano }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({
         queryKey: routeKeys.detail(result.route.id),

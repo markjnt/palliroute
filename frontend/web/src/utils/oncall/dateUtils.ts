@@ -40,20 +40,20 @@ export const getWeekDays = (date: Date): Date[] => {
 export const formatDate = (date: Date): string => {
   // Format date as YYYY-MM-DD using local timezone (not UTC)
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
 export const formatMonthYear = (date: Date): string => {
-  return date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
 };
 
 export const formatWeekRange = (dates: Date[]): string => {
-  if (dates.length === 0) return '';
+  if (dates.length === 0) return "";
   const start = dates[0];
   const end = dates[dates.length - 1];
-  return `${start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} - ${end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+  return `${start.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} - ${end.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
 };
 
 export const isWeekend = (date: Date): boolean => {
@@ -62,7 +62,10 @@ export const isWeekend = (date: Date): boolean => {
 };
 
 /** Sa–So oder gesetzlicher Feiertag (NRW) an Mo–Fr — gleiche UI-/Duty-Logik wie Wochenende. */
-export const isWeekendLayoutDate = (date: Date, holidayByYmd: Map<string, string>): boolean => {
+export const isWeekendLayoutDate = (
+  date: Date,
+  holidayByYmd: Map<string, string>,
+): boolean => {
   if (isWeekend(date)) return true;
   const ymd = formatDate(date);
   if (!holidayByYmd.get(ymd)) return false;
@@ -92,15 +95,17 @@ export const getCalendarWeek = (date: Date): number => {
   const yearStart = new Date(d.getFullYear(), 0, 1);
 
   // Calculate full weeks to nearest Thursday
-  const weekNumber = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  const weekNumber = Math.ceil(
+    ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+  );
 
   return weekNumber;
 };
 
 export const formatWeekWithKW = (dates: Date[]): string => {
-  if (dates.length === 0) return '';
+  if (dates.length === 0) return "";
   const start = dates[0];
   const end = dates[dates.length - 1];
   const kw = getCalendarWeek(start);
-  return `${start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} - ${end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} (KW ${kw})`;
+  return `${start.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} - ${end.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })} (KW ${kw})`;
 };

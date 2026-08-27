@@ -1,9 +1,15 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 // Typ für gültige Wochentage
 export type Weekday =
-  'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
 
 interface WeekdayState {
   // State
@@ -18,32 +24,34 @@ export const useWeekdayStore = create<WeekdayState>()(
   persist(
     (set) => ({
       // State
-      selectedWeekday: 'monday', // Default-Wert
+      selectedWeekday: "monday", // Default-Wert
 
       // Actions
       setSelectedWeekday: (day) => set({ selectedWeekday: day }),
       resetToCurrentDay: () => {
         const days: Weekday[] = [
-          'sunday',
-          'monday',
-          'tuesday',
-          'wednesday',
-          'thursday',
-          'friday',
-          'saturday',
+          "sunday",
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
         ];
         const currentDay = days[new Date().getDay()];
         const isBusinessDay =
-          currentDay === 'monday' ||
-          currentDay === 'tuesday' ||
-          currentDay === 'wednesday' ||
-          currentDay === 'thursday' ||
-          currentDay === 'friday';
-        set({ selectedWeekday: isBusinessDay && currentDay ? currentDay : 'monday' });
+          currentDay === "monday" ||
+          currentDay === "tuesday" ||
+          currentDay === "wednesday" ||
+          currentDay === "thursday" ||
+          currentDay === "friday";
+        set({
+          selectedWeekday: isBusinessDay && currentDay ? currentDay : "monday",
+        });
       },
     }),
     {
-      name: 'weekday-storage', // Name des localStorage-Eintrags
-    }
-  )
+      name: "weekday-storage", // Name des localStorage-Eintrags
+    },
+  ),
 );

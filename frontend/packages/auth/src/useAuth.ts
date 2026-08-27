@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import { useIsAuthenticated, useMsal } from '@azure/msal-react';
-import { InteractionStatus } from '@azure/msal-browser';
-import { isAuthConfigured, loginRequest } from './msalConfig';
+import { useCallback } from "react";
+import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
+import { isAuthConfigured, loginRequest } from "./msalConfig";
 
 export function useAuth() {
   const configured = isAuthConfigured();

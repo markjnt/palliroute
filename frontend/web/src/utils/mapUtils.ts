@@ -1,5 +1,5 @@
-import { MarkerData } from '../types/mapTypes';
-import { Employee, Patient, Appointment } from '../types/models';
+import { MarkerData } from "../types/mapTypes";
+import { Employee, Patient, Appointment } from "../types/models";
 import {
   weekdayMap,
   getCurrentWeekday,
@@ -16,7 +16,7 @@ import {
   MAP_DEFAULT_ZOOM,
   MAP_MIN_ZOOM,
   MAP_MAX_ZOOM,
-} from '@palliroute/shared';
+} from "@palliroute/shared";
 
 export {
   weekdayMap,
@@ -50,20 +50,25 @@ export const mapOptions: google.maps.MapOptions = {
 
 export const createEmployeeMarkerData = (
   employee: Employee,
-  routeId?: number
+  routeId?: number,
 ): MarkerData | null => {
   if (employee.latitude && employee.longitude) {
-    const position = new google.maps.LatLng(employee.latitude, employee.longitude);
+    const position = new google.maps.LatLng(
+      employee.latitude,
+      employee.longitude,
+    );
     return {
       position,
-      title: `${employee.first_name} ${employee.last_name} - ${employee.function || 'Mitarbeiter'}`,
-      type: 'employee',
+      title: `${employee.first_name} ${employee.last_name} - ${employee.function || "Mitarbeiter"}`,
+      type: "employee",
       employeeType: employee.function,
       employeeId: employee.id,
       routeId,
     };
   }
-  console.warn(`No coordinates for employee: ${employee.first_name} ${employee.last_name}`);
+  console.warn(
+    `No coordinates for employee: ${employee.first_name} ${employee.last_name}`,
+  );
   return null;
 };
 
@@ -71,18 +76,22 @@ export const createPatientMarkerData = (
   patient: Patient,
   appointment: Appointment,
   position?: number,
-  routeId?: number
+  routeId?: number,
 ): MarkerData | null => {
   if (patient.latitude && patient.longitude) {
-    const position_coords = new google.maps.LatLng(patient.latitude, patient.longitude);
+    const position_coords = new google.maps.LatLng(
+      patient.latitude,
+      patient.longitude,
+    );
     const label =
-      (appointment.visit_type === 'HB' || appointment.visit_type === 'NA') && position
+      (appointment.visit_type === "HB" || appointment.visit_type === "NA") &&
+      position
         ? position.toString()
         : undefined;
     return {
       position: position_coords,
       title: `${patient.first_name} ${patient.last_name} - ${appointment.visit_type}`,
-      type: 'patient',
+      type: "patient",
       label,
       visitType: appointment.visit_type,
       patientId: patient.id,
@@ -91,17 +100,22 @@ export const createPatientMarkerData = (
       routeId,
     };
   }
-  console.warn(`No coordinates for patient: ${patient.first_name} ${patient.last_name}`);
+  console.warn(
+    `No coordinates for patient: ${patient.first_name} ${patient.last_name}`,
+  );
   return null;
 };
 
-export const createTourAreaMarkerData = (area: string, routeId?: number): MarkerData | null => {
+export const createTourAreaMarkerData = (
+  area: string,
+  routeId?: number,
+): MarkerData | null => {
   const start = getTourAreaStartLocation(area);
   const position = new google.maps.LatLng(start.lat, start.lng);
   return {
     position,
-    title: 'AW-Startpunkt',
-    type: 'tour_area',
+    title: "AW-Startpunkt",
+    type: "tour_area",
     area,
     routeId,
   };
@@ -112,18 +126,22 @@ export const createTourPatientMarkerData = (
   appointment: Appointment,
   area: string,
   position?: number,
-  routeId?: number
+  routeId?: number,
 ): MarkerData | null => {
   if (patient.latitude && patient.longitude) {
-    const position_coords = new google.maps.LatLng(patient.latitude, patient.longitude);
+    const position_coords = new google.maps.LatLng(
+      patient.latitude,
+      patient.longitude,
+    );
     const label =
-      (appointment.visit_type === 'HB' || appointment.visit_type === 'NA') && position
+      (appointment.visit_type === "HB" || appointment.visit_type === "NA") &&
+      position
         ? position.toString()
         : undefined;
     return {
       position: position_coords,
       title: `${patient.first_name} ${patient.last_name} - ${appointment.visit_type} (${area})`,
-      type: 'tour_patient',
+      type: "tour_patient",
       label,
       visitType: appointment.visit_type,
       patientId: patient.id,
@@ -133,6 +151,8 @@ export const createTourPatientMarkerData = (
       area,
     };
   }
-  console.warn(`No coordinates for tour patient: ${patient.first_name} ${patient.last_name}`);
+  console.warn(
+    `No coordinates for tour patient: ${patient.first_name} ${patient.last_name}`,
+  );
   return null;
 };

@@ -1354,7 +1354,7 @@ class ExcelImportService:
             return s
 
         # Numeric types: convert to int and pad to 5 digits
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             try:
                 return f"{int(value):05d}"
             except (ValueError, OverflowError):
@@ -1401,7 +1401,7 @@ class ExcelImportService:
                     return s
             return s
 
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             try:
                 return str(int(value))
             except (ValueError, OverflowError):
@@ -2314,9 +2314,7 @@ class ExcelImportService:
 
             if completed_appointments_snapshots:
                 print("\nRestoring completed appointments...")
-                ExcelImportService._restore_completed_appointments(
-                    completed_appointments_snapshots
-                )
+                ExcelImportService._restore_completed_appointments(completed_appointments_snapshots)
 
             ExcelImportService._clear_aw_tour_employee_snapshot()
             ExcelImportService._clear_custom_order_snapshot()

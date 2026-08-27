@@ -1,5 +1,5 @@
-import { useMemo, useCallback } from 'react';
-import { Route, Weekday } from '../types/models';
+import { useMemo, useCallback } from "react";
+import { Route, Weekday } from "../types/models";
 
 interface UseAreaManagementProps {
   routes: Route[];
@@ -26,10 +26,10 @@ export const useAreaManagement = ({
   currentArea,
   useTourAreaLayout = false,
 }: UseAreaManagementProps): AreaManagementReturn => {
-  const isAllAreas = currentArea === 'Nord- und Südkreis' || !currentArea;
+  const isAllAreas = currentArea === "Nord- und Südkreis" || !currentArea;
 
   const isTourAreaMode =
-    useTourAreaLayout || selectedDay === 'saturday' || selectedDay === 'sunday';
+    useTourAreaLayout || selectedDay === "saturday" || selectedDay === "sunday";
 
   const getFilteredRoutes = useCallback(() => {
     if (isAllAreas) {
@@ -37,13 +37,15 @@ export const useAreaManagement = ({
     }
 
     if (isTourAreaMode) {
-      const filteredRoutes = routes.filter((r) => (r.area as string) === 'Mitte');
+      const filteredRoutes = routes.filter(
+        (r) => (r.area as string) === "Mitte",
+      );
 
-      if (currentArea === 'Nordkreis' || currentArea === 'Nord') {
-        const nordRoutes = routes.filter((r) => (r.area as string) === 'Nord');
+      if (currentArea === "Nordkreis" || currentArea === "Nord") {
+        const nordRoutes = routes.filter((r) => (r.area as string) === "Nord");
         filteredRoutes.push(...nordRoutes);
-      } else if (currentArea === 'Südkreis' || currentArea === 'Süd') {
-        const südRoutes = routes.filter((r) => (r.area as string) === 'Süd');
+      } else if (currentArea === "Südkreis" || currentArea === "Süd") {
+        const südRoutes = routes.filter((r) => (r.area as string) === "Süd");
         filteredRoutes.push(...südRoutes);
       }
 
@@ -51,10 +53,10 @@ export const useAreaManagement = ({
     }
 
     let targetArea = currentArea;
-    if (currentArea === 'Nord') {
-      targetArea = 'Nordkreis';
-    } else if (currentArea === 'Süd') {
-      targetArea = 'Südkreis';
+    if (currentArea === "Nord") {
+      targetArea = "Nordkreis";
+    } else if (currentArea === "Süd") {
+      targetArea = "Südkreis";
     }
 
     return routes.filter((r) => r.area === targetArea);
@@ -62,49 +64,49 @@ export const useAreaManagement = ({
 
   const getTourAreas = useCallback(() => {
     if (isAllAreas) {
-      return ['Nord', 'Mitte', 'Süd'];
+      return ["Nord", "Mitte", "Süd"];
     }
-    if (currentArea === 'Nordkreis' || currentArea === 'Nord') {
-      return ['Nord', 'Mitte'];
+    if (currentArea === "Nordkreis" || currentArea === "Nord") {
+      return ["Nord", "Mitte"];
     }
-    if (currentArea === 'Südkreis' || currentArea === 'Süd') {
-      return ['Mitte', 'Süd'];
+    if (currentArea === "Südkreis" || currentArea === "Süd") {
+      return ["Mitte", "Süd"];
     }
-    return ['Mitte'];
+    return ["Mitte"];
   }, [isAllAreas, currentArea]);
 
   const getTourRoutesByArea = useCallback(() => {
     const areaMap = new Map<string, Route[]>();
 
     if (isAllAreas) {
-      const orderedAreas = ['Nord', 'Mitte', 'Süd'];
+      const orderedAreas = ["Nord", "Mitte", "Süd"];
       orderedAreas.forEach((area) => {
         const areaRoutes = routes.filter((r) => (r.area as string) === area);
         areaMap.set(area, areaRoutes);
       });
     } else {
-      if (currentArea === 'Nordkreis' || currentArea === 'Nord') {
+      if (currentArea === "Nordkreis" || currentArea === "Nord") {
         areaMap.set(
-          'Nord',
-          routes.filter((r) => (r.area as string) === 'Nord')
+          "Nord",
+          routes.filter((r) => (r.area as string) === "Nord"),
         );
         areaMap.set(
-          'Mitte',
-          routes.filter((r) => (r.area as string) === 'Mitte')
+          "Mitte",
+          routes.filter((r) => (r.area as string) === "Mitte"),
         );
-      } else if (currentArea === 'Südkreis' || currentArea === 'Süd') {
+      } else if (currentArea === "Südkreis" || currentArea === "Süd") {
         areaMap.set(
-          'Mitte',
-          routes.filter((r) => (r.area as string) === 'Mitte')
+          "Mitte",
+          routes.filter((r) => (r.area as string) === "Mitte"),
         );
         areaMap.set(
-          'Süd',
-          routes.filter((r) => (r.area as string) === 'Süd')
+          "Süd",
+          routes.filter((r) => (r.area as string) === "Süd"),
         );
       } else {
         areaMap.set(
-          'Mitte',
-          routes.filter((r) => (r.area as string) === 'Mitte')
+          "Mitte",
+          routes.filter((r) => (r.area as string) === "Mitte"),
         );
       }
     }
@@ -114,27 +116,27 @@ export const useAreaManagement = ({
 
   const getAreaBackgroundColor = (area: string) => {
     switch (area) {
-      case 'Nord':
-        return 'rgba(25, 118, 210, 0.08)';
-      case 'Mitte':
-        return 'rgba(123, 31, 162, 0.08)';
-      case 'Süd':
-        return 'rgba(56, 142, 60, 0.08)';
+      case "Nord":
+        return "rgba(25, 118, 210, 0.08)";
+      case "Mitte":
+        return "rgba(123, 31, 162, 0.08)";
+      case "Süd":
+        return "rgba(56, 142, 60, 0.08)";
       default:
-        return 'rgba(255, 152, 0, 0.08)';
+        return "rgba(255, 152, 0, 0.08)";
     }
   };
 
   const getAreaColor = (area: string) => {
     switch (area) {
-      case 'Nord':
-        return '#1976d2';
-      case 'Mitte':
-        return '#7b1fa2';
-      case 'Süd':
-        return '#388e3c';
+      case "Nord":
+        return "#1976d2";
+      case "Mitte":
+        return "#7b1fa2";
+      case "Süd":
+        return "#388e3c";
       default:
-        return '#ff9800';
+        return "#ff9800";
     }
   };
 

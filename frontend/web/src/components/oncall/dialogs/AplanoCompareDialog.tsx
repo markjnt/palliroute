@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -14,7 +14,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
 import {
   CheckCircleOutline as CheckCircleOutlineIcon,
   Close as CloseIcon,
@@ -26,14 +26,20 @@ import {
   WarningAmber as WarningAmberIcon,
   WbSunny as DayIcon,
   Weekend as AWIcon,
-} from '@mui/icons-material';
-import { AplanoCompareEntry, AplanoCompareResponse } from '../../../services/api/scheduling';
-import { WEEKDAY_DUTIES, WEEKEND_DUTIES } from '../../../utils/oncall/constants';
-import { getDutyColor } from '../../../utils/oncall/colorUtils';
-import { DutyType, OnCallArea } from '../../../types/models';
+} from "@mui/icons-material";
+import {
+  AplanoCompareEntry,
+  AplanoCompareResponse,
+} from "../../../services/api/scheduling";
+import {
+  WEEKDAY_DUTIES,
+  WEEKEND_DUTIES,
+} from "../../../utils/oncall/constants";
+import { getDutyColor } from "../../../utils/oncall/colorUtils";
+import { DutyType, OnCallArea } from "../../../types/models";
 
-type StatusFilter = 'all' | 'equal' | 'missing_in_aplano' | 'different';
-type GroupFilter = 'all' | 'pflege_n' | 'pflege_s' | 'arzt';
+type StatusFilter = "all" | "equal" | "missing_in_aplano" | "different";
+type GroupFilter = "all" | "pflege_n" | "pflege_s" | "arzt";
 
 interface AplanoCompareDialogProps {
   open: boolean;
@@ -45,125 +51,152 @@ interface AplanoCompareDialogProps {
   onRefresh?: () => void;
 }
 
-const statusLabel: Record<Exclude<StatusFilter, 'all'>, string> = {
-  equal: 'Gleich',
-  missing_in_aplano: 'Fehlt in Aplano',
-  different: 'Abweichend',
+const statusLabel: Record<Exclude<StatusFilter, "all">, string> = {
+  equal: "Gleich",
+  missing_in_aplano: "Fehlt in Aplano",
+  different: "Abweichend",
 };
 
-function getStatusChipSx(status: Exclude<StatusFilter, 'all'>) {
-  if (status === 'equal') {
+function getStatusChipSx(status: Exclude<StatusFilter, "all">) {
+  if (status === "equal") {
     return {
       height: 28,
       borderRadius: 2,
       fontWeight: 700,
-      fontSize: '0.75rem',
-      border: '1px solid',
-      borderColor: 'success.light',
-      backgroundColor: 'rgba(76,175,80,0.14)',
-      color: 'success.dark',
-      '& .MuiChip-label': { px: 1.25 },
+      fontSize: "0.75rem",
+      border: "1px solid",
+      borderColor: "success.light",
+      backgroundColor: "rgba(76,175,80,0.14)",
+      color: "success.dark",
+      "& .MuiChip-label": { px: 1.25 },
     } as const;
   }
-  if (status === 'missing_in_aplano') {
+  if (status === "missing_in_aplano") {
     return {
       height: 28,
       borderRadius: 2,
       fontWeight: 700,
-      fontSize: '0.75rem',
-      border: '1px solid',
-      borderColor: 'warning.light',
-      backgroundColor: 'rgba(255,167,38,0.2)',
-      color: 'warning.dark',
-      '& .MuiChip-label': { px: 1.25 },
+      fontSize: "0.75rem",
+      border: "1px solid",
+      borderColor: "warning.light",
+      backgroundColor: "rgba(255,167,38,0.2)",
+      color: "warning.dark",
+      "& .MuiChip-label": { px: 1.25 },
     } as const;
   }
   return {
     height: 28,
     borderRadius: 2,
     fontWeight: 700,
-    fontSize: '0.75rem',
-    border: '1px solid',
-    borderColor: 'error.light',
-    backgroundColor: 'rgba(239,83,80,0.16)',
-    color: 'error.dark',
-    '& .MuiChip-label': { px: 1.25 },
+    fontSize: "0.75rem",
+    border: "1px solid",
+    borderColor: "error.light",
+    backgroundColor: "rgba(239,83,80,0.16)",
+    color: "error.dark",
+    "& .MuiChip-label": { px: 1.25 },
   } as const;
 }
 
 const categoryMap: Record<string, string> = {
-  RB_WEEKDAY: 'RB Werktag',
-  RB_WEEKEND: 'RB Wochenende',
-  AW: 'AW',
+  RB_WEEKDAY: "RB Werktag",
+  RB_WEEKEND: "RB Wochenende",
+  AW: "AW",
 };
 const roleMap: Record<string, string> = {
-  NURSING: 'Pflege',
-  DOCTOR: 'Ärztlich',
+  NURSING: "Pflege",
+  DOCTOR: "Ärztlich",
 };
 const timeMap: Record<string, string> = {
-  DAY: 'Tag',
-  NIGHT: 'Nacht',
-  NONE: 'Ganztägig',
+  DAY: "Tag",
+  NIGHT: "Nacht",
+  NONE: "Ganztägig",
 };
 
 function formatDateGerman(dateIso: string): string {
   const d = new Date(dateIso);
-  return d.toLocaleDateString('de-DE', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+  return d.toLocaleDateString("de-DE", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 }
 
 function getDutyTypeForRow(row: AplanoCompareEntry): DutyType | null {
-  if (row.category === 'AW' && row.role === 'NURSING') return 'aw_nursing';
-  if (row.category === 'RB_WEEKDAY' && row.role === 'NURSING') return 'rb_nursing_weekday';
-  if (row.category === 'RB_WEEKDAY' && row.role === 'DOCTOR') return 'rb_doctors_weekday';
-  if (row.category === 'RB_WEEKEND' && row.role === 'DOCTOR') return 'rb_doctors_weekend';
-  if (row.category === 'RB_WEEKEND' && row.role === 'NURSING' && row.time_of_day === 'DAY')
-    return 'rb_nursing_weekend_day';
-  if (row.category === 'RB_WEEKEND' && row.role === 'NURSING' && row.time_of_day === 'NIGHT')
-    return 'rb_nursing_weekend_night';
+  if (row.category === "AW" && row.role === "NURSING") return "aw_nursing";
+  if (row.category === "RB_WEEKDAY" && row.role === "NURSING")
+    return "rb_nursing_weekday";
+  if (row.category === "RB_WEEKDAY" && row.role === "DOCTOR")
+    return "rb_doctors_weekday";
+  if (row.category === "RB_WEEKEND" && row.role === "DOCTOR")
+    return "rb_doctors_weekend";
+  if (
+    row.category === "RB_WEEKEND" &&
+    row.role === "NURSING" &&
+    row.time_of_day === "DAY"
+  )
+    return "rb_nursing_weekend_day";
+  if (
+    row.category === "RB_WEEKEND" &&
+    row.role === "NURSING" &&
+    row.time_of_day === "NIGHT"
+  )
+    return "rb_nursing_weekend_night";
   return null;
 }
 
 function getDutyLabelForRow(row: AplanoCompareEntry): string {
   const dutyType = getDutyTypeForRow(row);
   const area = row.area as OnCallArea;
-  if (!dutyType) return `${categoryMap[row.category] ?? row.category} ${row.area}`;
+  if (!dutyType)
+    return `${categoryMap[row.category] ?? row.category} ${row.area}`;
   const source =
-    dutyType.includes('weekend') || dutyType.includes('aw_') ? WEEKEND_DUTIES : WEEKDAY_DUTIES;
+    dutyType.includes("weekend") || dutyType.includes("aw_")
+      ? WEEKEND_DUTIES
+      : WEEKDAY_DUTIES;
   const match = source.find((d) => d.type === dutyType && d.area === area);
-  return match?.shortLabel ?? `${categoryMap[row.category] ?? row.category} ${row.area}`;
+  return (
+    match?.shortLabel ??
+    `${categoryMap[row.category] ?? row.category} ${row.area}`
+  );
 }
 
 function getDutyIconForRow(row: AplanoCompareEntry) {
   const dutyType = getDutyTypeForRow(row);
   if (!dutyType) return <NursingIcon sx={{ fontSize: 16 }} />;
-  if (dutyType === 'aw_nursing') return <AWIcon sx={{ fontSize: 16 }} />;
-  if (dutyType.includes('doctors')) return <DoctorIcon sx={{ fontSize: 16 }} />;
-  if (dutyType.includes('weekend_day')) return <DayIcon sx={{ fontSize: 16 }} />;
-  if (dutyType.includes('weekend_night')) return <NightIcon sx={{ fontSize: 16 }} />;
+  if (dutyType === "aw_nursing") return <AWIcon sx={{ fontSize: 16 }} />;
+  if (dutyType.includes("doctors")) return <DoctorIcon sx={{ fontSize: 16 }} />;
+  if (dutyType.includes("weekend_day"))
+    return <DayIcon sx={{ fontSize: 16 }} />;
+  if (dutyType.includes("weekend_night"))
+    return <NightIcon sx={{ fontSize: 16 }} />;
   return <NursingIcon sx={{ fontSize: 16 }} />;
 }
 
 function humanizeReason(reason?: string | null): string | null {
   if (!reason) return null;
   const labels: Record<string, string> = {
-    missing_in_aplano: 'In PalliRoute vorhanden, in Aplano fehlt der Eintrag.',
-    missing_internal_assignment: 'In Aplano vorhanden, intern fehlt die Zuordnung.',
-    employee_mismatch: 'Mitarbeiter zwischen PalliRoute und Aplano unterschiedlich.',
-    multiple_aplano_assignments: 'Mehrere Aplano-Einträge für denselben Slot gefunden.',
+    missing_in_aplano: "In PalliRoute vorhanden, in Aplano fehlt der Eintrag.",
+    missing_internal_assignment:
+      "In Aplano vorhanden, intern fehlt die Zuordnung.",
+    employee_mismatch:
+      "Mitarbeiter zwischen PalliRoute und Aplano unterschiedlich.",
+    multiple_aplano_assignments:
+      "Mehrere Aplano-Einträge für denselben Slot gefunden.",
   };
   return labels[reason] ?? reason;
 }
 
-function matchesGroupFilter(row: AplanoCompareEntry, groupFilter: GroupFilter): boolean {
-  if (groupFilter === 'all') return true;
-  if (groupFilter === 'pflege_n') return row.role === 'NURSING' && row.area === 'Nord';
-  if (groupFilter === 'pflege_s') return row.role === 'NURSING' && row.area === 'Süd';
-  return row.role === 'DOCTOR';
+function matchesGroupFilter(
+  row: AplanoCompareEntry,
+  groupFilter: GroupFilter,
+): boolean {
+  if (groupFilter === "all") return true;
+  if (groupFilter === "pflege_n")
+    return row.role === "NURSING" && row.area === "Nord";
+  if (groupFilter === "pflege_s")
+    return row.role === "NURSING" && row.area === "Süd";
+  return row.role === "DOCTOR";
 }
 
 export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
@@ -175,34 +208,38 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
   isRefreshing = false,
   onRefresh,
 }) => {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [groupFilter, setGroupFilter] = useState<GroupFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [groupFilter, setGroupFilter] = useState<GroupFilter>("all");
 
   const rows = compareData?.details ?? [];
 
   const groupFilteredRows = useMemo(
     () => rows.filter((row) => matchesGroupFilter(row, groupFilter)),
-    [rows, groupFilter]
+    [rows, groupFilter],
   );
 
   const filteredSummary = useMemo(
     () => ({
-      equal_count: groupFilteredRows.filter((row) => row.status === 'equal').length,
-      missing_in_aplano_count: groupFilteredRows.filter((row) => row.status === 'missing_in_aplano')
+      equal_count: groupFilteredRows.filter((row) => row.status === "equal")
         .length,
-      different_count: groupFilteredRows.filter((row) => row.status === 'different').length,
+      missing_in_aplano_count: groupFilteredRows.filter(
+        (row) => row.status === "missing_in_aplano",
+      ).length,
+      different_count: groupFilteredRows.filter(
+        (row) => row.status === "different",
+      ).length,
       total: groupFilteredRows.length,
     }),
-    [groupFilteredRows]
+    [groupFilteredRows],
   );
 
   const filteredRows = useMemo(() => {
-    if (statusFilter === 'all') return groupFilteredRows;
+    if (statusFilter === "all") return groupFilteredRows;
     return groupFilteredRows.filter((row) => row.status === statusFilter);
   }, [groupFilteredRows, statusFilter]);
 
-  const handleStatusCardClick = (status: Exclude<StatusFilter, 'all'>) => {
-    setStatusFilter((prev) => (prev === status ? 'all' : status));
+  const handleStatusCardClick = (status: Exclude<StatusFilter, "all">) => {
+    setStatusFilter((prev) => (prev === status ? "all" : status));
   };
   const groupedRows = useMemo(() => {
     const map = new Map<string, AplanoCompareEntry[]>();
@@ -216,65 +253,65 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
     return Array.from(map.entries());
   }, [filteredRows]);
 
-  const hasError = compareData?.error === 'APLANO_UNAVAILABLE';
+  const hasError = compareData?.error === "APLANO_UNAVAILABLE";
 
   const filterBarSx = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 1.5,
-    flexWrap: 'wrap' as const,
+    flexWrap: "wrap" as const,
   };
 
   const groupToggleSx = {
-    backgroundColor: 'rgba(0,0,0,0.03)',
+    backgroundColor: "rgba(0,0,0,0.03)",
     borderRadius: 2.5,
     p: 0.5,
-    border: '1px solid',
-    borderColor: 'divider',
-    '& .MuiToggleButton-root': {
-      border: 'none',
+    border: "1px solid",
+    borderColor: "divider",
+    "& .MuiToggleButton-root": {
+      border: "none",
       borderRadius: 2,
       px: 1.5,
       py: 0.75,
-      textTransform: 'none',
+      textTransform: "none",
       fontWeight: 600,
-      fontSize: '0.8125rem',
-      color: 'text.secondary',
+      fontSize: "0.8125rem",
+      color: "text.secondary",
       lineHeight: 1.2,
-      '&.Mui-selected': {
-        backgroundColor: 'background.paper',
-        color: 'primary.main',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        '&:hover': {
-          backgroundColor: 'background.paper',
+      "&.Mui-selected": {
+        backgroundColor: "background.paper",
+        color: "primary.main",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        "&:hover": {
+          backgroundColor: "background.paper",
         },
       },
-      '&:hover': {
-        backgroundColor: 'rgba(0,0,0,0.04)',
+      "&:hover": {
+        backgroundColor: "rgba(0,0,0,0.04)",
       },
     },
   };
 
   const summaryCardSx = (
-    status: Exclude<StatusFilter, 'all'>,
+    status: Exclude<StatusFilter, "all">,
     borderColor: string,
-    activeBg: string
+    activeBg: string,
   ) => ({
     borderRadius: 2.5,
     borderColor,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
+    cursor: "pointer",
+    transition: "all 0.15s ease",
     ...(statusFilter === status
       ? {
           borderWidth: 2,
           backgroundColor: activeBg,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
         }
       : {
-          backgroundColor: 'background.paper',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-          '&:hover': {
+          backgroundColor: "background.paper",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+          "&:hover": {
             borderColor,
             backgroundColor: activeBg,
           },
@@ -290,28 +327,28 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
       PaperProps={{
         sx: {
           borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
         },
       }}
     >
       <DialogTitle
         sx={{
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderBottom: "1px solid",
+          borderColor: "divider",
           pt: 2.5,
           pb: 2,
         }}
       >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
             gap: 2,
           }}
         >
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Aplano-Abgleich
               </Typography>
@@ -324,10 +361,10 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
             onClick={onClose}
             size="small"
             sx={{
-              color: 'text.secondary',
+              color: "text.secondary",
               mt: -0.25,
-              '&:hover': {
-                backgroundColor: 'action.hover',
+              "&:hover": {
+                backgroundColor: "action.hover",
               },
             }}
           >
@@ -342,20 +379,39 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
         }}
       >
         {isLoading ? (
-          <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ py: 6, display: "flex", justifyContent: "center" }}>
             <CircularProgress />
           </Box>
         ) : hasError ? (
           <Alert severity="error">Aplano ist momentan nicht verfügbar.</Alert>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 0.5, pt: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.5,
+              mt: 0.5,
+              pt: 1,
+            }}
+          >
             {/* Bereichsfilter – ganz oben */}
             <Box sx={filterBarSx}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.25,
+                  flexWrap: "wrap",
+                }}
+              >
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
                 >
                   Bereich
                 </Typography>
@@ -363,7 +419,9 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                   size="small"
                   exclusive
                   value={groupFilter}
-                  onChange={(_, next: GroupFilter | null) => next && setGroupFilter(next)}
+                  onChange={(_, next: GroupFilter | null) =>
+                    next && setGroupFilter(next)
+                  }
                   sx={groupToggleSx}
                 >
                   <ToggleButton value="all">Alle</ToggleButton>
@@ -387,32 +445,51 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
             {/* Status-Zähler – klickbar als Filter, Zahlen nach Bereichsfilter */}
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
                 gap: 1,
               }}
             >
               <Card
                 variant="outlined"
-                onClick={() => handleStatusCardClick('equal')}
-                sx={summaryCardSx('equal', 'success.light', 'rgba(76,175,80,0.08)')}
+                onClick={() => handleStatusCardClick("equal")}
+                sx={summaryCardSx(
+                  "equal",
+                  "success.light",
+                  "rgba(76,175,80,0.08)",
+                )}
               >
-                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+                <CardContent sx={{ p: 1.25, "&:last-child": { pb: 1.25 } }}>
                   <Box
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                       gap: 0.75,
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                      <CheckCircleOutlineIcon color="success" sx={{ fontSize: 18 }} />
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                    >
+                      <CheckCircleOutlineIcon
+                        color="success"
+                        sx={{ fontSize: 18 }}
+                      />
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontWeight: 600 }}
+                      >
                         Gleich
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "1.1rem",
+                        lineHeight: 1,
+                      }}
+                    >
                       {filteredSummary.equal_count}
                     </Typography>
                   </Box>
@@ -420,25 +497,41 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
               </Card>
               <Card
                 variant="outlined"
-                onClick={() => handleStatusCardClick('missing_in_aplano')}
-                sx={summaryCardSx('missing_in_aplano', 'warning.light', 'rgba(255,167,38,0.12)')}
+                onClick={() => handleStatusCardClick("missing_in_aplano")}
+                sx={summaryCardSx(
+                  "missing_in_aplano",
+                  "warning.light",
+                  "rgba(255,167,38,0.12)",
+                )}
               >
-                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+                <CardContent sx={{ p: 1.25, "&:last-child": { pb: 1.25 } }}>
                   <Box
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                       gap: 0.75,
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                    >
                       <WarningAmberIcon color="warning" sx={{ fontSize: 18 }} />
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontWeight: 600 }}
+                      >
                         Fehlt in Aplano
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "1.1rem",
+                        lineHeight: 1,
+                      }}
+                    >
                       {filteredSummary.missing_in_aplano_count}
                     </Typography>
                   </Box>
@@ -446,25 +539,41 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
               </Card>
               <Card
                 variant="outlined"
-                onClick={() => handleStatusCardClick('different')}
-                sx={summaryCardSx('different', 'error.light', 'rgba(239,83,80,0.1)')}
+                onClick={() => handleStatusCardClick("different")}
+                sx={summaryCardSx(
+                  "different",
+                  "error.light",
+                  "rgba(239,83,80,0.1)",
+                )}
               >
-                <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+                <CardContent sx={{ p: 1.25, "&:last-child": { pb: 1.25 } }}>
                   <Box
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                       gap: 0.75,
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                    >
                       <ErrorOutlineIcon color="error" sx={{ fontSize: 18 }} />
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontWeight: 600 }}
+                      >
                         Abweichend
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: "1.1rem",
+                        lineHeight: 1,
+                      }}
+                    >
                       {filteredSummary.different_count}
                     </Typography>
                   </Box>
@@ -472,12 +581,12 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
               </Card>
             </Box>
 
-            {statusFilter !== 'all' && (
-              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            {statusFilter !== "all" && (
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
                 <Chip
                   label={`Filter: ${statusLabel[statusFilter]} · ${filteredRows.length} von ${filteredSummary.total}`}
                   size="small"
-                  onDelete={() => setStatusFilter('all')}
+                  onDelete={() => setStatusFilter("all")}
                   sx={{ fontWeight: 600 }}
                 />
               </Box>
@@ -486,24 +595,29 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
             <Box
               sx={{
                 maxHeight: 460,
-                overflow: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
+                overflow: "auto",
+                display: "flex",
+                flexDirection: "column",
                 gap: 1.5,
               }}
             >
               {filteredRows.length === 0 ? (
-                <Alert severity="info">Keine Einträge für den gewählten Filter.</Alert>
+                <Alert severity="info">
+                  Keine Einträge für den gewählten Filter.
+                </Alert>
               ) : (
                 groupedRows.map(([date, dayRows]) => (
-                  <Box key={date} sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Box
+                    key={date}
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}
+                  >
                     <Typography
                       variant="caption"
                       sx={{
                         fontWeight: 700,
-                        color: 'text.secondary',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
+                        color: "text.secondary",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
                         px: 0.25,
                       }}
                     >
@@ -513,37 +627,37 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                       const dutyType = getDutyTypeForRow(row);
                       const dutyColor = dutyType
                         ? getDutyColor(dutyType, row.area as OnCallArea, true)
-                        : '#e0e0e0';
+                        : "#e0e0e0";
                       return (
                         <Box
                           key={`${row.date}-${row.category}-${row.role}-${row.time_of_day}-${idx}`}
                           sx={{
-                            border: '1px solid',
-                            borderColor: 'divider',
+                            border: "1px solid",
+                            borderColor: "divider",
                             borderRadius: 2.5,
                             p: 1.25,
-                            transition: 'all 0.2s ease',
-                            backgroundColor: 'background.paper',
-                            '&:hover': {
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 6px 14px rgba(0,0,0,0.08)',
-                              borderColor: 'primary.light',
+                            transition: "all 0.2s ease",
+                            backgroundColor: "background.paper",
+                            "&:hover": {
+                              transform: "translateY(-1px)",
+                              boxShadow: "0 6px 14px rgba(0,0,0,0.08)",
+                              borderColor: "primary.light",
                             },
                           }}
                         >
                           <Box
                             sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
+                              display: "flex",
+                              justifyContent: "space-between",
                               gap: 1,
-                              alignItems: 'center',
+                              alignItems: "center",
                               mb: 1,
                             }}
                           >
                             <Box
                               sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
+                                display: "inline-flex",
+                                alignItems: "center",
                                 gap: 0.75,
                                 px: 1,
                                 py: 0.5,
@@ -554,22 +668,28 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                               {getDutyIconForRow(row)}
                               <Typography
                                 variant="caption"
-                                sx={{ fontWeight: 700, color: 'text.primary' }}
+                                sx={{ fontWeight: 700, color: "text.primary" }}
                               >
                                 {getDutyLabelForRow(row)}
                               </Typography>
                             </Box>
                             <Chip
-                              label={statusLabel[row.status as Exclude<StatusFilter, 'all'>]}
+                              label={
+                                statusLabel[
+                                  row.status as Exclude<StatusFilter, "all">
+                                ]
+                              }
                               size="small"
-                              sx={getStatusChipSx(row.status as Exclude<StatusFilter, 'all'>)}
+                              sx={getStatusChipSx(
+                                row.status as Exclude<StatusFilter, "all">,
+                              )}
                             />
                           </Box>
 
                           <Box
                             sx={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 1fr',
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
                               gap: 1,
                             }}
                           >
@@ -577,43 +697,52 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                               sx={{
                                 p: 1,
                                 borderRadius: 2,
-                                backgroundColor: 'rgba(25,118,210,0.06)',
+                                backgroundColor: "rgba(25,118,210,0.06)",
                               }}
                             >
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
-                                sx={{ display: 'block', mb: 0.25 }}
+                                sx={{ display: "block", mb: 0.25 }}
                               >
                                 PalliRoute
                               </Typography>
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {row.employee_internal?.name ?? '—'}
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                {row.employee_internal?.name ?? "—"}
                               </Typography>
                             </Box>
                             <Box
                               sx={{
                                 p: 1,
                                 borderRadius: 2,
-                                backgroundColor: 'rgba(2,136,209,0.08)',
+                                backgroundColor: "rgba(2,136,209,0.08)",
                               }}
                             >
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
-                                sx={{ display: 'block', mb: 0.25 }}
+                                sx={{ display: "block", mb: 0.25 }}
                               >
                                 Aplano
                               </Typography>
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {row.employee_aplano?.name ?? '—'}
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                {row.employee_aplano?.name ?? "—"}
                               </Typography>
                             </Box>
                           </Box>
 
                           {row.reason && (
                             <Box sx={{ mt: 1 }}>
-                              <Alert severity="info" sx={{ py: 0, borderRadius: 2 }}>
+                              <Alert
+                                severity="info"
+                                sx={{ py: 0, borderRadius: 2 }}
+                              >
                                 <Typography variant="caption">
                                   Hinweis: {humanizeReason(row.reason)}
                                 </Typography>

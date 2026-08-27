@@ -1,18 +1,26 @@
-import type { Appointment, MarkerType, Route } from '@palliroute/models';
-import { appointmentTypeColors, employeeTypeColors } from '../colors';
+import type { Appointment, MarkerType, Route } from "@palliroute/models";
+import { appointmentTypeColors, employeeTypeColors } from "../colors";
 
 export const weekdayMap: Record<string, string> = {
-  monday: 'Montag',
-  tuesday: 'Dienstag',
-  wednesday: 'Mittwoch',
-  thursday: 'Donnerstag',
-  friday: 'Freitag',
-  saturday: 'Samstag',
-  sunday: 'Sonntag',
+  monday: "Montag",
+  tuesday: "Dienstag",
+  wednesday: "Mittwoch",
+  thursday: "Donnerstag",
+  friday: "Freitag",
+  saturday: "Samstag",
+  sunday: "Sonntag",
 };
 
 export const getCurrentWeekday = (): string => {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const days = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
   return days[new Date().getDay()];
 };
 
@@ -24,18 +32,20 @@ export const parseRouteOrder = (routeOrder: unknown): number[] => {
     const parsed = JSON.parse(routeOrder as string);
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
-    console.error('Failed to parse route_order:', error);
+    console.error("Failed to parse route_order:", error);
     return [];
   }
 };
 
 export const getOwnRouteOrder = (route: Route): number[] => {
   const customOrder = parseRouteOrder(route.custom_order);
-  return customOrder.length > 0 ? customOrder : parseRouteOrder(route.route_order);
+  return customOrder.length > 0
+    ? customOrder
+    : parseRouteOrder(route.route_order);
 };
 
 export const getOwnRoutePolyline = (route: Route): string => {
-  return route.custom_polyline || route.polyline || '';
+  return route.custom_polyline || route.polyline || "";
 };
 
 export const getOwnRouteDistance = (route: Route): number => {
@@ -56,7 +66,7 @@ export const isValidRoute = (route: Route): boolean => {
 export const hasValidRouteOrder = (
   route: Route,
   appointments: Appointment[],
-  selectedWeekday: string
+  selectedWeekday: string,
 ): boolean => {
   const routeOrder = parseRouteOrder(route.route_order);
   if (!routeOrder || routeOrder.length === 0) {
@@ -64,8 +74,10 @@ export const hasValidRouteOrder = (
   }
   return routeOrder.every((appointmentId) =>
     appointments.some(
-      (appointment) => appointment.id === appointmentId && appointment.weekday === selectedWeekday
-    )
+      (appointment) =>
+        appointment.id === appointmentId &&
+        appointment.weekday === selectedWeekday,
+    ),
   );
 };
 
@@ -76,26 +88,28 @@ export const getColorForVisitType = (visitType?: string): string => {
 
 export const getColorForEmployeeType = (employeeType?: string): string => {
   if (!employeeType) return employeeTypeColors.default;
-  if (employeeType.includes('Arzt') && !employeeType.includes('Honorar')) {
-    return employeeTypeColors['Arzt'];
+  if (employeeType.includes("Arzt") && !employeeType.includes("Honorar")) {
+    return employeeTypeColors["Arzt"];
   }
-  if (employeeType.includes('Honorararzt')) {
-    return employeeTypeColors['Honorararzt'];
+  if (employeeType.includes("Honorararzt")) {
+    return employeeTypeColors["Honorararzt"];
   }
   return employeeTypeColors.default;
 };
 
 export const isAwTourArea = (area?: string | null): boolean =>
-  area === 'Nord' || area === 'Mitte' || area === 'Süd';
+  area === "Nord" || area === "Mitte" || area === "Süd";
 
-export const getTourAreaStartLocation = (area: string): { lat: number; lng: number } => {
+export const getTourAreaStartLocation = (
+  area: string,
+): { lat: number; lng: number } => {
   let areaNormalized = area;
-  if (area.includes('Nord') || area === 'Nordkreis') {
-    areaNormalized = 'Nord';
-  } else if (area.includes('Süd') || area === 'Südkreis') {
-    areaNormalized = 'Süd';
-  } else if (area.includes('Mitte')) {
-    areaNormalized = 'Mitte';
+  if (area.includes("Nord") || area === "Nordkreis") {
+    areaNormalized = "Nord";
+  } else if (area.includes("Süd") || area === "Südkreis") {
+    areaNormalized = "Süd";
+  } else if (area.includes("Mitte")) {
+    areaNormalized = "Mitte";
   }
 
   const tourAreaStartLocations: Record<string, { lat: number; lng: number }> = {
@@ -104,19 +118,18 @@ export const getTourAreaStartLocation = (area: string): { lat: number; lng: numb
     Süd: { lat: 50.8775055, lng: 7.6168993 },
   };
 
-  return tourAreaStartLocations[areaNormalized] || tourAreaStartLocations['Mitte'];
+  return (
+    tourAreaStartLocations[areaNormalized] || tourAreaStartLocations["Mitte"]
+  );
 };
 
-export const GOOGLE_MAPS_MAP_ID = 'DEMO_MAP_ID';
+export const GOOGLE_MAPS_MAP_ID = "DEMO_MAP_ID";
 
-export const GOOGLE_MAPS_LIBRARIES: ('places' | 'geocoding' | 'geometry' | 'marker')[] = [
-  'places',
-  'geocoding',
-  'geometry',
-  'marker',
-];
+export const GOOGLE_MAPS_LIBRARIES: (
+  "places" | "geocoding" | "geometry" | "marker"
+)[] = ["places", "geocoding", "geometry", "marker"];
 
-export const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
+export const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 export const MAP_DEFAULT_CENTER = { lat: 51.0267, lng: 7.5683 };
 export const MAP_DEFAULT_ZOOM = 10;
 export const MAP_MIN_ZOOM = 3;
@@ -130,17 +143,17 @@ export const ROUTE_POLYLINE = {
 } as const;
 
 export const TOUR_AREA_COLORS = {
-  Nord: '#1976d2',
-  Mitte: '#7b1fa2',
-  Süd: '#388e3c',
-  default: '#ff9800',
+  Nord: "#1976d2",
+  Mitte: "#7b1fa2",
+  Süd: "#388e3c",
+  default: "#ff9800",
 } as const;
 
 export const getTourAreaColor = (area?: string | null): string => {
-  if (area === 'Wochenend-Touren') return TOUR_AREA_COLORS.default;
-  if (area === 'Nord' || area === 'Nordkreis') return TOUR_AREA_COLORS.Nord;
-  if (area === 'Mitte') return TOUR_AREA_COLORS.Mitte;
-  if (area === 'Süd' || area === 'Südkreis') return TOUR_AREA_COLORS.Süd;
+  if (area === "Wochenend-Touren") return TOUR_AREA_COLORS.default;
+  if (area === "Nord" || area === "Nordkreis") return TOUR_AREA_COLORS.Nord;
+  if (area === "Mitte") return TOUR_AREA_COLORS.Mitte;
+  if (area === "Süd" || area === "Südkreis") return TOUR_AREA_COLORS.Süd;
   return TOUR_AREA_COLORS.default;
 };
 
@@ -164,27 +177,30 @@ export const getMarkerFillColor = ({
   let baseColor: string;
   if (routeColor) {
     baseColor = routeColor;
-  } else if (type === 'employee') {
+  } else if (type === "employee") {
     baseColor = getColorForEmployeeType(employeeType);
-  } else if (type === 'tour_area') {
+  } else if (type === "tour_area") {
     baseColor = getTourAreaColor(area);
-  } else if (type === 'pflegeheim') {
-    baseColor = '#388e3c';
-  } else if (type === 'custom') {
-    baseColor = '#ff5722';
+  } else if (type === "pflegeheim") {
+    baseColor = "#388e3c";
+  } else if (type === "custom") {
+    baseColor = "#ff5722";
   } else {
     baseColor = getColorForVisitType(visitType);
   }
-  return isInactive ? '#9E9E9E' : baseColor;
+  return isInactive ? "#9E9E9E" : baseColor;
 };
 
 export const getMarkerLabelText = (
   routePosition?: number,
   visitType?: string,
-  customLabel?: string
+  customLabel?: string,
 ): string | undefined => {
   if (customLabel) return customLabel;
-  if (routePosition && (!visitType || visitType === 'HB' || visitType === 'NA')) {
+  if (
+    routePosition &&
+    (!visitType || visitType === "HB" || visitType === "NA")
+  ) {
     return routePosition.toString();
   }
   return undefined;
@@ -192,7 +208,9 @@ export const getMarkerLabelText = (
 
 type LatLngLike = { lat: () => number; lng: () => number };
 
-export const groupMarkersByLatLng = <T extends { position: LatLngLike }>(markers: T[]): T[][] => {
+export const groupMarkersByLatLng = <T extends { position: LatLngLike }>(
+  markers: T[],
+): T[][] => {
   const grouped = new Map<string, T[]>();
   for (const marker of markers) {
     const key = `${marker.position.lat().toFixed(5)}|${marker.position.lng().toFixed(5)}`;
@@ -207,7 +225,7 @@ export const offsetOverlappingLatLng = (
   lat: number,
   lng: number,
   index: number,
-  total: number
+  total: number,
 ): { lat: number; lng: number } => {
   if (total === 1) return { lat, lng };
   const offset = 0.0001;

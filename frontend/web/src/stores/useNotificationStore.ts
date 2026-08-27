@@ -1,16 +1,19 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface NotificationState {
   notification: {
     open: boolean;
     message: string;
-    severity: 'success' | 'error' | 'warning';
+    severity: "success" | "error" | "warning";
   };
   loading: {
     active: boolean;
     message: string;
   };
-  setNotification: (message: string, severity: 'success' | 'error' | 'warning') => void;
+  setNotification: (
+    message: string,
+    severity: "success" | "error" | "warning",
+  ) => void;
   closeNotification: () => void;
   setLoading: (message: string) => void;
   resetLoading: () => void;
@@ -19,12 +22,12 @@ interface NotificationState {
 export const useNotificationStore = create<NotificationState>((set) => ({
   notification: {
     open: false,
-    message: '',
-    severity: 'success',
+    message: "",
+    severity: "success",
   },
   loading: {
     active: false,
-    message: '',
+    message: "",
   },
   setNotification: (message, severity) =>
     set({
@@ -42,5 +45,5 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       },
     })),
   setLoading: (message) => set({ loading: { active: true, message } }),
-  resetLoading: () => set({ loading: { active: false, message: '' } }),
+  resetLoading: () => set({ loading: { active: false, message: "" } }),
 }));

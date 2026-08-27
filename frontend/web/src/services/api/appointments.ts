@@ -1,14 +1,14 @@
-import { api } from '@palliroute/shared';
-import { Appointment, Weekday } from '../../types/models';
+import { api } from "@palliroute/shared";
+import { Appointment, Weekday } from "../../types/models";
 
 export const appointmentsApi = {
   // Get all appointments
   async getAll(): Promise<Appointment[]> {
     try {
-      const response = await api.get('/appointments/');
+      const response = await api.get("/appointments/");
       return response.data;
     } catch (error) {
-      console.error('Failed to fetch appointments:', error);
+      console.error("Failed to fetch appointments:", error);
       throw error;
     }
   },
@@ -19,19 +19,30 @@ export const appointmentsApi = {
       const response = await api.get(`/appointments/?patient_id=${patientId}`);
       return response.data;
     } catch (error) {
-      console.error(`Failed to fetch appointments for patient with ID ${patientId}:`, error);
+      console.error(
+        `Failed to fetch appointments for patient with ID ${patientId}:`,
+        error,
+      );
       throw error;
     }
   },
 
   // Get appointments by weekday
-  async getByWeekday(weekday: Weekday, calendarWeek?: number): Promise<Appointment[]> {
+  async getByWeekday(
+    weekday: Weekday,
+    calendarWeek?: number,
+  ): Promise<Appointment[]> {
     try {
       const params = calendarWeek ? { calendar_week: calendarWeek } : {};
-      const response = await api.get(`/appointments/weekday/${weekday}`, { params });
+      const response = await api.get(`/appointments/weekday/${weekday}`, {
+        params,
+      });
       return response.data;
     } catch (error) {
-      console.error(`Failed to fetch appointments for weekday ${weekday}:`, error);
+      console.error(
+        `Failed to fetch appointments for weekday ${weekday}:`,
+        error,
+      );
       throw error;
     }
   },
@@ -54,7 +65,7 @@ export const appointmentsApi = {
     sourceArea?: string,
     targetArea?: string,
     calendarWeek?: number,
-    respectReplacement?: boolean
+    respectReplacement?: boolean,
   ): Promise<void> {
     try {
       const payload: any = {
@@ -78,12 +89,12 @@ export const appointmentsApi = {
         payload.source_area = sourceArea;
         payload.target_area = targetArea;
       } else {
-        throw new Error('Either employee IDs or areas must be provided');
+        throw new Error("Either employee IDs or areas must be provided");
       }
 
-      await api.post('/appointments/move', payload);
+      await api.post("/appointments/move", payload);
     } catch (error) {
-      console.error('Fehler beim Verschieben des Termins:', error);
+      console.error("Fehler beim Verschieben des Termins:", error);
       throw error;
     }
   },
@@ -91,7 +102,7 @@ export const appointmentsApi = {
   async checkReplacement(
     targetEmployeeId: number,
     weekday: string,
-    calendarWeek?: number
+    calendarWeek?: number,
   ): Promise<any> {
     try {
       const payload: any = {
@@ -103,22 +114,28 @@ export const appointmentsApi = {
         payload.calendar_week = calendarWeek;
       }
 
-      const response = await api.post('/appointments/check-replacement', payload);
+      const response = await api.post(
+        "/appointments/check-replacement",
+        payload,
+      );
       return response.data;
     } catch (error) {
-      console.error('Fehler beim Prüfen der Vertretung:', error);
+      console.error("Fehler beim Prüfen der Vertretung:", error);
       throw error;
     }
   },
 
-  async assignTourArea(appointmentId: number, targetArea: 'Nord' | 'Mitte' | 'Süd'): Promise<void> {
+  async assignTourArea(
+    appointmentId: number,
+    targetArea: "Nord" | "Mitte" | "Süd",
+  ): Promise<void> {
     try {
-      await api.post('/appointments/assign-area', {
+      await api.post("/appointments/assign-area", {
         appointment_id: appointmentId,
         target_area: targetArea,
       });
     } catch (error) {
-      console.error('Fehler beim Zuweisen des Tourbereichs:', error);
+      console.error("Fehler beim Zuweisen des Tourbereichs:", error);
       throw error;
     }
   },

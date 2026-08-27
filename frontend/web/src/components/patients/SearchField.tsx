@@ -1,11 +1,17 @@
-import React, { useMemo, useEffect } from 'react';
-import { Box, TextField, InputAdornment, IconButton, Typography } from '@mui/material';
-import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
-import { Patient, Appointment, Employee, Weekday } from '../../types/models';
-import { useEmployees } from '../../services/queries/useEmployees';
-import { usePatients } from '../../services/queries/usePatients';
-import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
-import { useAreaStore } from '../../stores/useAreaStore';
+import React, { useMemo, useEffect } from "react";
+import {
+  Box,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import { Search as SearchIcon, Clear as ClearIcon } from "@mui/icons-material";
+import { Patient, Appointment, Employee, Weekday } from "../../types/models";
+import { useEmployees } from "../../services/queries/useEmployees";
+import { usePatients } from "../../services/queries/usePatients";
+import { useAppointmentsByWeekday } from "../../services/queries/useAppointments";
+import { useAreaStore } from "../../stores/useAreaStore";
 
 export interface FilteredResults {
   filteredActiveOtherEmployeesWithPatients: Employee[];
@@ -22,7 +28,7 @@ interface SearchFieldProps {
 }
 
 // Constants
-const DOCTOR_FUNCTIONS = ['Arzt', 'Honorararzt'] as const;
+const DOCTOR_FUNCTIONS = ["Arzt", "Honorararzt"] as const;
 const AREA_ORDER = {
   Nordkreis: 0,
   Südkreis: 1,
@@ -45,8 +51,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({
   // Utility functions
   const getAreaOrder = (area?: string): number => {
     if (!area) return AREA_ORDER.default;
-    if (area.includes('Nordkreis')) return AREA_ORDER.Nordkreis;
-    if (area.includes('Südkreis')) return AREA_ORDER.Südkreis;
+    if (area.includes("Nordkreis")) return AREA_ORDER.Nordkreis;
+    if (area.includes("Südkreis")) return AREA_ORDER.Südkreis;
     return AREA_ORDER.default;
   };
 
@@ -56,7 +62,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
 
   const hasPatientInEmployee = (employeeId: number): boolean => {
     return appointments.some(
-      (app) => app.weekday === selectedDay && app.employee_id === employeeId
+      (app) => app.weekday === selectedDay && app.employee_id === employeeId,
     );
   };
 
@@ -82,19 +88,25 @@ export const SearchField: React.FC<SearchFieldProps> = ({
       }
     });
 
-    const employeePatients = patients.filter((p) => employeePatientIds.has(p.id || 0));
+    const employeePatients = patients.filter((p) =>
+      employeePatientIds.has(p.id || 0),
+    );
 
     return employeePatients.some((patient) => {
       const patientName = `${patient.first_name} ${patient.last_name}`;
       const patientAddress = `${patient.street} ${patient.city}`;
-      return matchesSearchTerm(patientName) || matchesSearchTerm(patientAddress);
+      return (
+        matchesSearchTerm(patientName) || matchesSearchTerm(patientAddress)
+      );
     });
   };
 
   // Memoized data processing
   const filteredEmployees = useMemo(() => {
-    const isAllAreas = currentArea === 'Nord- und Südkreis';
-    return isAllAreas ? employees : employees.filter((e) => e.area === currentArea);
+    const isAllAreas = currentArea === "Nord- und Südkreis";
+    return isAllAreas
+      ? employees
+      : employees.filter((e) => e.area === currentArea);
   }, [employees, currentArea]);
 
   const sortedEmployees = useMemo(
@@ -109,7 +121,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
 
         return a.last_name.localeCompare(b.last_name);
       }),
-    [filteredEmployees, getAreaOrder]
+    [filteredEmployees, getAreaOrder],
   );
 
   const { doctors, otherEmployees } = useMemo(() => {
@@ -118,9 +130,16 @@ export const SearchField: React.FC<SearchFieldProps> = ({
     return { doctors, otherEmployees };
   }, [sortedEmployees, isDoctor]);
 
-  const { activeOtherEmployeesWithPatients, activeOtherEmployeesWithoutPatients } = useMemo(() => {
-    const withPatients = otherEmployees.filter((e) => hasPatientInEmployee(e.id || 0));
-    const withoutPatients = otherEmployees.filter((e) => !hasPatientInEmployee(e.id || 0));
+  const {
+    activeOtherEmployeesWithPatients,
+    activeOtherEmployeesWithoutPatients,
+  } = useMemo(() => {
+    const withPatients = otherEmployees.filter((e) =>
+      hasPatientInEmployee(e.id || 0),
+    );
+    const withoutPatients = otherEmployees.filter(
+      (e) => !hasPatientInEmployee(e.id || 0),
+    );
     return {
       activeOtherEmployeesWithPatients: withPatients,
       activeOtherEmployeesWithoutPatients: withoutPatients,
@@ -131,8 +150,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({
   const filteredResults = useMemo((): FilteredResults => {
     if (!searchTerm.trim()) {
       return {
-        filteredActiveOtherEmployeesWithPatients: activeOtherEmployeesWithPatients,
-        filteredActiveOtherEmployeesWithoutPatients: activeOtherEmployeesWithoutPatients,
+        filteredActiveOtherEmployeesWithPatients:
+          activeOtherEmployeesWithPatients,
+        filteredActiveOtherEmployeesWithoutPatients:
+          activeOtherEmployeesWithoutPatients,
         filteredDoctors: doctors,
       };
     }
@@ -158,7 +179,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
       filteredResults.filteredActiveOtherEmployeesWithPatients.length +
       filteredResults.filteredActiveOtherEmployeesWithoutPatients.length +
       filteredResults.filteredDoctors.length,
-    [filteredResults]
+    [filteredResults],
   );
 
   // Notify parent component of filtered results changes
@@ -181,7 +202,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
         px: 0,
         pt: 0.5,
         pb: 2,
-        bgcolor: 'background.paper',
+        bgcolor: "background.paper",
       }}
     >
       <TextField
@@ -195,7 +216,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: 'action.active', fontSize: 20 }} />
+              <SearchIcon sx={{ color: "action.active", fontSize: 20 }} />
             </InputAdornment>
           ),
           endAdornment: searchTerm ? (
@@ -205,7 +226,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
                 onClick={handleClearClick}
                 edge="end"
                 aria-label="Suche löschen"
-                sx={{ color: 'text.secondary' }}
+                sx={{ color: "text.secondary" }}
               >
                 <ClearIcon fontSize="small" />
               </IconButton>
@@ -215,7 +236,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({
       />
       {searchTerm ? (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25 }}>
-          „{searchTerm}“ · {totalResults} {totalResults === 1 ? 'Ergebnis' : 'Ergebnisse'}
+          „{searchTerm}“ · {totalResults}{" "}
+          {totalResults === 1 ? "Ergebnis" : "Ergebnisse"}
         </Typography>
       ) : null}
     </Box>

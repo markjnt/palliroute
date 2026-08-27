@@ -1,10 +1,10 @@
-import React from 'react';
-import { InfoWindow } from '@react-google-maps/api';
-import { Box, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { MarkerData } from '../../types/mapTypes';
-import { Appointment, Employee, Patient, Route } from '../../types/models';
-import { useCloseOnMapClick } from '@palliroute/ui';
+import React from "react";
+import { InfoWindow } from "@react-google-maps/api";
+import { Box, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { MarkerData } from "../../types/mapTypes";
+import { Appointment, Employee, Patient, Route } from "../../types/models";
+import { useCloseOnMapClick } from "@palliroute/ui";
 import {
   PatientInfoContent,
   EmployeeInfoContent,
@@ -12,7 +12,7 @@ import {
   TourAreaInfoContent,
   CustomMarkerInfoContent,
   PflegeheimInfoContent,
-} from './infoWindows';
+} from "./infoWindows";
 
 interface MarkerInfoWindowProps {
   markerList: MarkerData[];
@@ -72,24 +72,24 @@ export const MarkerInfoWindow: React.FC<MarkerInfoWindowProps> = ({
           sx={{
             p: 1.75,
             minWidth: 260,
-            width: 'max-content',
+            width: "max-content",
             maxWidth: 560,
-            position: 'relative',
+            position: "relative",
           }}
         >
           <IconButton
             size="small"
             onClick={onClose}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               top: 10,
               right: 10,
               zIndex: 2,
               width: 32,
               height: 32,
-              bgcolor: 'rgba(0, 0, 0, 0.06)',
-              color: '#1d1d1f',
-              '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.1)' },
+              bgcolor: "rgba(0, 0, 0, 0.06)",
+              color: "#1d1d1f",
+              "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
             }}
             aria-label="Schließen"
           >
@@ -102,10 +102,12 @@ export const MarkerInfoWindow: React.FC<MarkerInfoWindowProps> = ({
                 mb: idx < markerList.length - 1 ? 2 : 0,
                 pb: idx < markerList.length - 1 ? 1.5 : 0,
                 borderBottom:
-                  idx < markerList.length - 1 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+                  idx < markerList.length - 1
+                    ? "1px solid rgba(0, 0, 0, 0.08)"
+                    : "none",
               }}
             >
-              {marker.type === 'patient' ? (
+              {marker.type === "patient" ? (
                 <PatientInfoContent
                   marker={marker}
                   patients={patients}
@@ -113,21 +115,25 @@ export const MarkerInfoWindow: React.FC<MarkerInfoWindowProps> = ({
                   routes={routes}
                   employees={employees}
                 />
-              ) : marker.type === 'tour_patient' ? (
+              ) : marker.type === "tour_patient" ? (
                 <TourPatientInfoContent
                   marker={marker}
                   patients={patients}
                   appointments={appointments}
                   routes={routes}
                 />
-              ) : marker.type === 'tour_area' ? (
+              ) : marker.type === "tour_area" ? (
                 <TourAreaInfoContent marker={marker} />
-              ) : marker.type === 'custom' ? (
+              ) : marker.type === "custom" ? (
                 <CustomMarkerInfoContent marker={marker} />
-              ) : marker.type === 'pflegeheim' ? (
+              ) : marker.type === "pflegeheim" ? (
                 <PflegeheimInfoContent marker={marker} />
               ) : (
-                <EmployeeInfoContent marker={marker} employees={employees} routes={routes} />
+                <EmployeeInfoContent
+                  marker={marker}
+                  employees={employees}
+                  routes={routes}
+                />
               )}
             </Box>
           ))}

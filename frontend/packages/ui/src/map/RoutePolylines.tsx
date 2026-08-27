@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
-import type { RoutePathData } from '@palliroute/models/map';
-import { ROUTE_POLYLINE } from '@palliroute/shared';
-import { useRouteHoverStore } from '@palliroute/stores';
+import { useEffect, useRef } from "react";
+import type { RoutePathData } from "@palliroute/models/map";
+import { ROUTE_POLYLINE } from "@palliroute/shared";
+import { useRouteHoverStore } from "@palliroute/stores";
 
 interface RoutePolylinesProps {
   routes: RoutePathData[];
@@ -23,9 +23,13 @@ export function RoutePolylines({
   const polylineRefs = useRef<{ [id: number]: google.maps.Polyline }>({});
   const hitRefs = useRef<{ [id: number]: google.maps.Polyline }>({});
   const previousDataRef = useRef<{ [id: number]: string }>({});
-  const listenersRef = useRef<{ [id: number]: google.maps.MapsEventListener[] }>({});
+  const listenersRef = useRef<{
+    [id: number]: google.maps.MapsEventListener[];
+  }>({});
 
-  const hoveredRouteId = useRouteHoverStore((state) => (enableHover ? state.hoveredRouteId : null));
+  const hoveredRouteId = useRouteHoverStore((state) =>
+    enableHover ? state.hoveredRouteId : null,
+  );
   const hoverRoute = useRouteHoverStore((state) => state.hoverRoute);
   const unhoverRoute = useRouteHoverStore((state) => state.unhoverRoute);
 
@@ -44,16 +48,17 @@ export function RoutePolylines({
     const attachHover = (routeId: number, hit: google.maps.Polyline) => {
       listenersRef.current[routeId]?.forEach((listener) => listener.remove());
       listenersRef.current[routeId] = [
-        hit.addListener('mouseover', () => hoverRoute(routeId)),
-        hit.addListener('mouseout', () => unhoverRoute()),
+        hit.addListener("mouseover", () => hoverRoute(routeId)),
+        hit.addListener("mouseout", () => unhoverRoute()),
       ];
     };
 
     for (const { routeId, polyline, color } of routes) {
-      const isEmpty = polyline == null || polyline === '';
-      const oldEncoded = previousDataRef.current[routeId] || '';
+      const isEmpty = polyline == null || polyline === "";
+      const oldEncoded = previousDataRef.current[routeId] || "";
       const isHovered = enableHover && hoveredRouteId === routeId;
-      const isDimmed = enableHover && hoveredRouteId != null && hoveredRouteId !== routeId;
+      const isDimmed =
+        enableHover && hoveredRouteId != null && hoveredRouteId !== routeId;
 
       if (isEmpty) {
         if (polylineRefs.current[routeId]) {
@@ -61,12 +66,13 @@ export function RoutePolylines({
           delete polylineRefs.current[routeId];
         }
         clearHit(routeId);
-        previousDataRef.current[routeId] = '';
+        previousDataRef.current[routeId] = "";
         continue;
       }
 
       if (!polylineRefs.current[routeId]) {
-        const decoded = window.google.maps.geometry.encoding.decodePath(polyline);
+        const decoded =
+          window.google.maps.geometry.encoding.decodePath(polyline);
         polylineRefs.current[routeId] = new window.google.maps.Polyline({
           path: decoded,
           map,
@@ -78,7 +84,8 @@ export function RoutePolylines({
         });
         previousDataRef.current[routeId] = polyline;
       } else if (polyline !== oldEncoded) {
-        const newPath = window.google.maps.geometry.encoding.decodePath(polyline);
+        const newPath =
+          window.google.maps.geometry.encoding.decodePath(polyline);
         polylineRefs.current[routeId].setPath(newPath);
         hitRefs.current[routeId]?.setPath(newPath);
         previousDataRef.current[routeId] = polyline;
@@ -111,7 +118,9 @@ export function RoutePolylines({
         polylineRefs.current[routeId].setOptions({
           strokeColor: color,
           strokeOpacity: isDimmed ? ROUTE_POLYLINE.dimmedOpacity : 1,
-          strokeWeight: isHovered ? ROUTE_POLYLINE.hoverWeight : ROUTE_POLYLINE.weight,
+          strokeWeight: isHovered
+            ? ROUTE_POLYLINE.hoverWeight
+            : ROUTE_POLYLINE.weight,
           zIndex: isHovered ? 20 : 3,
         });
       }
@@ -126,14 +135,24 @@ export function RoutePolylines({
         delete previousDataRef.current[id];
       }
     });
-  }, [routes, map, hiddenRouteIds, hoveredRouteId, hoverRoute, unhoverRoute, enableHover]);
+  }, [
+    routes,
+    map,
+    hiddenRouteIds,
+    hoveredRouteId,
+    hoverRoute,
+    unhoverRoute,
+    enableHover,
+  ]);
 
   useEffect(() => {
     const polylines = polylineRefs.current;
     const hits = hitRefs.current;
     const listeners = listenersRef.current;
     return () => {
-      Object.values(listeners).forEach((group) => group.forEach((listener) => listener.remove()));
+      Object.values(listeners).forEach((group) =>
+        group.forEach((listener) => listener.remove()),
+      );
       Object.values(polylines).forEach((line) => line.setMap(null));
       Object.values(hits).forEach((line) => line.setMap(null));
     };

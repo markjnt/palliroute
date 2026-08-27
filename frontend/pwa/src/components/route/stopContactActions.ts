@@ -3,5 +3,5 @@ export const openMaps = (address: string) => {
 };
 
 export const callPhone = (phone: string) => {
-  window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
+  window.location.href = `tel:${phone.replace(/\s+/g, "")}`;
 };

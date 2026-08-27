@@ -1,24 +1,28 @@
-import React from 'react';
-import { Box, IconButton } from '@mui/material';
-import { Map as MapIcon, Phone as PhoneIcon, Info as InfoIcon } from '@mui/icons-material';
-import { callPhone, openMaps } from './stopContactActions';
+import React from "react";
+import { Box, IconButton } from "@mui/material";
+import {
+  Map as MapIcon,
+  Phone as PhoneIcon,
+  Info as InfoIcon,
+} from "@mui/icons-material";
+import { callPhone, openMaps } from "./stopContactActions";
 
 const inlineCircleSx = (enabled: boolean, color: string) => ({
   width: 28,
   height: 28,
   p: 0,
-  borderRadius: '50%',
+  borderRadius: "50%",
   flexShrink: 0,
-  bgcolor: enabled ? color : 'rgba(0, 0, 0, 0.06)',
-  color: enabled ? 'white' : '#C7C7CC',
-  boxShadow: enabled ? `0 2px 6px ${color}40` : 'none',
-  '&:hover': {
-    bgcolor: enabled ? color : 'rgba(0, 0, 0, 0.06)',
+  bgcolor: enabled ? color : "rgba(0, 0, 0, 0.06)",
+  color: enabled ? "white" : "#C7C7CC",
+  boxShadow: enabled ? `0 2px 6px ${color}40` : "none",
+  "&:hover": {
+    bgcolor: enabled ? color : "rgba(0, 0, 0, 0.06)",
     opacity: enabled ? 0.9 : 1,
   },
-  '&.Mui-disabled': {
-    bgcolor: 'rgba(0, 0, 0, 0.06)',
-    color: '#C7C7CC',
+  "&.Mui-disabled": {
+    bgcolor: "rgba(0, 0, 0, 0.06)",
+    color: "#C7C7CC",
   },
 });
 
@@ -28,14 +32,14 @@ export const StopInfoIcon: React.FC = () => (
     sx={{
       width: 28,
       height: 28,
-      borderRadius: '50%',
+      borderRadius: "50%",
       flexShrink: 0,
-      bgcolor: '#007AFF',
-      color: 'white',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: '0 2px 6px rgba(0, 122, 255, 0.25)',
+      bgcolor: "#007AFF",
+      color: "white",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "0 2px 6px rgba(0, 122, 255, 0.25)",
     }}
   >
     <InfoIcon sx={{ fontSize: 15 }} />
@@ -56,7 +60,7 @@ export const StopMapsButton: React.FC<StopMapsButtonProps> = ({ address }) => {
         e.stopPropagation();
         if (address) openMaps(address);
       }}
-      sx={inlineCircleSx(hasAddress, '#007AFF')}
+      sx={inlineCircleSx(hasAddress, "#007AFF")}
     >
       <MapIcon sx={{ fontSize: 15 }} />
     </IconButton>
@@ -77,7 +81,7 @@ export const StopCallButton: React.FC<StopCallButtonProps> = ({ phone }) => {
         e.stopPropagation();
         if (phone) callPhone(phone);
       }}
-      sx={inlineCircleSx(hasPhone, '#34C759')}
+      sx={inlineCircleSx(hasPhone, "#34C759")}
     >
       <PhoneIcon sx={{ fontSize: 15 }} />
     </IconButton>

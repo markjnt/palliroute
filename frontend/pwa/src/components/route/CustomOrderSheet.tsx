@@ -1,16 +1,22 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Box, Button, IconButton, Typography, Chip } from '@mui/material';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import { Box, Button, IconButton, Typography, Chip } from "@mui/material";
 import {
   Done as DoneIcon,
   Close as CloseIcon,
   LocationOn as LocationIcon,
   Info as InfoIcon,
-} from '@mui/icons-material';
-import { Sheet } from 'react-modal-sheet';
-import { getColorForVisitType } from '../../utils/mapUtils';
-import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
-import { useSetCustomOrder } from '../../services/queries/useRoutes';
+} from "@mui/icons-material";
+import { Sheet } from "react-modal-sheet";
+import { getColorForVisitType } from "../../utils/mapUtils";
+import { useDeferredSheetMount } from "../../hooks/useDeferredSheetMount";
+import { useSetCustomOrder } from "../../services/queries/useRoutes";
 
 export interface CustomOrderStop {
   id: number;
@@ -69,10 +75,13 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
       if (prevTop == null) return;
       const dy = prevTop - el.getBoundingClientRect().top;
       if (Math.abs(dy) < 1) return;
-      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], {
-        duration: 380,
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      });
+      el.animate(
+        [{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }],
+        {
+          duration: 380,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      );
     });
   }, [displayedStops]);
 
@@ -100,7 +109,7 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
       await setCustomOrder.mutateAsync({ routeId, appointmentIds: draftOrder });
       onClose();
     } catch (error) {
-      console.error('Failed to save custom order:', error);
+      console.error("Failed to save custom order:", error);
     }
   };
 
@@ -122,35 +131,38 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
         <Sheet.Header>
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: '8px 0',
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: "8px 0",
             }}
           >
             <div
               style={{
-                width: '60px',
-                height: '4px',
-                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                borderRadius: '8px',
+                width: "60px",
+                height: "4px",
+                backgroundColor: "rgba(0, 0, 0, 0.2)",
+                borderRadius: "8px",
               }}
             />
           </div>
           <Box sx={{ px: 3, pb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#1d1d1f', flex: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "#1d1d1f", flex: 1 }}
+              >
                 Eigene Reihenfolge
               </Typography>
               <IconButton
                 onClick={onClose}
                 sx={{
-                  bgcolor: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  bgcolor: "rgba(0, 0, 0, 0.06)",
+                  color: "#1d1d1f",
                   flexShrink: 0,
                   width: 48,
                   height: 48,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.1)' },
+                  "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
                 }}
                 aria-label="Schließen"
               >
@@ -160,13 +172,15 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
                 onClick={handleConfirm}
                 disabled={!canConfirm || setCustomOrder.isPending}
                 sx={{
-                  bgcolor: canConfirm ? 'primary.main' : 'rgba(0, 0, 0, 0.08)',
-                  color: canConfirm ? 'white' : 'rgba(0, 0, 0, 0.28)',
+                  bgcolor: canConfirm ? "primary.main" : "rgba(0, 0, 0, 0.08)",
+                  color: canConfirm ? "white" : "rgba(0, 0, 0, 0.28)",
                   flexShrink: 0,
                   width: 48,
                   height: 48,
-                  '&:hover': {
-                    bgcolor: canConfirm ? 'primary.dark' : 'rgba(0, 0, 0, 0.08)',
+                  "&:hover": {
+                    bgcolor: canConfirm
+                      ? "primary.dark"
+                      : "rgba(0, 0, 0, 0.08)",
                   },
                 }}
                 aria-label="Speichern"
@@ -181,7 +195,15 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
         </Sheet.Header>
         <Sheet.Content>
           <Sheet.Scroller draggableAt="top">
-            <Box sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box
+              sx={{
+                px: 2,
+                pb: 2,
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+              }}
+            >
               {displayedStops.map((stop) => {
                 const order = selectedIndex.get(stop.id);
                 const selected = order != null;
@@ -197,60 +219,74 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
                     }}
                     onClick={() => handleClickStop(stop.id)}
                     sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
+                      display: "flex",
+                      alignItems: "flex-start",
                       gap: 1.5,
                       p: 1.5,
                       borderRadius: 2,
-                      border: selected ? '2px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.08)',
-                      bgcolor: selected ? 'rgba(0, 122, 255, 0.08)' : 'white',
-                      cursor: 'pointer',
+                      border: selected
+                        ? "2px solid #007AFF"
+                        : "1px solid rgba(0, 0, 0, 0.08)",
+                      bgcolor: selected ? "rgba(0, 122, 255, 0.08)" : "white",
+                      cursor: "pointer",
                       transition:
-                        'background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease',
+                        "background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
                     }}
                   >
                     <Box
                       sx={{
                         width: 32,
                         height: 32,
-                        borderRadius: '50%',
-                        bgcolor: selected ? '#007AFF' : '#E5E5EA',
-                        color: selected ? 'white' : '#8E8E93',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        borderRadius: "50%",
+                        bgcolor: selected ? "#007AFF" : "#E5E5EA",
+                        color: selected ? "white" : "#8E8E93",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         fontWeight: 700,
                         flexShrink: 0,
-                        alignSelf: 'center',
+                        alignSelf: "center",
                       }}
                     >
-                      {selected ? order : ''}
+                      {selected ? order : ""}
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {stop.patientName}
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                        <LocationIcon sx={{ fontSize: 14, color: '#8E8E93', mr: 0.5 }} />
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mt: 0.5 }}
+                      >
+                        <LocationIcon
+                          sx={{ fontSize: 14, color: "#8E8E93", mr: 0.5 }}
+                        />
                         <Typography
                           variant="caption"
                           sx={{
-                            color: '#8E8E93',
-                            fontSize: '0.75rem',
+                            color: "#8E8E93",
+                            fontSize: "0.75rem",
                           }}
                         >
                           {stop.address}
                         </Typography>
                       </Box>
                       {stop.info ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                          <InfoIcon sx={{ fontSize: 14, color: '#007AFF', mr: 0.5 }} />
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            mt: 0.5,
+                          }}
+                        >
+                          <InfoIcon
+                            sx={{ fontSize: 14, color: "#007AFF", mr: 0.5 }}
+                          />
                           <Typography
                             variant="caption"
                             sx={{
-                              color: '#007AFF',
-                              fontSize: '0.75rem',
-                              bgcolor: 'rgba(0, 122, 255, 0.1)',
+                              color: "#007AFF",
+                              fontSize: "0.75rem",
+                              bgcolor: "rgba(0, 122, 255, 0.1)",
                               px: 1,
                               py: 0.25,
                               borderRadius: 1,
@@ -280,18 +316,23 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
         <Box
           sx={{
             p: 2,
-            pb: 'max(16px, env(safe-area-inset-bottom))',
-            display: 'flex',
+            pb: "max(16px, env(safe-area-inset-bottom))",
+            display: "flex",
             gap: 1,
-            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
-            bgcolor: 'white',
+            borderTop: "1px solid rgba(0, 0, 0, 0.08)",
+            bgcolor: "white",
             flexShrink: 0,
           }}
         >
           <Button
             variant="outlined"
             onClick={handleReset}
-            sx={{ flex: 1, textTransform: 'none', borderRadius: 1.5, fontWeight: 600 }}
+            sx={{
+              flex: 1,
+              textTransform: "none",
+              borderRadius: 1.5,
+              fontWeight: 600,
+            }}
           >
             Zurücksetzen
           </Button>
@@ -299,14 +340,19 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
             variant="contained"
             onClick={handleConfirm}
             disabled={!canConfirm || setCustomOrder.isPending}
-            sx={{ flex: 1, textTransform: 'none', borderRadius: 1.5, fontWeight: 600 }}
+            sx={{
+              flex: 1,
+              textTransform: "none",
+              borderRadius: 1.5,
+              fontWeight: 600,
+            }}
           >
             Speichern
           </Button>
         </Box>
       </Sheet.Container>
     </Sheet>,
-    document.body
+    document.body,
   );
 };
 

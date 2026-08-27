@@ -1,31 +1,51 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { employeePlanningApi, type EmployeePlanningData } from '../api/employeePlanning';
-import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
-import { useNotificationStore } from '../../stores/useNotificationStore';
-import { routeKeys } from './useRoutes';
-import { appointmentKeys } from './useAppointments';
-import { patientKeys } from './usePatients';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  employeePlanningApi,
+  type EmployeePlanningData,
+} from "../api/employeePlanning";
+import { usePlanningWeekStore } from "../../stores/usePlanningWeekStore";
+import { useNotificationStore } from "../../stores/useNotificationStore";
+import { routeKeys } from "./useRoutes";
+import { appointmentKeys } from "./useAppointments";
+import { patientKeys } from "./usePatients";
 
 // Keys for React Query cache
 export const employeePlanningKeys = {
-  all: ['employee-planning'] as const,
-  lists: () => [...employeePlanningKeys.all, 'list'] as const,
-  list: (calendarWeek?: number) => [...employeePlanningKeys.lists(), { calendarWeek }] as const,
+  all: ["employee-planning"] as const,
+  lists: () => [...employeePlanningKeys.all, "list"] as const,
+  list: (calendarWeek?: number) =>
+    [...employeePlanningKeys.lists(), { calendarWeek }] as const,
   byEmployee: (employeeId: number, calendarWeek?: number) =>
-    [...employeePlanningKeys.all, 'employee', employeeId, { calendarWeek }] as const,
+    [
+      ...employeePlanningKeys.all,
+      "employee",
+      employeeId,
+      { calendarWeek },
+    ] as const,
   conflicts: (employeeId: number, weekday: string, calendarWeek?: number) =>
-    [...employeePlanningKeys.all, 'conflicts', employeeId, weekday, { calendarWeek }] as const,
+    [
+      ...employeePlanningKeys.all,
+      "conflicts",
+      employeeId,
+      weekday,
+      { calendarWeek },
+    ] as const,
 };
 
 /** Einheitliche Liste aus GET /employee-planning (reiner Array oder { data, warning } bei Sync-Warnung). */
 function normalizeEmployeePlanningResponse(
   body: unknown,
-  setNotification: (msg: string, type: 'success' | 'error') => void
+  setNotification: (msg: string, type: "success" | "error") => void,
 ): EmployeePlanningData[] {
-  if (body && typeof body === 'object' && !Array.isArray(body) && 'warning' in body) {
+  if (
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    "warning" in body
+  ) {
     const w = (body as { warning?: string }).warning;
     if (w) {
-      setNotification(`Aplano Sync Warnung: ${w}`, 'error');
+      setNotification(`Aplano Sync Warnung: ${w}`, "error");
     }
     const nested = (body as { data?: EmployeePlanningData[] }).data;
     return Array.isArray(nested) ? nested : [];
@@ -38,7 +58,8 @@ function normalizeEmployeePlanningResponse(
 
 // Hook to get all planning entries
 export const useEmployeePlanning = () => {
-  const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
+  const { selectedPlanningWeek, getCurrentPlanningWeek } =
+    usePlanningWeekStore();
   const { setNotification, setLoading, resetLoading } = useNotificationStore();
   const queryClient = useQueryClient();
   const currentWeek = selectedPlanningWeek || getCurrentPlanningWeek();
@@ -47,11 +68,14 @@ export const useEmployeePlanning = () => {
     queryKey: employeePlanningKeys.list(currentWeek),
     queryFn: async () => {
       try {
-        setLoading('Synchronisiere mit Aplano...');
+        setLoading("Synchronisiere mit Aplano...");
         const response = await employeePlanningApi.getAll(currentWeek);
         // AW-Tour-Zuweisungen werden serverseitig aus Aplano übernommen
         queryClient.invalidateQueries({ queryKey: routeKeys.all });
-        return normalizeEmployeePlanningResponse(response.data, setNotification);
+        return normalizeEmployeePlanningResponse(
+          response.data,
+          setNotification,
+        );
       } finally {
         resetLoading();
       }
@@ -64,7 +88,8 @@ export const useEmployeePlanning = () => {
 // Hook to update replacement
 export const useUpdateReplacement = () => {
   const queryClient = useQueryClient();
-  const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
+  const { selectedPlanningWeek, getCurrentPlanningWeek } =
+    usePlanningWeekStore();
 
   return useMutation({
     mutationFn: ({

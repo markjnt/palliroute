@@ -1,5 +1,5 @@
-import { useMemo, useCallback } from 'react';
-import { Employee, Appointment, Weekday } from '../types/models';
+import { useMemo, useCallback } from "react";
+import { Employee, Appointment, Weekday } from "../types/models";
 
 interface UseEmployeeManagementProps {
   employees: Employee[];
@@ -34,16 +34,16 @@ export const useEmployeeManagement = ({
 }: UseEmployeeManagementProps): EmployeeManagementReturn => {
   // Filter employees by area
   const getFilteredEmployees = useCallback(() => {
-    if (!currentArea || currentArea === 'Nord- und Südkreis') {
+    if (!currentArea || currentArea === "Nord- und Südkreis") {
       return employees;
     }
 
     // Handle both "Nordkreis"/"Südkreis" and "Nord"/"Süd" values
     let targetArea = currentArea;
-    if (currentArea === 'Nord') {
-      targetArea = 'Nordkreis';
-    } else if (currentArea === 'Süd') {
-      targetArea = 'Südkreis';
+    if (currentArea === "Nord") {
+      targetArea = "Nordkreis";
+    } else if (currentArea === "Süd") {
+      targetArea = "Südkreis";
     }
 
     return employees.filter((e) => e.area === targetArea);
@@ -55,8 +55,8 @@ export const useEmployeeManagement = ({
       // First sort by area (Nordkreis first, then Südkreis)
       const getAreaOrder = (area?: string) => {
         if (!area) return 2;
-        if (area.includes('Nordkreis')) return 0;
-        if (area.includes('Südkreis')) return 1;
+        if (area.includes("Nordkreis")) return 0;
+        if (area.includes("Südkreis")) return 1;
         return 2;
       };
 
@@ -82,21 +82,30 @@ export const useEmployeeManagement = ({
         return false;
       });
     },
-    [appointments, selectedDay]
+    [appointments, selectedDay],
   );
 
   // Get all employees
-  const allEmployees = useMemo(() => getSortedEmployees(), [getSortedEmployees]);
+  const allEmployees = useMemo(
+    () => getSortedEmployees(),
+    [getSortedEmployees],
+  );
 
   // Separate doctors from other employees
   const doctors = useMemo(
-    () => allEmployees.filter((e) => e.function === 'Arzt' || e.function === 'Honorararzt'),
-    [allEmployees]
+    () =>
+      allEmployees.filter(
+        (e) => e.function === "Arzt" || e.function === "Honorararzt",
+      ),
+    [allEmployees],
   );
 
   const otherEmployees = useMemo(
-    () => allEmployees.filter((e) => e.function !== 'Arzt' && e.function !== 'Honorararzt'),
-    [allEmployees]
+    () =>
+      allEmployees.filter(
+        (e) => e.function !== "Arzt" && e.function !== "Honorararzt",
+      ),
+    [allEmployees],
   );
 
   // Get employees with patients
@@ -136,7 +145,7 @@ export const useEmployeeManagement = ({
         .filter((emp) => emp.id !== excludeEmployeeId)
         .sort((a, b) => a.last_name.localeCompare(b.last_name));
     },
-    [allEmployees]
+    [allEmployees],
   );
 
   return {

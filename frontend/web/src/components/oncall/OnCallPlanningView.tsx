@@ -1,8 +1,11 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { Box, CircularProgress, Snackbar, Alert, Button } from '@mui/material';
-import { CompareArrows as CompareArrowsIcon, BarChart as BarChartIcon } from '@mui/icons-material';
-import { useOnCallPlanningStore } from '../../stores/useOnCallPlanningStore';
-import { useNotificationStore } from '../../stores/useNotificationStore';
+import React, { useMemo, useState, useCallback } from "react";
+import { Box, CircularProgress, Snackbar, Alert, Button } from "@mui/material";
+import {
+  CompareArrows as CompareArrowsIcon,
+  BarChart as BarChartIcon,
+} from "@mui/icons-material";
+import { useOnCallPlanningStore } from "../../stores/useOnCallPlanningStore";
+import { useNotificationStore } from "../../stores/useNotificationStore";
 import {
   useAssignments,
   useCreateAssignment,
@@ -15,8 +18,8 @@ import {
   useGenerateShiftInstances,
   useUnplannedShiftInstances,
   useAplanoCompare,
-} from '../../services/queries/useScheduling';
-import { useEmployees } from '../../services/queries/useEmployees';
+} from "../../services/queries/useScheduling";
+import { useEmployees } from "../../services/queries/useEmployees";
 import {
   Assignment,
   DutyType,
@@ -24,36 +27,41 @@ import {
   Employee,
   ShiftDefinition,
   AssignmentSource,
-} from '../../types/models';
+} from "../../types/models";
 import {
   AssignmentsQueryParams,
   CreateAssignmentData,
   schedulingApi,
-} from '../../services/api/scheduling';
-import { CalendarHeader } from './calendar/CalendarHeader';
-import { CalendarGrid } from './calendar/CalendarGrid';
-import { AssignmentDialog } from './dialogs/AssignmentDialog';
-import { CapacityOverviewDialog } from './dialogs/CapacityOverviewDialog';
-import { AutoPlanningDialog } from './dialogs/AutoPlanningDialog';
-import { UnplannedShiftsDialog } from './dialogs/UnplannedShiftsDialog';
-import { AplanoCompareDialog } from './dialogs/AplanoCompareDialog';
-import { EmployeeTable } from './table/EmployeeTable';
+} from "../../services/api/scheduling";
+import { CalendarHeader } from "./calendar/CalendarHeader";
+import { CalendarGrid } from "./calendar/CalendarGrid";
+import { AssignmentDialog } from "./dialogs/AssignmentDialog";
+import { CapacityOverviewDialog } from "./dialogs/CapacityOverviewDialog";
+import { AutoPlanningDialog } from "./dialogs/AutoPlanningDialog";
+import { UnplannedShiftsDialog } from "./dialogs/UnplannedShiftsDialog";
+import { AplanoCompareDialog } from "./dialogs/AplanoCompareDialog";
+import { EmployeeTable } from "./table/EmployeeTable";
 import {
   formatDate,
   formatMonthYear,
   getCalendarDays,
   getWeekDays,
-} from '../../utils/oncall/dateUtils';
-import { findShiftDefinition, shiftDefinitionToDutyType } from '../../utils/oncall/shiftMapping';
-import type { AutoPlanningSettings } from './dialogs/AutoPlanningDialog';
+} from "../../utils/oncall/dateUtils";
+import {
+  findShiftDefinition,
+  shiftDefinitionToDutyType,
+} from "../../utils/oncall/shiftMapping";
+import type { AutoPlanningSettings } from "./dialogs/AutoPlanningDialog";
 
 export const OnCallPlanningView: React.FC = () => {
   const { viewMode, displayType, currentDate } = useOnCallPlanningStore();
-  const { notification, closeNotification, setNotification } = useNotificationStore();
+  const { notification, closeNotification, setNotification } =
+    useNotificationStore();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedDuty, setSelectedDuty] = useState<{ type: DutyType; area?: OnCallArea } | null>(
-    null
-  );
+  const [selectedDuty, setSelectedDuty] = useState<{
+    type: DutyType;
+    area?: OnCallArea;
+  } | null>(null);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [capacityDialogOpen, setCapacityDialogOpen] = useState(false);
   const [autoPlanningDialogOpen, setAutoPlanningDialogOpen] = useState(false);
@@ -62,7 +70,7 @@ export const OnCallPlanningView: React.FC = () => {
 
   // Get dates to display
   const displayDates = useMemo(() => {
-    if (viewMode === 'month') {
+    if (viewMode === "month") {
       return getCalendarDays(currentDate);
     } else {
       return getWeekDays(currentDate);
@@ -85,18 +93,23 @@ export const OnCallPlanningView: React.FC = () => {
   }, [actualDates]);
 
   // Fetch shift definitions (needed for mapping)
-  const { data: shiftDefinitions = [], isLoading: shiftDefinitionsLoading } = useShiftDefinitions();
+  const { data: shiftDefinitions = [], isLoading: shiftDefinitionsLoading } =
+    useShiftDefinitions();
 
   // Fetch data
-  const { data: assignments = [], isLoading: assignmentsLoading } = useAssignments(queryParams);
+  const { data: assignments = [], isLoading: assignmentsLoading } =
+    useAssignments(queryParams);
   const { data: employees = [], isLoading: employeesLoading } = useEmployees();
 
   // Fetch employee capacities (month parameter is optional, used for calculating assigned/remaining)
-  const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-  const { data: employeeCapacities = [] } = useEmployeeCapacities({ month: monthString });
-  const { data: unplannedShifts = [], isLoading: isLoadingUnplanned } = useUnplannedShiftInstances({
+  const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+  const { data: employeeCapacities = [] } = useEmployeeCapacities({
     month: monthString,
   });
+  const { data: unplannedShifts = [], isLoading: isLoadingUnplanned } =
+    useUnplannedShiftInstances({
+      month: monthString,
+    });
   const {
     data: aplanoCompareData,
     isLoading: isLoadingAplanoCompare,
@@ -117,10 +130,12 @@ export const OnCallPlanningView: React.FC = () => {
     assignments.forEach((assignment) => {
       if (!assignment.shift_definition || !assignment.shift_instance) return;
 
-      const dutyTypeMapping = shiftDefinitionToDutyType(assignment.shift_definition);
+      const dutyTypeMapping = shiftDefinitionToDutyType(
+        assignment.shift_definition,
+      );
       if (!dutyTypeMapping) return;
 
-      const key = `${assignment.shift_instance.date}_${dutyTypeMapping.dutyType}_${dutyTypeMapping.area || ''}`;
+      const key = `${assignment.shift_instance.date}_${dutyTypeMapping.dutyType}_${dutyTypeMapping.area || ""}`;
       map.set(key, assignment);
     });
     return map;
@@ -128,11 +143,15 @@ export const OnCallPlanningView: React.FC = () => {
 
   // Get assignment for a specific date, duty type, and area
   const getAssignment = useCallback(
-    (date: Date, dutyType: DutyType, area?: OnCallArea): Assignment | undefined => {
-      const key = `${formatDate(date)}_${dutyType}_${area || ''}`;
+    (
+      date: Date,
+      dutyType: DutyType,
+      area?: OnCallArea,
+    ): Assignment | undefined => {
+      const key = `${formatDate(date)}_${dutyType}_${area || ""}`;
       return assignmentsMap.get(key);
     },
-    [assignmentsMap]
+    [assignmentsMap],
   );
 
   // Filter employees by function only (no area filter)
@@ -140,32 +159,40 @@ export const OnCallPlanningView: React.FC = () => {
     (dutyType: DutyType, area?: OnCallArea): Employee[] => {
       return employees.filter((emp) => {
         // Check function only (no area filter)
-        if (dutyType.includes('doctors')) {
-          return emp.function === 'Arzt' || emp.function === 'Honorararzt';
+        if (dutyType.includes("doctors")) {
+          return emp.function === "Arzt" || emp.function === "Honorararzt";
         } else {
-          return emp.function === 'Pflegekraft' || emp.function === 'PDL';
+          return emp.function === "Pflegekraft" || emp.function === "PDL";
         }
       });
     },
-    [employees]
+    [employees],
   );
 
   // Handle duty click
-  const handleDutyClick = useCallback((date: Date, duty: { type: DutyType; area?: OnCallArea }) => {
-    setSelectedDate(date);
-    setSelectedDuty(duty);
-    setAssignmentDialogOpen(true);
-  }, []);
+  const handleDutyClick = useCallback(
+    (date: Date, duty: { type: DutyType; area?: OnCallArea }) => {
+      setSelectedDate(date);
+      setSelectedDuty(duty);
+      setAssignmentDialogOpen(true);
+    },
+    [],
+  );
 
   // Handle employee selection
   const handleEmployeeChange = useCallback(
-    async (employeeId: number | '') => {
-      if (!selectedDate || !selectedDuty || shiftDefinitions.length === 0) return;
+    async (employeeId: number | "") => {
+      if (!selectedDate || !selectedDuty || shiftDefinitions.length === 0)
+        return;
 
       const dateStr = formatDate(selectedDate);
-      const existing = getAssignment(selectedDate, selectedDuty.type, selectedDuty.area);
+      const existing = getAssignment(
+        selectedDate,
+        selectedDuty.type,
+        selectedDuty.area,
+      );
 
-      if (employeeId === '') {
+      if (employeeId === "") {
         // Delete assignment
         if (existing?.id) {
           await deleteAssignment.mutateAsync(existing.id);
@@ -182,10 +209,10 @@ export const OnCallPlanningView: React.FC = () => {
           const shiftDef = findShiftDefinition(
             shiftDefinitions,
             selectedDuty.type,
-            selectedDuty.area || 'Nord'
+            selectedDuty.area || "Nord",
           );
           if (!shiftDef) {
-            setNotification('Schicht-Definition nicht gefunden', 'error');
+            setNotification("Schicht-Definition nicht gefunden", "error");
             return;
           }
 
@@ -194,7 +221,7 @@ export const OnCallPlanningView: React.FC = () => {
             shift_definition_id: shiftDef.id,
             date: dateStr,
             employee_id: employeeId as number,
-            source: 'MANUAL',
+            source: "MANUAL",
           } as Extract<CreateAssignmentData, { shift_definition_id: number }>);
         }
       }
@@ -212,7 +239,7 @@ export const OnCallPlanningView: React.FC = () => {
       deleteAssignment,
       shiftDefinitions,
       setNotification,
-    ]
+    ],
   );
 
   const handleDialogClose = useCallback(() => {
@@ -236,11 +263,11 @@ export const OnCallPlanningView: React.FC = () => {
         const lastDayOfMonth = new Date(year, month + 1, 0);
         const startDate = formatDate(firstDayOfMonth);
         const endDate = formatDate(lastDayOfMonth);
-        const monthParam = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const monthParam = `${year}-${String(month + 1).padStart(2, "0")}`;
         // Vormonat für W2/W3 (Wochenend-Rotation, Tag/Nacht-Wechsel)
         const prevMonth = month === 0 ? 11 : month - 1;
         const prevYear = month === 0 ? year - 1 : year;
-        const prevMonthParam = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
+        const prevMonthParam = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}`;
 
         // Zuerst Shift-Instanzen für Vormonat und Planungsmonat erzeugen (falls noch nicht vorhanden)
         await generateShiftInstances.mutateAsync({ month: prevMonthParam });
@@ -263,43 +290,64 @@ export const OnCallPlanningView: React.FC = () => {
           message?: string;
           infeasibility_summary?: string[];
         };
-        if (data.solver_status === 'ERROR' && data.error === 'APLANO_UNAVAILABLE') {
-          setNotification(data.message ?? 'Aplano ist nicht verfügbar.', 'error');
+        if (
+          data.solver_status === "ERROR" &&
+          data.error === "APLANO_UNAVAILABLE"
+        ) {
+          setNotification(
+            data.message ?? "Aplano ist nicht verfügbar.",
+            "error",
+          );
           return;
         }
-        if (data.solver_status === 'ERROR') {
-          setNotification(data.message ?? 'Fehler bei der automatischen Planung', 'error');
+        if (data.solver_status === "ERROR") {
+          setNotification(
+            data.message ?? "Fehler bei der automatischen Planung",
+            "error",
+          );
           return;
         }
-        if (data.solver_status === 'INFEASIBLE') {
+        if (data.solver_status === "INFEASIBLE") {
           const lines = data.infeasibility_summary?.length
-            ? [data.message ?? 'Keine zulässige Lösung.', '', ...data.infeasibility_summary]
-            : [data.message ?? 'Keine zulässige Lösung (Solver: INFEASIBLE).'];
-          setNotification(lines.join('\n'), 'error');
+            ? [
+                data.message ?? "Keine zulässige Lösung.",
+                "",
+                ...data.infeasibility_summary,
+              ]
+            : [data.message ?? "Keine zulässige Lösung (Solver: INFEASIBLE)."];
+          setNotification(lines.join("\n"), "error");
           return;
         }
-        if (data.solver_status === 'SKIPPED') {
-          setNotification(data.message ?? 'Automatische Planung übersprungen', 'error');
+        if (data.solver_status === "SKIPPED") {
+          setNotification(
+            data.message ?? "Automatische Planung übersprungen",
+            "error",
+          );
           return;
         }
 
         // Show success notification
-        setNotification('Automatische Planung erfolgreich abgeschlossen', 'success');
+        setNotification(
+          "Automatische Planung erfolgreich abgeschlossen",
+          "success",
+        );
 
         // Close dialog only after successful completion
         setAutoPlanningDialogOpen(false);
       } catch (error: any) {
-        console.error('Failed to start auto planning:', error);
+        console.error("Failed to start auto planning:", error);
 
         // Show error notification (network/server errors)
         const errorMessage =
-          error?.response?.data?.error || error?.message || 'Fehler bei der automatischen Planung';
-        setNotification(errorMessage, 'error');
+          error?.response?.data?.error ||
+          error?.message ||
+          "Fehler bei der automatischen Planung";
+        setNotification(errorMessage, "error");
 
         // Dialog stays open on error so user can retry
       }
     },
-    [currentDate, autoPlan, generateShiftInstances, setNotification]
+    [currentDate, autoPlan, generateShiftInstances, setNotification],
   );
 
   // Reset planning for a date range
@@ -319,26 +367,37 @@ export const OnCallPlanningView: React.FC = () => {
       });
 
       // Show success notification
-      setNotification('Planung erfolgreich zurückgesetzt', 'success');
+      setNotification("Planung erfolgreich zurückgesetzt", "success");
 
       // Close dialog after successful reset
       setAutoPlanningDialogOpen(false);
     } catch (error: any) {
-      console.error('Failed to reset planning:', error);
+      console.error("Failed to reset planning:", error);
 
       // Show error notification
       const errorMessage =
-        error?.response?.data?.error || error?.message || 'Fehler beim Zurücksetzen der Planung';
-      setNotification(errorMessage, 'error');
+        error?.response?.data?.error ||
+        error?.message ||
+        "Fehler beim Zurücksetzen der Planung";
+      setNotification(errorMessage, "error");
     }
   }, [currentDate, resetPlanning, setNotification]);
 
   // Wrapper functions for table view
   const handleCreateAssignment = useCallback(
-    async (data: { employee_id: number; date: string; duty_type: DutyType; area?: OnCallArea }) => {
-      const shiftDef = findShiftDefinition(shiftDefinitions, data.duty_type, data.area || 'Nord');
+    async (data: {
+      employee_id: number;
+      date: string;
+      duty_type: DutyType;
+      area?: OnCallArea;
+    }) => {
+      const shiftDef = findShiftDefinition(
+        shiftDefinitions,
+        data.duty_type,
+        data.area || "Nord",
+      );
       if (!shiftDef) {
-        setNotification('Schicht-Definition nicht gefunden', 'error');
+        setNotification("Schicht-Definition nicht gefunden", "error");
         return;
       }
 
@@ -347,10 +406,10 @@ export const OnCallPlanningView: React.FC = () => {
         shift_definition_id: shiftDef.id,
         date: data.date,
         employee_id: data.employee_id,
-        source: 'MANUAL',
+        source: "MANUAL",
       } as Extract<CreateAssignmentData, { shift_definition_id: number }>);
     },
-    [createAssignment, shiftDefinitions, setNotification]
+    [createAssignment, shiftDefinitions, setNotification],
   );
 
   const handleUpdateAssignment = useCallback(
@@ -360,24 +419,24 @@ export const OnCallPlanningView: React.FC = () => {
         data: { employee_id: data.assignmentData.employee_id },
       });
     },
-    [updateAssignment]
+    [updateAssignment],
   );
 
   const handleDeleteAssignment = useCallback(
     async (id: number) => {
       await deleteAssignment.mutateAsync(id);
     },
-    [deleteAssignment]
+    [deleteAssignment],
   );
 
   if (assignmentsLoading || employeesLoading || shiftDefinitionsLoading) {
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
         }}
       >
         <CircularProgress />
@@ -397,19 +456,19 @@ export const OnCallPlanningView: React.FC = () => {
   return (
     <Box
       sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        backgroundColor: 'background.default',
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        backgroundColor: "background.default",
       }}
     >
       <Box
         sx={{
-          width: '100%',
+          width: "100%",
           p: 4,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           flex: 1,
           minHeight: 0,
         }}
@@ -421,21 +480,21 @@ export const OnCallPlanningView: React.FC = () => {
           onUnplannedOpen={() => setUnplannedDialogOpen(true)}
         />
 
-        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-          {displayType === 'calendar' ? (
+        <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+          {displayType === "calendar" ? (
             <>
               <Box
                 sx={{
-                  backgroundColor: 'background.paper',
+                  backgroundColor: "background.paper",
                   borderRadius: 3,
                   pt: 0,
                   px: 3,
                   pb: 3,
-                  boxShadow: 'none',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  height: '100%',
-                  overflow: 'auto',
+                  boxShadow: "none",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  height: "100%",
+                  overflow: "auto",
                 }}
               >
                 <CalendarGrid
@@ -460,16 +519,16 @@ export const OnCallPlanningView: React.FC = () => {
           ) : (
             <Box
               sx={{
-                backgroundColor: 'background.paper',
+                backgroundColor: "background.paper",
                 borderRadius: 3,
                 pt: 0,
                 px: 3,
                 pb: 3,
-                boxShadow: 'none',
-                border: '1px solid',
-                borderColor: 'divider',
-                height: '100%',
-                overflow: 'auto',
+                boxShadow: "none",
+                border: "1px solid",
+                borderColor: "divider",
+                height: "100%",
+                overflow: "auto",
               }}
             >
               <EmployeeTable
@@ -490,16 +549,23 @@ export const OnCallPlanningView: React.FC = () => {
         <Box
           sx={{
             mt: 2,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             gap: 2,
-            position: 'sticky',
+            position: "sticky",
             bottom: 12,
             zIndex: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+              flexWrap: "wrap",
+            }}
+          >
             <Button
               variant="outlined"
               startIcon={<BarChartIcon sx={{ fontSize: 18 }} />}
@@ -514,7 +580,7 @@ export const OnCallPlanningView: React.FC = () => {
             startIcon={<CompareArrowsIcon sx={{ fontSize: 18 }} />}
             onClick={() => setAplanoCompareOpen(true)}
             size="small"
-            sx={{ whiteSpace: 'nowrap' }}
+            sx={{ whiteSpace: "nowrap" }}
           >
             Aplano-Abgleich
           </Button>
@@ -551,9 +617,9 @@ export const OnCallPlanningView: React.FC = () => {
             await createAssignment.mutateAsync({
               shift_instance_id: shiftInstanceId,
               employee_id: employeeId,
-              source: 'MANUAL',
+              source: "MANUAL",
             });
-            setNotification('Schicht zugewiesen', 'success');
+            setNotification("Schicht zugewiesen", "success");
           }}
           monthLabel={formatMonthYear(currentDate)}
         />
@@ -575,13 +641,13 @@ export const OnCallPlanningView: React.FC = () => {
           open={notification.open}
           autoHideDuration={6000}
           onClose={closeNotification}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
           <Alert
             onClose={closeNotification}
             severity={notification.severity}
             variant="filled"
-            sx={{ width: '100%', whiteSpace: 'pre-line' }}
+            sx={{ width: "100%", whiteSpace: "pre-line" }}
           >
             {notification.message}
           </Alert>

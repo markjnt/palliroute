@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -15,7 +15,7 @@ import {
   ListItemButton,
   ListItemText,
   TextField,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Refresh as RefreshIcon,
   TableChart as TableIcon,
@@ -23,36 +23,39 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   ExpandMore as ExpandMoreIcon,
-} from '@mui/icons-material';
-import { Employee } from '../../types/models';
-import { EmployeeForm } from './EmployeeForm';
-import { EmployeeTablePopup } from './EmployeeTablePopup';
-import { WeeklyPlanningTable } from './WeeklyPlanningTable';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/icons-material";
+import { Employee } from "../../types/models";
+import { EmployeeForm } from "./EmployeeForm";
+import { EmployeeTablePopup } from "./EmployeeTablePopup";
+import { WeeklyPlanningTable } from "./WeeklyPlanningTable";
+import { useNavigate } from "react-router-dom";
 import {
   useEmployees,
   useDeleteEmployee,
   useImportEmployees,
-} from '../../services/queries/useEmployees';
-import { useNotificationStore } from '../../stores/useNotificationStore';
-import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
-import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
-import { MAP_HEADER_TOOLBAR_PX } from '../../theme/floatingControlSx';
-import { dateFromIsoCalendarWeek } from '@palliroute/shared';
+} from "../../services/queries/useEmployees";
+import { useNotificationStore } from "../../stores/useNotificationStore";
+import { useLastUpdateStore } from "../../stores/useLastUpdateStore";
+import { usePlanningWeekStore } from "../../stores/usePlanningWeekStore";
+import { MAP_HEADER_TOOLBAR_PX } from "../../theme/floatingControlSx";
+import { dateFromIsoCalendarWeek } from "@palliroute/shared";
 
 /** 1–52, gleiche Liste wie `usePlanningWeekStore.getAvailablePlanningWeeks` — stabil für useMemo. */
 const PLANNING_WEEKS_1_52: readonly number[] = Object.freeze(
-  Array.from({ length: 52 }, (_, i) => i + 1)
+  Array.from({ length: 52 }, (_, i) => i + 1),
 );
 
 /** Montag–Sonntag der ISO-KW im Jahr (Anzeige; Jahr = Referenz für Planung). */
-function formatIsoWeekShortRange(calendarWeek: number, isoYear: number): string {
+function formatIsoWeekShortRange(
+  calendarWeek: number,
+  isoYear: number,
+): string {
   try {
     const mon = dateFromIsoCalendarWeek(isoYear, calendarWeek, 1);
     const sun = dateFromIsoCalendarWeek(isoYear, calendarWeek, 7);
-    return `${mon.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })} – ${sun.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}`;
+    return `${mon.toLocaleDateString("de-DE", { day: "numeric", month: "short" })} – ${sun.toLocaleDateString("de-DE", { day: "numeric", month: "short" })}`;
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -65,7 +68,7 @@ const stringToColor = (string: string) => {
     hash = string.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  let color = '#';
+  let color = "#";
 
   for (i = 0; i < 3; i += 1) {
     const value = (hash >> (i * 8)) & 0xff;
@@ -81,16 +84,16 @@ const stringAvatar = (name: string) => {
     sx: {
       bgcolor: stringToColor(name),
       marginRight: 2,
-      '&:hover': {
-        cursor: 'pointer',
+      "&:hover": {
+        cursor: "pointer",
         boxShadow: 3,
-        transform: 'scale(1.1)',
+        transform: "scale(1.1)",
       },
     },
     children: name
-      .split(' ')
+      .split(" ")
       .map((part) => part[0])
-      .join('')
+      .join("")
       .toUpperCase(),
   };
 };
@@ -99,16 +102,21 @@ interface EmployeeSidebarProps {
   width?: number;
 }
 
-export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 }) => {
+export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({
+  width = 400,
+}) => {
   const [openForm, setOpenForm] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState<{ id: number; name: string } | null>(
-    null
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const [tablePopupOpen, setTablePopupOpen] = useState(false);
   const [kwAnchorEl, setKwAnchorEl] = useState<null | HTMLElement>(null);
-  const [kwPickerSearch, setKwPickerSearch] = useState('');
+  const [kwPickerSearch, setKwPickerSearch] = useState("");
   const [kwPickerShowAll, setKwPickerShowAll] = useState(false);
   const navigate = useNavigate();
   const planningYear = new Date().getFullYear();
@@ -118,11 +126,15 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
   const deleteEmployeeMutation = useDeleteEmployee();
   const importEmployeesMutation = useImportEmployees();
   const { setNotification } = useNotificationStore();
-  const { lastEmployeeImportTime, setLastEmployeeImportTime } = useLastUpdateStore();
+  const { lastEmployeeImportTime, setLastEmployeeImportTime } =
+    useLastUpdateStore();
 
   // Planning week store
-  const { selectedPlanningWeek, setSelectedPlanningWeek, getCurrentPlanningWeek } =
-    usePlanningWeekStore();
+  const {
+    selectedPlanningWeek,
+    setSelectedPlanningWeek,
+    getCurrentPlanningWeek,
+  } = usePlanningWeekStore();
 
   const displayedPlanningWeeks = useMemo(() => {
     const all = PLANNING_WEEKS_1_52;
@@ -143,24 +155,30 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
     const from = Math.max(1, cur - 5);
     const to = Math.min(52, cur + 5);
     return all.filter((w) => w >= from && w <= to);
-  }, [kwPickerSearch, kwPickerShowAll, planningYear, selectedPlanningWeek, getCurrentPlanningWeek]);
+  }, [
+    kwPickerSearch,
+    kwPickerShowAll,
+    planningYear,
+    selectedPlanningWeek,
+    getCurrentPlanningWeek,
+  ]);
 
   useEffect(() => {
     if (!kwAnchorEl) {
-      setKwPickerSearch('');
+      setKwPickerSearch("");
       setKwPickerShowAll(false);
     }
   }, [kwAnchorEl]);
 
   // Format last update time for display
   const formatLastUpdateTime = (time: Date | null): string => {
-    if (!time) return 'Noch nicht aktualisiert';
+    if (!time) return "Noch nicht aktualisiert";
 
     return (
-      'zuletzt ' +
-      time.toLocaleDateString('de-DE') +
-      ' ' +
-      time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+      "zuletzt " +
+      time.toLocaleDateString("de-DE") +
+      " " +
+      time.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
     );
   };
 
@@ -187,7 +205,7 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
       setDeleteDialogOpen(false);
       setEmployeeToDelete(null);
     } catch (error) {
-      console.error('Error deleting employee:', error);
+      console.error("Error deleting employee:", error);
       // Optional: Show error message to user
     }
   };
@@ -198,7 +216,7 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
 
       // Create detailed success message
       const { summary } = result;
-      let message = 'Import erfolgreich: ';
+      let message = "Import erfolgreich: ";
       const parts = [];
 
       if (summary.added > 0) {
@@ -212,26 +230,26 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
       }
 
       if (parts.length > 0) {
-        message += parts.join(', ');
+        message += parts.join(", ");
 
         // Add detailed breakdown if there are multiple types of changes
         if (parts.length > 1) {
           message += ` (Gesamt: ${summary.total_processed})`;
         }
       } else {
-        message = 'Keine Änderungen erforderlich';
+        message = "Keine Änderungen erforderlich";
       }
 
-      setNotification(message, 'success');
+      setNotification(message, "success");
     } catch (error: any) {
-      console.error('Error importing employees:', error);
-      let message = 'Fehler beim Importieren der Mitarbeiter';
+      console.error("Error importing employees:", error);
+      let message = "Fehler beim Importieren der Mitarbeiter";
       if (error?.response?.data?.error) {
         message = error.response.data.error;
       } else if (error?.message) {
         message = error.message;
       }
-      setNotification(message, 'error');
+      setNotification(message, "error");
     }
   };
 
@@ -270,29 +288,31 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
   // Set current week if no week is selected
   useEffect(() => {
     if (selectedPlanningWeek === null) {
-      setSelectedPlanningWeek(usePlanningWeekStore.getState().getCurrentPlanningWeek());
+      setSelectedPlanningWeek(
+        usePlanningWeekStore.getState().getCurrentPlanningWeek(),
+      );
     }
   }, [selectedPlanningWeek, setSelectedPlanningWeek]);
 
   return (
     <Box
       sx={{
-        height: '100%',
-        width: '100%',
-        bgcolor: 'background.paper',
-        display: 'flex',
-        flexDirection: 'column',
+        height: "100%",
+        width: "100%",
+        bgcolor: "background.paper",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           p: 2,
           height: 64,
           borderBottom: 1,
-          borderColor: 'divider',
+          borderColor: "divider",
         }}
       >
         <Typography variant="h6" component="h2" sx={{ pl: 2 }}>
@@ -301,8 +321,8 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
 
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             mr: 6,
           }}
         >
@@ -310,8 +330,8 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
             role="group"
             aria-label="Kalenderwoche wechseln"
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
+              display: "inline-flex",
+              alignItems: "center",
               gap: 0.75,
               flexShrink: 0,
             }}
@@ -329,7 +349,7 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
                 height: MAP_HEADER_TOOLBAR_PX,
                 p: 0,
                 borderRadius: 2,
-                boxSizing: 'border-box',
+                boxSizing: "border-box",
               }}
             >
               <ChevronLeftIcon fontSize="small" />
@@ -348,39 +368,39 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
                 px: 1.25,
                 py: 0,
                 borderRadius: 2,
-                boxSizing: 'border-box',
-                justifyContent: 'space-between',
-                textTransform: 'none',
+                boxSizing: "border-box",
+                justifyContent: "space-between",
+                textTransform: "none",
                 fontWeight: 600,
-                fontSize: '0.8125rem',
+                fontSize: "0.8125rem",
                 ...(selectedPlanningWeek
                   ? isCurrentWeek
                     ? {
-                        borderColor: 'success.main',
-                        color: 'success.main',
-                        backgroundColor: 'success.50',
-                        '&:hover': {
-                          borderColor: 'success.dark',
-                          backgroundColor: 'success.100',
+                        borderColor: "success.main",
+                        color: "success.main",
+                        backgroundColor: "success.50",
+                        "&:hover": {
+                          borderColor: "success.dark",
+                          backgroundColor: "success.100",
                         },
                       }
                     : {
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
-                        backgroundColor: 'primary.50',
-                        '&:hover': {
-                          borderColor: 'primary.dark',
-                          backgroundColor: 'primary.100',
+                        borderColor: "primary.main",
+                        color: "primary.main",
+                        backgroundColor: "primary.50",
+                        "&:hover": {
+                          borderColor: "primary.dark",
+                          backgroundColor: "primary.100",
                         },
                       }
                   : {
-                      borderColor: 'divider',
-                      color: 'text.disabled',
-                      backgroundColor: 'transparent',
+                      borderColor: "divider",
+                      color: "text.disabled",
+                      backgroundColor: "transparent",
                     }),
               }}
             >
-              {selectedPlanningWeek ? `KW ${selectedPlanningWeek}` : 'KW'}
+              {selectedPlanningWeek ? `KW ${selectedPlanningWeek}` : "KW"}
             </Button>
 
             <Button
@@ -396,7 +416,7 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
                 height: MAP_HEADER_TOOLBAR_PX,
                 p: 0,
                 borderRadius: 2,
-                boxSizing: 'border-box',
+                boxSizing: "border-box",
               }}
             >
               <ChevronRightIcon fontSize="small" />
@@ -405,7 +425,7 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
         </Box>
       </Box>
 
-      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
         <Button
           variant="contained"
           onClick={handleImport}
@@ -420,8 +440,8 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
           disabled={importEmployeesMutation.isPending}
         >
           {importEmployeesMutation.isPending
-            ? 'Importiere...'
-            : `Excel Import${lastEmployeeImportTime ? ` (${formatLastUpdateTime(lastEmployeeImportTime)})` : ''}`}
+            ? "Importiere..."
+            : `Excel Import${lastEmployeeImportTime ? ` (${formatLastUpdateTime(lastEmployeeImportTime)})` : ""}`}
         </Button>
         <Button
           variant="outlined"
@@ -435,7 +455,15 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
 
       <Divider />
 
-      <Box sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <Box
+        sx={{
+          p: 2,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
         <WeeklyPlanningTable employees={employees} />
       </Box>
 
@@ -445,12 +473,12 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
         anchorEl={kwAnchorEl}
         onClose={handleKwPopoverClose}
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
+          vertical: "bottom",
+          horizontal: "left",
         }}
         transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
+          vertical: "top",
+          horizontal: "left",
         }}
         PaperProps={{
           sx: {
@@ -470,12 +498,16 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
             placeholder="KW oder Datum suchen…"
             value={kwPickerSearch}
             onChange={(e) => setKwPickerSearch(e.target.value)}
-            inputProps={{ 'aria-label': 'Kalenderwoche filtern' }}
+            inputProps={{ "aria-label": "Kalenderwoche filtern" }}
           />
         </Box>
-        <List dense sx={{ py: 0, px: 1, maxHeight: 280, overflow: 'auto' }}>
+        <List dense sx={{ py: 0, px: 1, maxHeight: 280, overflow: "auto" }}>
           {displayedPlanningWeeks.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 2 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ px: 1, py: 2 }}
+            >
               Keine Kalenderwoche passt zur Suche.
             </Typography>
           ) : (
@@ -495,17 +527,25 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
                     sx={{
                       borderRadius: 1,
                       mb: 0.5,
-                      alignItems: 'flex-start',
-                      backgroundColor: isCurrentWeekItem ? 'success.50' : 'transparent',
-                      '&.Mui-selected': {
-                        backgroundColor: isCurrentWeekItem ? 'success.main' : 'primary.main',
-                        color: 'white',
-                        '&:hover': {
-                          backgroundColor: isCurrentWeekItem ? 'success.dark' : 'primary.dark',
+                      alignItems: "flex-start",
+                      backgroundColor: isCurrentWeekItem
+                        ? "success.50"
+                        : "transparent",
+                      "&.Mui-selected": {
+                        backgroundColor: isCurrentWeekItem
+                          ? "success.main"
+                          : "primary.main",
+                        color: "white",
+                        "&:hover": {
+                          backgroundColor: isCurrentWeekItem
+                            ? "success.dark"
+                            : "primary.dark",
                         },
                       },
-                      '&:hover': {
-                        backgroundColor: isCurrentWeekItem ? 'success.100' : 'primary.50',
+                      "&:hover": {
+                        backgroundColor: isCurrentWeekItem
+                          ? "success.100"
+                          : "primary.50",
                       },
                     }}
                   >
@@ -514,15 +554,20 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
                       secondary={rangeLabel || undefined}
                       primaryTypographyProps={{
                         fontWeight: isSelected ? 600 : 400,
-                        fontSize: '0.875rem',
-                        color: isCurrentWeekItem && !isSelected ? 'success.dark' : 'inherit',
+                        fontSize: "0.875rem",
+                        color:
+                          isCurrentWeekItem && !isSelected
+                            ? "success.dark"
+                            : "inherit",
                       }}
                       secondaryTypographyProps={{
-                        fontSize: '0.72rem',
+                        fontSize: "0.72rem",
                         lineHeight: 1.25,
                         sx: {
                           mt: 0.25,
-                          color: isSelected ? 'rgba(255,255,255,0.85)' : 'text.secondary',
+                          color: isSelected
+                            ? "rgba(255,255,255,0.85)"
+                            : "text.secondary",
                         },
                       }}
                     />
@@ -531,8 +576,10 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
                         sx={{
                           width: 8,
                           height: 8,
-                          borderRadius: '50%',
-                          backgroundColor: isSelected ? 'white' : 'success.main',
+                          borderRadius: "50%",
+                          backgroundColor: isSelected
+                            ? "white"
+                            : "success.main",
                           ml: 1,
                           mt: 0.5,
                           flexShrink: 0,
@@ -548,7 +595,12 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
         </List>
         {!kwPickerSearch && !kwPickerShowAll && (
           <Box sx={{ px: 1, pb: 1 }}>
-            <Button fullWidth size="small" variant="text" onClick={() => setKwPickerShowAll(true)}>
+            <Button
+              fullWidth
+              size="small"
+              variant="text"
+              onClick={() => setKwPickerShowAll(true)}
+            >
               Alle Kalenderwochen (1–52)
             </Button>
           </Box>
@@ -556,7 +608,11 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
       </Popover>
 
       {openForm && (
-        <EmployeeForm open={openForm} onClose={handleFormClose} employee={selectedEmployee} />
+        <EmployeeForm
+          open={openForm}
+          onClose={handleFormClose}
+          employee={selectedEmployee}
+        />
       )}
 
       <EmployeeTablePopup
@@ -584,10 +640,12 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
         <DialogTitle>Mitarbeiter löschen</DialogTitle>
         <DialogContent>
           <Typography>
-            Sind Sie sicher, dass Sie den Mitarbeiter {employeeToDelete?.name} löschen möchten?
+            Sind Sie sicher, dass Sie den Mitarbeiter {employeeToDelete?.name}{" "}
+            löschen möchten?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Hinweis: Alle zugehörigen Termine und Routen werden ebenfalls gelöscht.
+            Hinweis: Alle zugehörigen Termine und Routen werden ebenfalls
+            gelöscht.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -606,7 +664,11 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
             color="error"
             disabled={deleteEmployeeMutation.isPending}
           >
-            {deleteEmployeeMutation.isPending ? <CircularProgress size={24} /> : 'Löschen'}
+            {deleteEmployeeMutation.isPending ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Löschen"
+            )}
           </Button>
         </DialogActions>
       </Dialog>

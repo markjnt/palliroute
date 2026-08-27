@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface AdditionalRoutesStore {
   selectedEmployeeIds: (number | string)[];
@@ -17,57 +17,68 @@ const emptySelection = {
   selectedAreas: [] as string[],
 };
 
-export const useAdditionalRoutesStore = create<AdditionalRoutesStore>((set) => ({
-  selectedEmployeeIds: [],
-  selectedAreas: [],
+export const useAdditionalRoutesStore = create<AdditionalRoutesStore>(
+  (set) => ({
+    selectedEmployeeIds: [],
+    selectedAreas: [],
 
-  addEmployee: (employeeId) => {
-    set((state) => {
-      const numericId = Number(employeeId);
-      if (!numericId || Number.isNaN(numericId)) return state;
-      if (state.selectedEmployeeIds.some((id) => Number(id) === numericId)) return state;
-      return { selectedEmployeeIds: [...state.selectedEmployeeIds, numericId] };
-    });
-  },
-
-  toggleEmployee: (employeeId: number | string) => {
-    set((state) => {
-      const numericId = Number(employeeId);
-      const isSelected = state.selectedEmployeeIds.some((id) => Number(id) === numericId);
-      if (isSelected) {
-        return {
-          selectedEmployeeIds: state.selectedEmployeeIds.filter((id) => Number(id) !== numericId),
-        };
-      } else {
+    addEmployee: (employeeId) => {
+      set((state) => {
+        const numericId = Number(employeeId);
+        if (!numericId || Number.isNaN(numericId)) return state;
+        if (state.selectedEmployeeIds.some((id) => Number(id) === numericId))
+          return state;
         return {
           selectedEmployeeIds: [...state.selectedEmployeeIds, numericId],
         };
-      }
-    });
-  },
+      });
+    },
 
-  toggleArea: (area: string) => {
-    set((state) => {
-      if (state.selectedAreas.includes(area)) {
-        return { selectedAreas: state.selectedAreas.filter((item) => item !== area) };
-      }
-      return { selectedAreas: [...state.selectedAreas, area] };
-    });
-  },
+    toggleEmployee: (employeeId: number | string) => {
+      set((state) => {
+        const numericId = Number(employeeId);
+        const isSelected = state.selectedEmployeeIds.some(
+          (id) => Number(id) === numericId,
+        );
+        if (isSelected) {
+          return {
+            selectedEmployeeIds: state.selectedEmployeeIds.filter(
+              (id) => Number(id) !== numericId,
+            ),
+          };
+        } else {
+          return {
+            selectedEmployeeIds: [...state.selectedEmployeeIds, numericId],
+          };
+        }
+      });
+    },
 
-  selectAll: (employeeIds: (number | string)[]) => {
-    set({ selectedEmployeeIds: [...employeeIds] });
-  },
+    toggleArea: (area: string) => {
+      set((state) => {
+        if (state.selectedAreas.includes(area)) {
+          return {
+            selectedAreas: state.selectedAreas.filter((item) => item !== area),
+          };
+        }
+        return { selectedAreas: [...state.selectedAreas, area] };
+      });
+    },
 
-  deselectAll: () => {
-    set(emptySelection);
-  },
+    selectAll: (employeeIds: (number | string)[]) => {
+      set({ selectedEmployeeIds: [...employeeIds] });
+    },
 
-  clearAll: () => {
-    set(emptySelection);
-  },
+    deselectAll: () => {
+      set(emptySelection);
+    },
 
-  resetForNewUser: () => {
-    set(emptySelection);
-  },
-}));
+    clearAll: () => {
+      set(emptySelection);
+    },
+
+    resetForNewUser: () => {
+      set(emptySelection);
+    },
+  }),
+);

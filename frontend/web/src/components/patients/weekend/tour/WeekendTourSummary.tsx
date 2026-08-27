@@ -1,10 +1,10 @@
-import React from 'react';
-import { Box, Chip } from '@mui/material';
+import React from "react";
+import { Box, Chip } from "@mui/material";
 import {
   Home as HomeIcon,
   Phone as PhoneIcon,
   AddCircle as AddCircleIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface WeekendTourSummaryProps {
   hbAppointmentsCount: number;
@@ -18,8 +18,8 @@ export const WeekendTourSummary: React.FC<WeekendTourSummaryProps> = ({
   naAppointmentsCount,
 }) => {
   return (
-    <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
+    <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1 }}>
         {hbAppointmentsCount > 0 && (
           <Chip
             size="small"

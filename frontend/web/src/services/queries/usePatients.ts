@@ -1,21 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { patientsApi } from '../api/patients';
-import { appointmentKeys } from './useAppointments';
-import { routeKeys, liveListQueryOptions } from './useRoutes';
-import { employeeKeys } from './useEmployees';
-import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
-import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
-import { employeePlanningKeys } from './useEmployeePlanning';
-import { configKeys } from './useConfig';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { patientsApi } from "../api/patients";
+import { appointmentKeys } from "./useAppointments";
+import { routeKeys, liveListQueryOptions } from "./useRoutes";
+import { employeeKeys } from "./useEmployees";
+import { useLastUpdateStore } from "../../stores/useLastUpdateStore";
+import { useCalendarWeekStore } from "../../stores/useCalendarWeekStore";
+import { employeePlanningKeys } from "./useEmployeePlanning";
+import { configKeys } from "./useConfig";
 
 // Keys für React Query Cache
 export const patientKeys = {
-  all: ['patients'] as const,
-  lists: () => [...patientKeys.all, 'list'] as const,
+  all: ["patients"] as const,
+  lists: () => [...patientKeys.all, "list"] as const,
   list: (filters: string) => [...patientKeys.lists(), { filters }] as const,
-  details: () => [...patientKeys.all, 'detail'] as const,
+  details: () => [...patientKeys.all, "detail"] as const,
   detail: (id: number) => [...patientKeys.details(), id] as const,
-  calendarWeeks: () => [...patientKeys.all, 'calendar-weeks'] as const,
+  calendarWeeks: () => [...patientKeys.all, "calendar-weeks"] as const,
 };
 
 // Hook zum Laden aller Patienten
@@ -24,7 +24,9 @@ export const usePatients = (overrideCalendarWeek?: number) => {
 
   // Verwende override oder den ausgewählten Wert aus dem Store
   const calendarWeek =
-    overrideCalendarWeek !== undefined ? overrideCalendarWeek : selectedCalendarWeek;
+    overrideCalendarWeek !== undefined
+      ? overrideCalendarWeek
+      : selectedCalendarWeek;
 
   return useQuery({
     queryKey: [...patientKeys.lists(), { calendarWeek }],
@@ -55,7 +57,8 @@ export const useCalendarWeeks = () => {
 export const usePatientImport = () => {
   const queryClient = useQueryClient();
   const { setLastPatientImportTime } = useLastUpdateStore();
-  const { setAvailableCalendarWeeks, getCurrentCalendarWeek } = useCalendarWeekStore();
+  const { setAvailableCalendarWeeks, getCurrentCalendarWeek } =
+    useCalendarWeekStore();
 
   return useMutation({
     mutationFn: () => patientsApi.import(),
@@ -70,7 +73,9 @@ export const usePatientImport = () => {
       // Import-Zeit aus der Antwort übernehmen, damit der Button sofort aktualisiert
       const lastImportTime = data.last_import_time ?? new Date().toISOString();
       setLastPatientImportTime(new Date(lastImportTime));
-      await queryClient.cancelQueries({ queryKey: configKeys.lastImportTime() });
+      await queryClient.cancelQueries({
+        queryKey: configKeys.lastImportTime(),
+      });
       queryClient.setQueryData(configKeys.lastImportTime(), {
         last_import_time: lastImportTime,
       });
@@ -80,7 +85,7 @@ export const usePatientImport = () => {
         const calendarWeeks = await patientsApi.getCalendarWeeks();
         setAvailableCalendarWeeks(calendarWeeks);
       } catch (error) {
-        console.error('Failed to load calendar weeks after import:', error);
+        console.error("Failed to load calendar weeks after import:", error);
       }
     },
   });

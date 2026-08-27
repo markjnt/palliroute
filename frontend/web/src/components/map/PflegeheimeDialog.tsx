@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,18 +15,21 @@ import {
   CircularProgress,
   IconButton,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Business as BusinessIcon,
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   Close as CloseIcon,
-} from '@mui/icons-material';
-import { usePflegeheime, useImportPflegeheime } from '../../services/queries/usePflegeheime';
-import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
-import { usePflegeheimeVisibilityStore } from '../../stores/usePflegeheimeVisibilityStore';
-import { useNotificationStore } from '../../stores/useNotificationStore';
+} from "@mui/icons-material";
+import {
+  usePflegeheime,
+  useImportPflegeheime,
+} from "../../services/queries/usePflegeheime";
+import { useLastUpdateStore } from "../../stores/useLastUpdateStore";
+import { usePflegeheimeVisibilityStore } from "../../stores/usePflegeheimeVisibilityStore";
+import { useNotificationStore } from "../../stores/useNotificationStore";
 
 interface PflegeheimeDialogProps {
   open: boolean;
@@ -35,18 +38,22 @@ interface PflegeheimeDialogProps {
 
 const formatLastUpdateTime = (time: Date): string => {
   return (
-    'zuletzt ' +
-    time.toLocaleDateString('de-DE') +
-    ' ' +
-    time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+    "zuletzt " +
+    time.toLocaleDateString("de-DE") +
+    " " +
+    time.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
   );
 };
 
-export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({ open, onClose }) => {
+export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({
+  open,
+  onClose,
+}) => {
   const { data: pflegeheime = [], isLoading, error } = usePflegeheime();
   const importPflegeheimeMutation = useImportPflegeheime();
   const { lastPflegeheimeImportTime } = useLastUpdateStore();
-  const { showPflegeheimeOnMap, toggleShowPflegeheimeOnMap } = usePflegeheimeVisibilityStore();
+  const { showPflegeheimeOnMap, toggleShowPflegeheimeOnMap } =
+    usePflegeheimeVisibilityStore();
   const { setNotification } = useNotificationStore();
 
   const handleImport = async () => {
@@ -59,32 +66,37 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({ open, onCl
       if (summary.removed > 0) parts.push(`${summary.removed} entfernt`);
       const message =
         parts.length > 0
-          ? 'Import erfolgreich: ' +
-            parts.join(', ') +
-            (parts.length > 1 ? ` (Gesamt: ${summary.total_processed})` : '')
-          : 'Keine Änderungen erforderlich';
-      setNotification(message, 'success');
+          ? "Import erfolgreich: " +
+            parts.join(", ") +
+            (parts.length > 1 ? ` (Gesamt: ${summary.total_processed})` : "")
+          : "Keine Änderungen erforderlich";
+      setNotification(message, "success");
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      const e = err as {
+        response?: { data?: { error?: string } };
+        message?: string;
+      };
       const message =
-        e?.response?.data?.error ?? e?.message ?? 'Fehler beim Importieren der Pflegeheime';
-      setNotification(message, 'error');
+        e?.response?.data?.error ??
+        e?.message ??
+        "Fehler beim Importieren der Pflegeheime";
+      setNotification(message, "error");
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <BusinessIcon sx={{ color: '#388e3c' }} />
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <BusinessIcon sx={{ color: "#388e3c" }} />
         Pflegeheime
         <Box sx={{ flex: 1 }} />
         <IconButton
           onClick={toggleShowPflegeheimeOnMap}
-          color={showPflegeheimeOnMap ? 'primary' : 'default'}
+          color={showPflegeheimeOnMap ? "primary" : "default"}
           title={
             showPflegeheimeOnMap
-              ? 'Pflegeheime auf Karte ausblenden'
-              : 'Pflegeheime auf Karte anzeigen'
+              ? "Pflegeheime auf Karte ausblenden"
+              : "Pflegeheime auf Karte anzeigen"
           }
           size="small"
         >
@@ -95,7 +107,7 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({ open, onCl
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 0 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 0 }}>
           <Button
             variant="contained"
             onClick={handleImport}
@@ -108,21 +120,29 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({ open, onCl
               )
             }
             disabled={importPflegeheimeMutation.isPending}
-            sx={{ bgcolor: '#388e3c', '&:hover': { bgcolor: '#2e7d32' } }}
+            sx={{ bgcolor: "#388e3c", "&:hover": { bgcolor: "#2e7d32" } }}
           >
             {importPflegeheimeMutation.isPending
-              ? 'Importiere...'
-              : `Excel Import${lastPflegeheimeImportTime ? ` (${formatLastUpdateTime(lastPflegeheimeImportTime)})` : ''}`}
+              ? "Importiere..."
+              : `Excel Import${lastPflegeheimeImportTime ? ` (${formatLastUpdateTime(lastPflegeheimeImportTime)})` : ""}`}
           </Button>
 
           {isLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
               <CircularProgress />
             </Box>
           )}
-          {error && <Typography color="error">Fehler beim Laden der Pflegeheime.</Typography>}
+          {error && (
+            <Typography color="error">
+              Fehler beim Laden der Pflegeheime.
+            </Typography>
+          )}
           {!isLoading && !error && (
-            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400 }}>
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{ maxHeight: 400 }}
+            >
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>

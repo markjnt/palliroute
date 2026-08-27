@@ -1,5 +1,5 @@
-import { InteractionRequiredAuthError } from '@azure/msal-browser';
-import { loginRequest, msalInstance } from './msalConfig';
+import { InteractionRequiredAuthError } from "@azure/msal-browser";
+import { loginRequest, msalInstance } from "./msalConfig";
 
 export async function getAccessToken(): Promise<string | null> {
   const accounts = msalInstance.getAllAccounts();
@@ -23,7 +23,7 @@ export async function getAccessToken(): Promise<string | null> {
       await msalInstance.acquireTokenRedirect(loginRequest);
       return null;
     }
-    console.error('Token acquisition failed', error);
+    console.error("Token acquisition failed", error);
     return null;
   }
 }

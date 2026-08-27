@@ -1,22 +1,29 @@
-import React, { useMemo } from 'react';
-import { Box, Typography } from '@mui/material';
-import { Assignment, DutyType, OnCallArea } from '../../../types/models';
+import React, { useMemo } from "react";
+import { Box, Typography } from "@mui/material";
+import { Assignment, DutyType, OnCallArea } from "../../../types/models";
 import {
   getCalendarDays,
   getWeekDays,
   formatDate,
   getCalendarWeek,
   isWeekendLayoutDate,
-} from '../../../utils/oncall/dateUtils';
-import { WEEKDAY_DUTIES, WEEKEND_DUTIES, WEEK_DAYS } from '../../../utils/oncall/constants';
-import { useNrwpHolidaysForYears } from '../../../services/queries/useConfig';
-import { CalendarDay } from './CalendarDay';
+} from "../../../utils/oncall/dateUtils";
+import {
+  WEEKDAY_DUTIES,
+  WEEKEND_DUTIES,
+  WEEK_DAYS,
+} from "../../../utils/oncall/constants";
+import { useNrwpHolidaysForYears } from "../../../services/queries/useConfig";
+import { CalendarDay } from "./CalendarDay";
 
 interface CalendarGridProps {
-  viewMode: 'month' | 'week';
+  viewMode: "month" | "week";
   currentDate: Date;
   assignmentsMap: Map<string, Assignment>;
-  onDutyClick: (date: Date, duty: { type: DutyType; area?: OnCallArea }) => void;
+  onDutyClick: (
+    date: Date,
+    duty: { type: DutyType; area?: OnCallArea },
+  ) => void;
 }
 
 export const CalendarGrid: React.FC<CalendarGridProps> = ({
@@ -26,7 +33,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   onDutyClick,
 }) => {
   const displayDates =
-    viewMode === 'month' ? getCalendarDays(currentDate) : getWeekDays(currentDate);
+    viewMode === "month"
+      ? getCalendarDays(currentDate)
+      : getWeekDays(currentDate);
 
   const holidayYears = useMemo(() => {
     const years = new Set<number>();
@@ -40,7 +49,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Group dates by week for month view
   const weeks = useMemo(() => {
-    if (viewMode !== 'month') return [];
+    if (viewMode !== "month") return [];
 
     const weeks: Array<Array<Date | null>> = [];
     let currentWeek: Array<Date | null> = [];
@@ -69,7 +78,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     const duties = useWeekendLayout ? WEEKEND_DUTIES : WEEKDAY_DUTIES;
 
     return duties.map((duty) => {
-      const key = `${dateStr}_${duty.type}_${duty.area || ''}`;
+      const key = `${dateStr}_${duty.type}_${duty.area || ""}`;
       const assignment = assignmentsMap.get(key);
       return { duty, assignment };
     });
@@ -89,22 +98,22 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     return null;
   };
 
-  if (viewMode === 'month') {
+  if (viewMode === "month") {
     return (
-      <Box sx={{ width: '100%', pt: 3 }}>
+      <Box sx={{ width: "100%", pt: 3 }}>
         {/* Weekday headers (sticky) – füllt Lücke nach oben ohne Position zu verschieben */}
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: 'auto repeat(7, 1fr)',
+            display: "grid",
+            gridTemplateColumns: "auto repeat(7, 1fr)",
             gap: 1,
             mb: 1,
-            position: 'sticky',
+            position: "sticky",
             top: 0,
             left: 0,
             right: 0,
-            width: '100%',
-            backgroundColor: 'background.paper',
+            width: "100%",
+            backgroundColor: "background.paper",
             zIndex: 2,
             py: 0.5,
             mt: -3,
@@ -114,7 +123,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           {/* Empty cell for KW column */}
           <Box
             sx={{
-              minWidth: '40px',
+              minWidth: "40px",
               px: 1,
             }}
           />
@@ -122,13 +131,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             <Box
               key={day}
               sx={{
-                textAlign: 'center',
+                textAlign: "center",
                 fontWeight: 600,
                 py: 1.5,
-                fontSize: '0.75rem',
-                color: 'text.secondary',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                fontSize: "0.75rem",
+                color: "text.secondary",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
               }}
             >
               {day}
@@ -144,12 +153,12 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             <Box
               key={weekIdx}
               sx={{
-                display: 'grid',
-                gridTemplateColumns: 'auto repeat(7, 1fr)',
+                display: "grid",
+                gridTemplateColumns: "auto repeat(7, 1fr)",
                 gap: 1,
-                width: '100%',
+                width: "100%",
                 mb: 1,
-                '&:last-child': {
+                "&:last-child": {
                   mb: 0,
                 },
               }}
@@ -157,11 +166,11 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               {/* KW column */}
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   px: 1,
-                  minWidth: '40px',
+                  minWidth: "40px",
                 }}
               >
                 {kw !== null && (
@@ -169,8 +178,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                     variant="caption"
                     sx={{
                       fontWeight: 600,
-                      fontSize: '0.75rem',
-                      color: 'text.secondary',
+                      fontSize: "0.75rem",
+                      color: "text.secondary",
                     }}
                   >
                     KW {kw}
@@ -209,20 +218,20 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Week view
   return (
-    <Box sx={{ width: '100%', pt: 3 }}>
+    <Box sx={{ width: "100%", pt: 3 }}>
       {/* Weekday headers (sticky) – füllt Lücke nach oben ohne Position zu verschieben */}
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
           gap: 1,
           mb: 1,
-          position: 'sticky',
+          position: "sticky",
           top: 0,
           left: 0,
           right: 0,
-          width: '100%',
-          backgroundColor: 'background.paper',
+          width: "100%",
+          backgroundColor: "background.paper",
           zIndex: 2,
           py: 0.5,
           mt: -3,
@@ -233,13 +242,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           <Box
             key={day}
             sx={{
-              textAlign: 'center',
+              textAlign: "center",
               fontWeight: 600,
               py: 1.5,
-              fontSize: '0.75rem',
-              color: 'text.secondary',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              fontSize: "0.75rem",
+              color: "text.secondary",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
           >
             {day}
@@ -250,10 +259,10 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       {/* Calendar days */}
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
           gap: 1,
-          width: '100%',
+          width: "100%",
         }}
       >
         {displayDates.map((date, idx) => {

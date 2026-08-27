@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import {
   Box,
   CircularProgress,
@@ -11,7 +17,7 @@ import {
   MenuList,
   ListItemIcon,
   ListItemText,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Event as EventIcon,
   AddLocation as AddLocationIcon,
@@ -24,10 +30,10 @@ import {
   Menu as MenuIcon,
   ChangeCircle as ChangeCircleIcon,
   PictureAsPdf as PictureAsPdfIcon,
-} from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
-import { MapContainerProps, MarkerData } from '../../types/mapTypes';
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
+import { MapContainerProps, MarkerData } from "../../types/mapTypes";
 import {
   containerStyle,
   defaultCenter,
@@ -42,33 +48,37 @@ import {
   createTourAreaMarkerData,
   createTourPatientMarkerData,
   parseRouteOrder,
-} from '../../utils/mapUtils';
-import { useEmployees } from '../../services/queries/useEmployees';
-import { usePatients } from '../../services/queries/usePatients';
-import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
-import { useRoutes } from '../../services/queries/useRoutes';
-import { MapMarkers } from './MapMarkers';
-import { RoutePolylines } from '@palliroute/ui';
-import { AddCustomMarkerDialog } from './AddCustomMarkerDialog';
-import { PflegeheimeDialog } from './PflegeheimeDialog';
-import { routeLineColors, getColorForTour, getTourAreaColor } from '@palliroute/shared';
-import { Weekday } from '../../types/models';
-import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
-import { useNotificationStore } from '../../stores/useNotificationStore';
-import { useDownloadRoutePdf } from '../../services/queries/useRoutes';
-import AreaSelection from '../area_select/AreaSelection';
-import { useCustomMarkerStore } from '../../stores/useCustomMarkerStore';
-import { useNrwpHolidayForTourDay } from '../../hooks';
-import { usePflegeheime } from '../../services/queries/usePflegeheime';
-import { usePflegeheimeVisibilityStore } from '../../stores/usePflegeheimeVisibilityStore';
-import { useRouteVisibility } from '../../stores/useRouteVisibilityStore';
+} from "../../utils/mapUtils";
+import { useEmployees } from "../../services/queries/useEmployees";
+import { usePatients } from "../../services/queries/usePatients";
+import { useAppointmentsByWeekday } from "../../services/queries/useAppointments";
+import { useRoutes } from "../../services/queries/useRoutes";
+import { MapMarkers } from "./MapMarkers";
+import { RoutePolylines } from "@palliroute/ui";
+import { AddCustomMarkerDialog } from "./AddCustomMarkerDialog";
+import { PflegeheimeDialog } from "./PflegeheimeDialog";
+import {
+  routeLineColors,
+  getColorForTour,
+  getTourAreaColor,
+} from "@palliroute/shared";
+import { Weekday } from "../../types/models";
+import { useCalendarWeekStore } from "../../stores/useCalendarWeekStore";
+import { useNotificationStore } from "../../stores/useNotificationStore";
+import { useDownloadRoutePdf } from "../../services/queries/useRoutes";
+import AreaSelection from "../area_select/AreaSelection";
+import { useCustomMarkerStore } from "../../stores/useCustomMarkerStore";
+import { useNrwpHolidayForTourDay } from "../../hooks";
+import { usePflegeheime } from "../../services/queries/usePflegeheime";
+import { usePflegeheimeVisibilityStore } from "../../stores/usePflegeheimeVisibilityStore";
+import { useRouteVisibility } from "../../stores/useRouteVisibilityStore";
 import {
   mapFloatingControlSx,
   mapFloatingSurfaceSx,
   mapToolbarIconButtonSx,
   MAP_HEADER_TOOLBAR_PX,
   MAP_OVERLAY_TOP_PX,
-} from '../../theme/floatingControlSx';
+} from "../../theme/floatingControlSx";
 
 /**
  * Main container component for the map that integrates all map features
@@ -92,20 +102,22 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const { setNotification } = useNotificationStore();
   const downloadPdfMutation = useDownloadRoutePdf();
   const { data: pflegeheime = [] } = usePflegeheime();
-  const showPflegeheimeOnMap = usePflegeheimeVisibilityStore((s) => s.showPflegeheimeOnMap);
+  const showPflegeheimeOnMap = usePflegeheimeVisibilityStore(
+    (s) => s.showPflegeheimeOnMap,
+  );
   const toggleShowPflegeheimeOnMap = usePflegeheimeVisibilityStore(
-    (s) => s.toggleShowPflegeheimeOnMap
+    (s) => s.toggleShowPflegeheimeOnMap,
   );
   const hiddenPolylines = useRouteVisibility((s) => s.hiddenPolylines);
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
+    id: "google-map-script",
     googleMapsApiKey: apiKey,
     libraries,
     mapIds: [GOOGLE_MAPS_MAP_ID],
-    language: 'de',
-    region: 'DE',
+    language: "de",
+    region: "DE",
   });
 
   // Map state
@@ -117,7 +129,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     if (!map) return undefined;
     const syncZoom = () => setZoomLevel(map.getZoom() ?? defaultZoom);
     syncZoom();
-    const listener = map.addListener('zoom_changed', syncZoom);
+    const listener = map.addListener("zoom_changed", syncZoom);
     return () => {
       google.maps.event.removeListener(listener);
     };
@@ -137,7 +149,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
   const handleDownloadPdf = useCallback(async () => {
     if (!selectedCalendarWeek) {
-      setNotification('Bitte wählen Sie eine Kalenderwoche aus', 'error');
+      setNotification("Bitte wählen Sie eine Kalenderwoche aus", "error");
       return;
     }
     try {
@@ -145,14 +157,24 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         calendarWeek: selectedCalendarWeek,
         selectedWeekday: selectedWeekday as Weekday,
       });
-      setNotification(`ZIP für KW ${selectedCalendarWeek} erfolgreich heruntergeladen`, 'success');
+      setNotification(
+        `ZIP für KW ${selectedCalendarWeek} erfolgreich heruntergeladen`,
+        "success",
+      );
     } catch (e) {
-      console.error('Error downloading PDF:', e);
-      setNotification('Fehler beim Herunterladen des PDFs', 'error');
+      console.error("Error downloading PDF:", e);
+      setNotification("Fehler beim Herunterladen des PDFs", "error");
     }
-  }, [selectedCalendarWeek, selectedWeekday, downloadPdfMutation, setNotification]);
+  }, [
+    selectedCalendarWeek,
+    selectedWeekday,
+    downloadPdfMutation,
+    setNotification,
+  ]);
 
-  const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
+  const { isAreaTourDay } = useNrwpHolidayForTourDay(
+    selectedWeekday as Weekday,
+  );
 
   // Data hooks - verwenden automatisch selectedCalendarWeek aus dem Store
   const {
@@ -183,7 +205,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   });
 
   // Nur die passenden Routen für den Tag und die Area
-  const isAllAreas = userArea === 'Nord- und Südkreis' || !userArea;
+  const isAllAreas = userArea === "Nord- und Südkreis" || !userArea;
   const dayRoutes = useMemo(() => {
     if (isAreaTourDay) {
       // Weekend / Feiertags-AW: Mitte + Nord/Süd je nach userArea
@@ -191,23 +213,26 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         if (route.weekday !== selectedWeekday) return false;
         if (isAllAreas) return true;
         // Always show Mitte
-        if ((route.area as string) === 'Mitte') return true;
+        if ((route.area as string) === "Mitte") return true;
         // Filter others based on userArea - handle both "Nordkreis"/"Nord" and "Südkreis"/"Süd"
-        if (userArea === 'Nordkreis' || userArea === 'Nord')
-          return (route.area as string) === 'Nord';
-        if (userArea === 'Südkreis' || userArea === 'Süd') return (route.area as string) === 'Süd';
+        if (userArea === "Nordkreis" || userArea === "Nord")
+          return (route.area as string) === "Nord";
+        if (userArea === "Südkreis" || userArea === "Süd")
+          return (route.area as string) === "Süd";
         return false;
       });
     } else {
       // Weekday routes - handle both "Nordkreis"/"Nord" and "Südkreis"/"Süd"
       let targetArea = userArea;
-      if (userArea === 'Nord') {
-        targetArea = 'Nordkreis';
-      } else if (userArea === 'Süd') {
-        targetArea = 'Südkreis';
+      if (userArea === "Nord") {
+        targetArea = "Nordkreis";
+      } else if (userArea === "Süd") {
+        targetArea = "Südkreis";
       }
       return routes.filter(
-        (route) => route.weekday === selectedWeekday && (isAllAreas || route.area === targetArea)
+        (route) =>
+          route.weekday === selectedWeekday &&
+          (isAllAreas || route.area === targetArea),
       );
     }
   }, [routes, selectedWeekday, userArea, isAllAreas, isAreaTourDay]);
@@ -234,17 +259,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       // If no routes but we're in weekend mode, show all areas or based on userArea
       if (visibleAreas.size === 0) {
         if (isAllAreas) {
-          visibleAreas.add('Nord');
-          visibleAreas.add('Mitte');
-          visibleAreas.add('Süd');
+          visibleAreas.add("Nord");
+          visibleAreas.add("Mitte");
+          visibleAreas.add("Süd");
         } else {
           // Always show Mitte
-          visibleAreas.add('Mitte');
+          visibleAreas.add("Mitte");
           // Add selected area
-          if (userArea === 'Nordkreis' || userArea === 'Nord') {
-            visibleAreas.add('Nord');
-          } else if (userArea === 'Südkreis' || userArea === 'Süd') {
-            visibleAreas.add('Süd');
+          if (userArea === "Nordkreis" || userArea === "Nord") {
+            visibleAreas.add("Nord");
+          } else if (userArea === "Südkreis" || userArea === "Süd") {
+            visibleAreas.add("Süd");
           }
         }
       }
@@ -271,11 +296,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         const awTourAppointments = appointments.filter(
           (a) =>
             a.weekday === selectedWeekday &&
-            (a.visit_type === 'HB' || a.visit_type === 'NA') &&
-            !a.employee_id
+            (a.visit_type === "HB" || a.visit_type === "NA") &&
+            !a.employee_id,
         );
 
-        const tourFlacheAreas = new Set(['Nord', 'Mitte', 'Süd']);
+        const tourFlacheAreas = new Set(["Nord", "Mitte", "Süd"]);
         const appointmentPositions = new Map<
           number,
           { position: number; routeId: number; area?: string }
@@ -300,7 +325,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         for (const appointment of awTourAppointments) {
           const patient = patients.find((p) => p.id === appointment.patient_id);
           if (patient) {
-            const posInfo = appointment.id ? appointmentPositions.get(appointment.id) : undefined;
+            const posInfo = appointment.id
+              ? appointmentPositions.get(appointment.id)
+              : undefined;
             const position = posInfo ? posInfo.position : undefined;
             const routeId = posInfo ? posInfo.routeId : undefined;
             const area = posInfo ? posInfo.area : appointment.area;
@@ -310,9 +337,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             const baseMarker = createTourPatientMarkerData(
               patient,
               appointment,
-              area || 'Unknown',
+              area || "Unknown",
               position,
-              routeId
+              routeId,
             );
             if (baseMarker) {
               const marker = { ...baseMarker, isInactive };
@@ -328,7 +355,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         if (employee.latitude && employee.longitude) {
           // Finde ggf. die Route für diesen Mitarbeiter am ausgewählten Tag
           const route = routes.find(
-            (r) => r.employee_id === employee.id && r.weekday === selectedWeekday
+            (r) =>
+              r.employee_id === employee.id && r.weekday === selectedWeekday,
           );
           const marker = createEmployeeMarkerData(employee, route?.id);
           if (marker) newMarkers.push(marker);
@@ -339,27 +367,41 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       if (patients.length > 0 && appointments.length > 0) {
         // Nur HB- und NA-Termine (Hausbesuch und Neuaufnahme)
         const appointmentsForDay = appointments.filter(
-          (a) => a.weekday === selectedWeekday && (a.visit_type === 'HB' || a.visit_type === 'NA')
+          (a) =>
+            a.weekday === selectedWeekday &&
+            (a.visit_type === "HB" || a.visit_type === "NA"),
         );
         const appointmentPositions = new Map();
         routes.forEach((route) => {
           const routeOrder = parseRouteOrder(route.route_order);
           routeOrder.forEach((appointmentId, idx) => {
-            appointmentPositions.set(appointmentId, { position: idx + 1, routeId: route.id });
+            appointmentPositions.set(appointmentId, {
+              position: idx + 1,
+              routeId: route.id,
+            });
           });
         });
         for (const appointment of appointmentsForDay) {
           const patient = patients.find((p) => p.id === appointment.patient_id);
           if (patient) {
-            const posInfo = appointment.id ? appointmentPositions.get(appointment.id) : undefined;
+            const posInfo = appointment.id
+              ? appointmentPositions.get(appointment.id)
+              : undefined;
             const position = posInfo ? posInfo.position : undefined;
             const routeId = posInfo ? posInfo.routeId : undefined;
             // Prüfe, ob die Route sichtbar ist
             const isInactive = !routeId || !visibleRouteIds.includes(routeId);
-            const baseMarker = createPatientMarkerData(patient, appointment, position, routeId);
+            const baseMarker = createPatientMarkerData(
+              patient,
+              appointment,
+              position,
+              routeId,
+            );
             if (baseMarker) {
               // Area der zugehörigen Route ermitteln
-              const routeArea = routeId ? routes.find((r) => r.id === routeId)?.area : undefined;
+              const routeArea = routeId
+                ? routes.find((r) => r.id === routeId)?.area
+                : undefined;
               const marker = { ...baseMarker, isInactive, routeArea };
               newMarkers.push(marker);
             }
@@ -373,7 +415,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       newMarkers.push({
         position: new google.maps.LatLng(customMarker.lat, customMarker.lng),
         title: customMarker.name,
-        type: 'custom',
+        type: "custom",
         customAddress: customMarker.address,
       });
     }
@@ -385,7 +427,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           newMarkers.push({
             position: new google.maps.LatLng(p.latitude, p.longitude),
             title: p.name,
-            type: 'pflegeheim' as const,
+            type: "pflegeheim" as const,
             customAddress: p.address ?? `${p.street}, ${p.zip_code} ${p.city}`,
           });
         }
@@ -429,7 +471,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       } else {
         // Weekday routes - employee-based
         const employee = employees.find((e) => e.id === route.employee_id);
-        const color = employee?.id ? getColorForTour(employee.id) : '#9E9E9E';
+        const color = employee?.id ? getColorForTour(employee.id) : "#9E9E9E";
         return {
           employeeId: route.employee_id,
           routeId: route.id,
@@ -440,7 +482,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           totalDuration: route.total_duration || 0,
           employeeName: employee
             ? `${employee.first_name} ${employee.last_name}`
-            : 'Unknown Employee',
+            : "Unknown Employee",
         };
       }
     });
@@ -448,7 +490,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
   // Fehler- und Ladezustände
   const isLoading =
-    employeesLoading || patientsLoading || appointmentsLoading || routesLoading || !isLoaded;
+    employeesLoading ||
+    patientsLoading ||
+    appointmentsLoading ||
+    routesLoading ||
+    !isLoaded;
   const error =
     mapError ||
     (patientsError instanceof Error ? patientsError.message : null) ||
@@ -457,7 +503,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -466,23 +519,23 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   return (
     <Box
       sx={{
-        height: '100%',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
       }}
     >
       {/* Karten-Menü: Bereich, PDF — links oben; RB/AW direkt daneben */}
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: MAP_OVERLAY_TOP_PX,
           left: 16,
           zIndex: 1000,
           height: MAP_HEADER_TOOLBAR_PX,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 1,
         }}
       >
@@ -495,14 +548,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           title="Kartenmenü"
           sx={mapToolbarIconButtonSx}
         >
-          <MenuIcon fontSize="small" sx={{ color: 'primary.main' }} />
+          <MenuIcon fontSize="small" sx={{ color: "primary.main" }} />
         </Button>
         <Button
           variant="outlined"
           color="primary"
           size="small"
-          startIcon={<EventIcon sx={{ color: 'primary.main', fontSize: 20 }} />}
-          onClick={() => navigate('/rbawplan')}
+          startIcon={<EventIcon sx={{ color: "primary.main", fontSize: 20 }} />}
+          onClick={() => navigate("/rbawplan")}
           aria-label="RB/AW Planung"
           sx={{
             height: MAP_HEADER_TOOLBAR_PX,
@@ -510,13 +563,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             maxHeight: MAP_HEADER_TOOLBAR_PX,
             py: 0,
             px: 1.25,
-            boxSizing: 'border-box',
+            boxSizing: "border-box",
             ...mapFloatingControlSx,
-            color: 'primary.main',
+            color: "primary.main",
             fontWeight: 600,
-            textTransform: 'none',
-            justifyContent: 'center',
-            '& .MuiButton-startIcon': { mr: 0.75 },
+            textTransform: "none",
+            justifyContent: "center",
+            "& .MuiButton-startIcon": { mr: 0.75 },
           }}
         >
           RB/AW Planung
@@ -526,21 +579,24 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           open={Boolean(mapMenuAnchor)}
           onClose={(_event, reason) => {
             // MUI Menu leitet Schließen nach Eintrag-Klick weiter (Popover-Typung ohne menuItemClick).
-            if (String(reason) === 'menuItemClick' && suppressMenuCloseFromPdfItemRef.current) {
+            if (
+              String(reason) === "menuItemClick" &&
+              suppressMenuCloseFromPdfItemRef.current
+            ) {
               return;
             }
             setMapMenuAnchor(null);
           }}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
           slotProps={{
             paper: {
               sx: {
                 minWidth: 240,
                 mt: 0.5,
                 ...mapFloatingSurfaceSx,
-                border: '1px solid',
-                borderColor: 'divider',
+                border: "1px solid",
+                borderColor: "divider",
                 borderRadius: 2.5,
                 py: 0.5,
               },
@@ -561,12 +617,12 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                 gap: 1,
               }}
             >
-              <ListItemIcon sx={{ minWidth: 36, color: 'primary.main' }}>
+              <ListItemIcon sx={{ minWidth: 36, color: "primary.main" }}>
                 <ChangeCircleIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText
                 primary="Gebiet wählen"
-                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                primaryTypographyProps={{ variant: "body2", fontWeight: 600 }}
               />
             </MenuItem>
             <MenuItem
@@ -586,9 +642,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                 gap: 1,
               }}
             >
-              <ListItemIcon sx={{ minWidth: 36, color: 'error.main' }}>
+              <ListItemIcon sx={{ minWidth: 36, color: "error.main" }}>
                 {downloadPdfMutation.isPending ? (
-                  <CircularProgress size={18} sx={{ color: 'error.main' }} />
+                  <CircularProgress size={18} sx={{ color: "error.main" }} />
                 ) : (
                   <PictureAsPdfIcon fontSize="small" />
                 )}
@@ -598,10 +654,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                 secondary={
                   selectedCalendarWeek
                     ? `Kalenderwoche ${selectedCalendarWeek}`
-                    : 'Keine KW gewählt'
+                    : "Keine KW gewählt"
                 }
-                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
+                primaryTypographyProps={{ variant: "body2", fontWeight: 600 }}
+                secondaryTypographyProps={{
+                  variant: "caption",
+                  color: "text.secondary",
+                }}
               />
             </MenuItem>
           </MenuList>
@@ -617,33 +676,35 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       {/* Pflegeheime — oben rechts */}
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: MAP_OVERLAY_TOP_PX,
           right: 16,
           zIndex: 1000,
           height: MAP_HEADER_TOOLBAR_PX,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <Box
           sx={{
-            display: 'inline-flex',
-            alignItems: 'stretch',
+            display: "inline-flex",
+            alignItems: "stretch",
             height: MAP_HEADER_TOOLBAR_PX,
             borderRadius: 2.5,
             ...mapFloatingSurfaceSx,
-            border: '1px solid',
-            borderColor: 'success.light',
-            overflow: 'hidden',
-            boxSizing: 'border-box',
+            border: "1px solid",
+            borderColor: "success.light",
+            overflow: "hidden",
+            boxSizing: "border-box",
           }}
         >
           <Button
             onClick={() => setPflegeheimeDialogOpen(true)}
             variant="outlined"
             color="success"
-            startIcon={<BusinessIcon sx={{ color: 'success.main', fontSize: 20 }} />}
+            startIcon={
+              <BusinessIcon sx={{ color: "success.main", fontSize: 20 }} />
+            }
             size="small"
             sx={{
               height: MAP_HEADER_TOOLBAR_PX,
@@ -652,18 +713,18 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               py: 0,
               px: 1.25,
               borderRadius: 0,
-              border: 'none',
-              boxShadow: 'none',
-              boxSizing: 'border-box',
+              border: "none",
+              boxShadow: "none",
+              boxSizing: "border-box",
               ...mapFloatingControlSx,
-              color: 'success.main',
+              color: "success.main",
               fontWeight: 600,
-              textTransform: 'none',
-              justifyContent: 'center',
-              '& .MuiButton-startIcon': { mr: 0.75 },
-              '&:hover': {
-                border: 'none',
-                boxShadow: 'none',
+              textTransform: "none",
+              justifyContent: "center",
+              "& .MuiButton-startIcon": { mr: 0.75 },
+              "&:hover": {
+                border: "none",
+                boxShadow: "none",
               },
             }}
           >
@@ -676,33 +737,33 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             onClick={toggleShowPflegeheimeOnMap}
             title={
               showPflegeheimeOnMap
-                ? 'Pflegeheime auf Karte ausblenden'
-                : 'Pflegeheime auf Karte anzeigen'
+                ? "Pflegeheime auf Karte ausblenden"
+                : "Pflegeheime auf Karte anzeigen"
             }
             aria-label={
               showPflegeheimeOnMap
-                ? 'Pflegeheime auf Karte ausblenden'
-                : 'Pflegeheime auf Karte anzeigen'
+                ? "Pflegeheime auf Karte ausblenden"
+                : "Pflegeheime auf Karte anzeigen"
             }
             sx={{
               ...mapToolbarIconButtonSx,
               borderRadius: 0,
-              border: 'none',
-              borderLeft: '1px solid',
-              borderColor: 'divider',
-              boxShadow: 'none',
-              color: showPflegeheimeOnMap ? 'success.main' : 'action.active',
-              '&:hover': {
-                bgcolor: 'grey.100',
-                border: 'none',
-                borderLeft: '1px solid',
-                borderColor: 'divider',
-                boxShadow: 'none',
+              border: "none",
+              borderLeft: "1px solid",
+              borderColor: "divider",
+              boxShadow: "none",
+              color: showPflegeheimeOnMap ? "success.main" : "action.active",
+              "&:hover": {
+                bgcolor: "grey.100",
+                border: "none",
+                borderLeft: "1px solid",
+                borderColor: "divider",
+                boxShadow: "none",
               },
             }}
           >
             {showPflegeheimeOnMap ? (
-              <VisibilityIcon fontSize="small" sx={{ color: 'success.main' }} />
+              <VisibilityIcon fontSize="small" sx={{ color: "success.main" }} />
             ) : (
               <VisibilityOffIcon fontSize="small" />
             )}
@@ -727,13 +788,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       {/* Marker + Zoom — unten rechts */}
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           bottom: 24,
           right: 16,
           zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'stretch',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
           gap: 1,
         }}
       >
@@ -750,7 +811,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               width: 40,
               height: 40,
               p: 0,
-              alignSelf: 'flex-end',
+              alignSelf: "flex-end",
             }}
           >
             <DeleteIcon fontSize="small" />
@@ -768,7 +829,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               width: 40,
               height: 40,
               p: 0,
-              alignSelf: 'flex-end',
+              alignSelf: "flex-end",
             }}
           >
             <AddLocationIcon fontSize="small" />
@@ -776,14 +837,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         )}
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
             borderRadius: 2.5,
             ...mapFloatingSurfaceSx,
-            border: '1px solid',
-            borderColor: 'divider',
-            overflow: 'hidden',
+            border: "1px solid",
+            borderColor: "divider",
+            overflow: "hidden",
           }}
         >
           <IconButton
@@ -796,13 +857,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               borderRadius: 0,
               width: 40,
               height: 40,
-              bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'grey.100' },
+              bgcolor: "background.paper",
+              "&:hover": { bgcolor: "grey.100" },
             }}
           >
             <ZoomInIcon />
           </IconButton>
-          <Divider flexItem sx={{ borderColor: 'divider', opacity: 1 }} />
+          <Divider flexItem sx={{ borderColor: "divider", opacity: 1 }} />
           <IconButton
             size="small"
             onClick={zoomOut}
@@ -813,8 +874,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               borderRadius: 0,
               width: 40,
               height: 40,
-              bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'grey.100' },
+              bgcolor: "background.paper",
+              "&:hover": { bgcolor: "grey.100" },
             }}
           >
             <ZoomOutIcon />

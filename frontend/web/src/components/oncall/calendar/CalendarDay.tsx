@@ -1,14 +1,19 @@
-import React, { useMemo } from 'react';
-import { Box, Typography, Divider } from '@mui/material';
-import { Assignment, DutyType, OnCallArea } from '../../../types/models';
-import { isToday } from '../../../utils/oncall/dateUtils';
-import { DutyChip } from './DutyChip';
-import { HolidayChip } from '../../common/HolidayChip';
+import React, { useMemo } from "react";
+import { Box, Typography, Divider } from "@mui/material";
+import { Assignment, DutyType, OnCallArea } from "../../../types/models";
+import { isToday } from "../../../utils/oncall/dateUtils";
+import { DutyChip } from "./DutyChip";
+import { HolidayChip } from "../../common/HolidayChip";
 
 interface CalendarDayProps {
   date: Date;
   assignments: Array<{
-    duty: { type: DutyType; label: string; area?: OnCallArea; shortLabel: string };
+    duty: {
+      type: DutyType;
+      label: string;
+      area?: OnCallArea;
+      shortLabel: string;
+    };
     assignment?: Assignment;
   }>;
   /** NRW-Feiertag (Kalenderansicht, Punkt + Tooltip wie Tabellenkopf) */
@@ -17,7 +22,10 @@ interface CalendarDayProps {
   holidayDotCompact?: boolean;
   /** Sa/So oder Feiertags-Mo–Fr: Wochenend-Duties (AW + RB Tag/Nacht) wie in der Tabelle */
   weekendLayout?: boolean;
-  onDutyClick: (date: Date, duty: { type: DutyType; area?: OnCallArea }) => void;
+  onDutyClick: (
+    date: Date,
+    duty: { type: DutyType; area?: OnCallArea },
+  ) => void;
 }
 
 export const CalendarDay: React.FC<CalendarDayProps> = ({
@@ -35,8 +43,12 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
       return { awDuties: [], rbDuties: assignments };
     }
 
-    const aw = assignments.filter(({ duty }) => duty.type.includes('aw_nursing'));
-    const rb = assignments.filter(({ duty }) => !duty.type.includes('aw_nursing'));
+    const aw = assignments.filter(({ duty }) =>
+      duty.type.includes("aw_nursing"),
+    );
+    const rb = assignments.filter(
+      ({ duty }) => !duty.type.includes("aw_nursing"),
+    );
 
     return { awDuties: aw, rbDuties: rb };
   }, [assignments, weekendLayout]);
@@ -44,30 +56,32 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
   return (
     <Box
       sx={{
-        minHeight: '200px',
-        width: '100%',
-        border: isTodayDate ? '2px solid' : '1px solid',
-        borderColor: isTodayDate ? 'primary.main' : 'divider',
+        minHeight: "200px",
+        width: "100%",
+        border: isTodayDate ? "2px solid" : "1px solid",
+        borderColor: isTodayDate ? "primary.main" : "divider",
         borderRadius: 2,
-        backgroundColor: weekendLayout ? 'rgba(255, 152, 0, 0.08)' : 'background.paper',
+        backgroundColor: weekendLayout
+          ? "rgba(255, 152, 0, 0.08)"
+          : "background.paper",
         p: 1.5,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        '&:hover': {
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        overflow: "hidden",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        "&:hover": {
           boxShadow: 2,
-          borderColor: 'primary.light',
+          borderColor: "primary.light",
         },
       }}
     >
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           gap: 0.75,
           mb: 1,
         }}
@@ -76,23 +90,25 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
           variant="body2"
           sx={{
             fontWeight: isTodayDate ? 700 : 500,
-            color: isTodayDate ? 'primary.main' : 'text.primary',
-            fontSize: '0.875rem',
+            color: isTodayDate ? "primary.main" : "text.primary",
+            fontSize: "0.875rem",
             lineHeight: 1,
           }}
         >
           {date.getDate()}
         </Typography>
-        {holidayName ? <HolidayChip name={holidayName} compact={holidayDotCompact} /> : null}
+        {holidayName ? (
+          <HolidayChip name={holidayName} compact={holidayDotCompact} />
+        ) : null}
       </Box>
 
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 0.75,
-          width: '100%',
-          overflow: 'hidden',
+          width: "100%",
+          overflow: "hidden",
         }}
       >
         {weekendLayout ? (
@@ -112,7 +128,7 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
                   <Divider
                     sx={{
                       my: 0.5,
-                      borderColor: 'divider',
+                      borderColor: "divider",
                       opacity: 0.5,
                     }}
                   />

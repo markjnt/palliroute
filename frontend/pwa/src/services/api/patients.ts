@@ -1,15 +1,15 @@
-import { api } from '@palliroute/shared';
-import { Patient, PatientImportResponse } from '../../types/models';
-import { calendarWeekService } from './calendarWeek';
+import { api } from "@palliroute/shared";
+import { Patient, PatientImportResponse } from "../../types/models";
+import { calendarWeekService } from "./calendarWeek";
 
 export const patientsApi = {
   // Get available calendar weeks from backend
   async getCalendarWeeks(): Promise<number[]> {
     try {
-      const response = await api.get('/patients/calendar-weeks');
+      const response = await api.get("/patients/calendar-weeks");
       return response.data.calendar_weeks;
     } catch (error) {
-      console.error('Failed to fetch calendar weeks:', error);
+      console.error("Failed to fetch calendar weeks:", error);
       throw error;
     }
   },
@@ -20,12 +20,12 @@ export const patientsApi = {
       // Use the calendar week service to get the best week
       const weekToUse = await calendarWeekService.getBestWeek();
 
-      const response = await api.get('/patients/', {
+      const response = await api.get("/patients/", {
         params: { calendar_week: weekToUse },
       });
       return response.data;
     } catch (error) {
-      console.error('Failed to fetch patients:', error);
+      console.error("Failed to fetch patients:", error);
       throw error;
     }
   },
@@ -45,16 +45,16 @@ export const patientsApi = {
   async import(file: File): Promise<PatientImportResponse> {
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await api.post('/patients/import', formData, {
+      const response = await api.post("/patients/import", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
       return response.data;
     } catch (error) {
-      console.error('Failed to import patients from Excel:', error);
+      console.error("Failed to import patients from Excel:", error);
       throw error;
     }
   },

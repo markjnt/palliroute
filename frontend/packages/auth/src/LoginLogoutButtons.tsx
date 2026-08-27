@@ -1,6 +1,6 @@
-import React from 'react';
-import { Button } from '@mui/material';
-import { useAuth } from './useAuth';
+import React from "react";
+import { Button } from "@mui/material";
+import { useAuth } from "./useAuth";
 
 export const LoginButton: React.FC = () => {
   const { login, configured } = useAuth();

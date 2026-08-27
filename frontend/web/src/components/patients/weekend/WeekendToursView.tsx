@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -8,27 +8,33 @@ import {
   Collapse,
   Alert,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Weekend as WeekendIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Home as HomeIcon,
   Phone as PhoneIcon,
-} from '@mui/icons-material';
-import { Weekday, Route, Patient, Appointment, Employee } from '../../../types/models';
-import { useRoutes } from '../../../services/queries/useRoutes';
-import { useAppointmentsByWeekday } from '../../../services/queries/useAppointments';
-import { usePatients } from '../../../services/queries/usePatients';
-import { useEmployees } from '../../../services/queries/useEmployees';
-import { useAreaStore } from '../../../stores/useAreaStore';
-import { TourPatientCard } from './TourPatientCard';
-import { WeekendTourHeader } from './tour/WeekendTourHeader';
-import { WeekendTourStats } from './tour/WeekendTourStats';
-import { WeekendTourControls } from './tour/WeekendTourControls';
-import { WeekendTourSummary } from './tour/WeekendTourSummary';
-import { AwTourEmployeeSelect } from './tour/AwTourEmployeeSelect';
-import { UnassignedWeekendAppointments } from './UnassignedWeekendAppointments';
+} from "@mui/icons-material";
+import {
+  Weekday,
+  Route,
+  Patient,
+  Appointment,
+  Employee,
+} from "../../../types/models";
+import { useRoutes } from "../../../services/queries/useRoutes";
+import { useAppointmentsByWeekday } from "../../../services/queries/useAppointments";
+import { usePatients } from "../../../services/queries/usePatients";
+import { useEmployees } from "../../../services/queries/useEmployees";
+import { useAreaStore } from "../../../stores/useAreaStore";
+import { TourPatientCard } from "./TourPatientCard";
+import { WeekendTourHeader } from "./tour/WeekendTourHeader";
+import { WeekendTourStats } from "./tour/WeekendTourStats";
+import { WeekendTourControls } from "./tour/WeekendTourControls";
+import { WeekendTourSummary } from "./tour/WeekendTourSummary";
+import { AwTourEmployeeSelect } from "./tour/AwTourEmployeeSelect";
+import { UnassignedWeekendAppointments } from "./UnassignedWeekendAppointments";
 import {
   usePatientManagement,
   useRouteManagement,
@@ -36,16 +42,16 @@ import {
   useAreaManagement,
   useRouteVisibility,
   useNrwpHolidayForTourDay,
-} from '../../../hooks';
-import { useAssignAwTourEmployee } from '../../../services/queries/useRoutes';
-import { useNotificationStore } from '../../../stores/useNotificationStore';
-import { useRouteHoverStore } from '@palliroute/stores';
+} from "../../../hooks";
+import { useAssignAwTourEmployee } from "../../../services/queries/useRoutes";
+import { useNotificationStore } from "../../../stores/useNotificationStore";
+import { useRouteHoverStore } from "@palliroute/stores";
 
 interface WeekendToursViewProps {
   selectedDay: Weekday;
 }
 
-const tourAreaLabels = ['Nord', 'Mitte', 'Süd'] as const;
+const tourAreaLabels = ["Nord", "Mitte", "Süd"] as const;
 type TourArea = (typeof tourAreaLabels)[number];
 
 // Weekend Tour Container Component (similar to TourContainer)
@@ -97,11 +103,11 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
   // Find the route for this area and day (can have employee_id now)
   // Normalize area for comparison (handle both "Nordkreis"/"Südkreis" and "Nord"/"Süd")
   const normalizeAreaForRoute = (routeArea: string): string => {
-    if (!routeArea) return '';
+    if (!routeArea) return "";
     const areaLower = routeArea.toLowerCase();
-    if (areaLower.includes('nord') && !areaLower.includes('süd')) return 'Nord';
-    if (areaLower.includes('süd') && !areaLower.includes('nord')) return 'Süd';
-    if (areaLower.includes('mitte')) return 'Mitte';
+    if (areaLower.includes("nord") && !areaLower.includes("süd")) return "Nord";
+    if (areaLower.includes("süd") && !areaLower.includes("nord")) return "Süd";
+    if (areaLower.includes("mitte")) return "Mitte";
     return routeArea;
   };
 
@@ -136,8 +142,13 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
   const isHovered = routeId != null && hoveredRouteId === routeId;
 
   // Get patients using custom hook
-  const { hbPatients, tkPatients, naPatients, getSortedRoutePatients, hasAppointmentsForDay } =
-    patientManagement;
+  const {
+    hbPatients,
+    tkPatients,
+    naPatients,
+    getSortedRoutePatients,
+    hasAppointmentsForDay,
+  } = patientManagement;
 
   const sortedRoutePatients = getSortedRoutePatients(route);
 
@@ -147,13 +158,19 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
 
   // Get appointments for this area
   const areaAppointments = appointments.filter(
-    (app) => (app.area as string) === area && !app.employee_id
+    (app) => (app.area as string) === area && !app.employee_id,
   );
 
   // Group appointments by visit type
-  const hbAppointments = areaAppointments.filter((app) => app.visit_type === 'HB');
-  const tkAppointments = areaAppointments.filter((app) => app.visit_type === 'TK');
-  const naAppointments = areaAppointments.filter((app) => app.visit_type === 'NA');
+  const hbAppointments = areaAppointments.filter(
+    (app) => app.visit_type === "HB",
+  );
+  const tkAppointments = areaAppointments.filter(
+    (app) => app.visit_type === "TK",
+  );
+  const naAppointments = areaAppointments.filter(
+    (app) => app.visit_type === "NA",
+  );
 
   // Handler functions
   const handleOptimizeRoute = async () => {
@@ -162,7 +179,7 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
 
   const handleAssignEmployee = async (employeeId: number | null) => {
     if (!routeId) {
-      setNotification('Keine AW-Tour vorhanden', 'error');
+      setNotification("Keine AW-Tour vorhanden", "error");
       return;
     }
     try {
@@ -173,20 +190,20 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
       });
       if (result.planning_failed) {
         setNotification(
-          'Mitarbeiter zugewiesen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.',
-          'warning'
+          "Mitarbeiter zugewiesen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.",
+          "warning",
         );
       } else {
         setNotification(
           employeeId
-            ? 'Mitarbeiter der AW-Tour zugewiesen (manuell)'
-            : 'Zuweisung auf Aplano zurückgesetzt',
-          'success'
+            ? "Mitarbeiter der AW-Tour zugewiesen (manuell)"
+            : "Zuweisung auf Aplano zurückgesetzt",
+          "success",
         );
       }
     } catch (error) {
-      console.error('Fehler beim Zuweisen des Mitarbeiters:', error);
-      setNotification('Mitarbeiter konnte nicht zugewiesen werden', 'error');
+      console.error("Fehler beim Zuweisen des Mitarbeiters:", error);
+      setNotification("Mitarbeiter konnte nicht zugewiesen werden", "error");
     }
   };
 
@@ -204,28 +221,36 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
       sx={{
         mb: 0,
         p: 2,
-        transition: 'all 0.3s ease',
-        width: '100%',
-        height: 'fit-content',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        minHeight: expanded ? 'auto' : '120px',
+        transition: "all 0.3s ease",
+        width: "100%",
+        height: "fit-content",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        minHeight: expanded ? "auto" : "120px",
         borderWidth: 2.5,
         borderColor: areaColor,
-        borderStyle: 'solid',
+        borderStyle: "solid",
         backgroundColor: backgroundColor,
         boxShadow: isHovered ? `0 0 0 2px ${areaColor}` : undefined,
       }}
     >
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
         }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pr: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minWidth: 0,
+            pr: 1,
+          }}
+        >
           <WeekendTourHeader area={area}>
             <AwTourEmployeeSelect
               route={route}
@@ -252,7 +277,7 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
         <IconButton
           onClick={() => setExpanded(!expanded)}
           size="small"
-          aria-label={expanded ? 'Einklappen' : 'Ausklappen'}
+          aria-label={expanded ? "Einklappen" : "Ausklappen"}
           color="primary"
           sx={{ ml: 1 }}
         >
@@ -276,22 +301,33 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
             {/* HB Patienten (Route) */}
             {sortedRoutePatients.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'primary.main' }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 2,
+                    color: "primary.main",
+                  }}
+                >
                   <HomeIcon color="primary" />
                   <Typography variant="h6" sx={{ ml: 1 }}>
                     Route ({sortedRoutePatients.length})
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {sortedRoutePatients.map((patient, index) => {
                     const patientAppointments = areaAppointments.filter(
                       (app) =>
                         app.patient_id === patient.id &&
-                        (app.visit_type === 'HB' || app.visit_type === 'NA')
+                        (app.visit_type === "HB" || app.visit_type === "NA"),
                     );
-                    const hasHB = patientAppointments.some((app) => app.visit_type === 'HB');
-                    const hasNA = patientAppointments.some((app) => app.visit_type === 'NA');
-                    const visitType = hasHB ? 'HB' : hasNA ? 'NA' : 'HB'; // Default to HB if somehow neither exists
+                    const hasHB = patientAppointments.some(
+                      (app) => app.visit_type === "HB",
+                    );
+                    const hasNA = patientAppointments.some(
+                      (app) => app.visit_type === "NA",
+                    );
+                    const visitType = hasHB ? "HB" : hasNA ? "NA" : "HB"; // Default to HB if somehow neither exists
 
                     return (
                       <TourPatientCard
@@ -316,19 +352,30 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
                   variant="outlined"
                   sx={{
                     p: 2,
-                    bgcolor: 'rgba(76, 175, 80, 0.04)',
+                    bgcolor: "rgba(76, 175, 80, 0.04)",
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'success.main' }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mb: 2,
+                      color: "success.main",
+                    }}
+                  >
                     <PhoneIcon color="success" />
                     <Typography variant="h6" sx={{ ml: 1 }}>
                       Telefonkontakte ({tkPatients.length})
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
                     {tkPatients.map((patient) => {
                       const patientAppointments = areaAppointments.filter(
-                        (app) => app.patient_id === patient.id && app.visit_type === 'TK'
+                        (app) =>
+                          app.patient_id === patient.id &&
+                          app.visit_type === "TK",
                       );
                       return (
                         <TourPatientCard
@@ -358,18 +405,21 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
 };
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
-  monday: 'Montag',
-  tuesday: 'Dienstag',
-  wednesday: 'Mittwoch',
-  thursday: 'Donnerstag',
-  friday: 'Freitag',
-  saturday: 'Samstag',
-  sunday: 'Sonntag',
+  monday: "Montag",
+  tuesday: "Dienstag",
+  wednesday: "Mittwoch",
+  thursday: "Donnerstag",
+  friday: "Freitag",
+  saturday: "Samstag",
+  sunday: "Sonntag",
 };
 
-export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay }) => {
+export const WeekendToursView: React.FC<WeekendToursViewProps> = ({
+  selectedDay,
+}) => {
   const { holidayName } = useNrwpHolidayForTourDay(selectedDay);
-  const isCalendarWeekend = selectedDay === 'saturday' || selectedDay === 'sunday';
+  const isCalendarWeekend =
+    selectedDay === "saturday" || selectedDay === "sunday";
 
   const {
     data: routes = [],
@@ -384,7 +434,11 @@ export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay 
     isLoading: loadingAppointments,
     error: appointmentsError,
   } = useAppointmentsByWeekday(selectedDay);
-  const { data: patients = [], isLoading: loadingPatients, error: patientsError } = usePatients();
+  const {
+    data: patients = [],
+    isLoading: loadingPatients,
+    error: patientsError,
+  } = usePatients();
   const {
     data: employees = [],
     isLoading: loadingEmployees,
@@ -412,19 +466,26 @@ export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay 
     const filteredAppointments = appointments.filter(
       (app) =>
         app.weekday === selectedDay &&
-        (app.area as string) === 'Nicht zugewiesen' &&
-        !app.employee_id
+        (app.area as string) === "Nicht zugewiesen" &&
+        !app.employee_id,
     );
 
     return filteredAppointments.map((appointment) => ({
       appointment,
-      patient: patients.find((patient) => patient.id === appointment.patient_id),
+      patient: patients.find(
+        (patient) => patient.id === appointment.patient_id,
+      ),
     }));
   }, [appointments, patients, selectedDay]);
 
-  if (loadingRoutes || loadingAppointments || loadingPatients || loadingEmployees) {
+  if (
+    loadingRoutes ||
+    loadingAppointments ||
+    loadingPatients ||
+    loadingEmployees
+  ) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", pt: 4 }}>
         <CircularProgress />
       </Box>
     );
@@ -436,17 +497,19 @@ export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay 
         {routesError?.message ||
           appointmentsError?.message ||
           patientsError?.message ||
-          'Fehler beim Laden der Touren'}
+          "Fehler beim Laden der Touren"}
       </Alert>
     );
   }
 
-  const toursTitle = !isCalendarWeekend ? 'Feiertags-Touren' : 'Wochenend-Touren';
+  const toursTitle = !isCalendarWeekend
+    ? "Feiertags-Touren"
+    : "Wochenend-Touren";
 
   // Keine AW-Flächenrouten / keine offenen Zuweisungen
   if (filteredRoutes.length === 0 && unassignedAppointments.length === 0) {
     const dayPart = WEEKDAY_LABELS[selectedDay];
-    const feiertagPart = holidayName ? ` (Feiertag: ${holidayName})` : '';
+    const feiertagPart = holidayName ? ` (Feiertag: ${holidayName})` : "";
     return (
       <Alert severity="info" sx={{ my: 2 }}>
         Keine Touren gefunden für {dayPart}
@@ -461,13 +524,21 @@ export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay 
         <Typography
           variant="h6"
           component="h3"
-          sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
         >
-          <WeekendIcon sx={{ color: 'warning.main' }} />
+          <WeekendIcon sx={{ color: "warning.main" }} />
           {toursTitle}
         </Typography>
         {holidayName ? (
-          <Typography variant="body2" sx={{ mt: 0.5, color: 'warning.dark', fontWeight: 500 }}>
+          <Typography
+            variant="body2"
+            sx={{ mt: 0.5, color: "warning.dark", fontWeight: 500 }}
+          >
             Feiertag: {holidayName}
           </Typography>
         ) : null}
@@ -479,7 +550,7 @@ export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay 
         isAssigning={appointmentManagement.isAssigningTourArea}
       />
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
         {tourAreasToShow.map((area) => {
           const areaRoutes = tourRoutesByArea.get(area);
 

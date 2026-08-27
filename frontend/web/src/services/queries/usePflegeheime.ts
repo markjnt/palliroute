@@ -1,10 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { pflegeheimeApi } from '../api/pflegeheime';
-import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { pflegeheimeApi } from "../api/pflegeheime";
+import { useLastUpdateStore } from "../../stores/useLastUpdateStore";
 
 export const pflegeheimeKeys = {
-  all: ['pflegeheime'] as const,
-  lists: () => [...pflegeheimeKeys.all, 'list'] as const,
+  all: ["pflegeheime"] as const,
+  lists: () => [...pflegeheimeKeys.all, "list"] as const,
 };
 
 export const usePflegeheime = () => {

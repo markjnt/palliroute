@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { InfoWindow } from '@react-google-maps/api';
-import { MarkerData } from '../../types/mapTypes';
-import { Patient, Appointment, Employee, Weekday } from '../../types/models';
-import { getColorForVisitType, findEmployeeDayRoute } from '../../utils/mapUtils';
-import { getColorForAdditionalTour, getTourAreaColor } from '@palliroute/shared';
+import React, { useState } from "react";
+import { InfoWindow } from "@react-google-maps/api";
+import { MarkerData } from "../../types/mapTypes";
+import { Patient, Appointment, Employee, Weekday } from "../../types/models";
+import {
+  getColorForVisitType,
+  findEmployeeDayRoute,
+} from "../../utils/mapUtils";
+import {
+  getColorForAdditionalTour,
+  getTourAreaColor,
+} from "@palliroute/shared";
 import {
   Box,
   Typography,
@@ -15,31 +21,31 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Close as CloseIcon,
   Schedule as TimeIcon,
   Info as InfoIcon,
   Map as MapIcon,
   Phone as PhoneIcon,
-} from '@mui/icons-material';
-import { useMoveAppointment } from '../../services/queries/useAppointments';
-import { useUserStore } from '../../stores/useUserStore';
-import { useWeekdayStore } from '../../stores/useWeekdayStore';
-import { useEmployees } from '../../services/queries/useEmployees';
-import { useRoutes } from '../../services/queries/useRoutes';
-import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
-import { useCloseOnMapClick } from '@palliroute/ui';
-import { openMaps, callPhone } from '../route/stopContactActions';
+} from "@mui/icons-material";
+import { useMoveAppointment } from "../../services/queries/useAppointments";
+import { useUserStore } from "../../stores/useUserStore";
+import { useWeekdayStore } from "../../stores/useWeekdayStore";
+import { useEmployees } from "../../services/queries/useEmployees";
+import { useRoutes } from "../../services/queries/useRoutes";
+import { useNrwpHolidayForTourDay } from "../../hooks/useNrwpHolidayForTourDay";
+import { useCloseOnMapClick } from "@palliroute/ui";
+import { openMaps, callPhone } from "../route/stopContactActions";
 
 const dialogPaperSx = {
   borderRadius: 3,
-  bgcolor: 'rgba(255, 255, 255, 0.96)',
-  backdropFilter: 'blur(20px)',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)',
-  border: '1px solid rgba(255, 255, 255, 0.35)',
+  bgcolor: "rgba(255, 255, 255, 0.96)",
+  backdropFilter: "blur(20px)",
+  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)",
+  border: "1px solid rgba(255, 255, 255, 0.35)",
   mx: 2,
-  overflow: 'hidden',
+  overflow: "hidden",
 };
 
 const inlineActionSx = (color: string) => ({
@@ -48,12 +54,12 @@ const inlineActionSx = (color: string) => ({
   p: 0,
   mr: 1.25,
   mt: 0.1,
-  borderRadius: '50%',
+  borderRadius: "50%",
   bgcolor: color,
-  color: 'white',
+  color: "white",
   flexShrink: 0,
   boxShadow: `0 2px 6px ${color}40`,
-  '&:hover': { bgcolor: color, opacity: 0.9 },
+  "&:hover": { bgcolor: color, opacity: 0.9 },
 });
 
 interface StopPopupProps {
@@ -77,27 +83,38 @@ export const StopPopup: React.FC<StopPopupProps> = ({
   const [moveError, setMoveError] = useState<string | null>(null);
   const { selectedUserId } = useUserStore();
   const { selectedWeekday } = useWeekdayStore();
-  const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
+  const { isAreaTourDay } = useNrwpHolidayForTourDay(
+    selectedWeekday as Weekday,
+  );
   const { data: employees = [] } = useEmployees();
-  const { data: routes = [] } = useRoutes({ weekday: selectedWeekday as Weekday });
+  const { data: routes = [] } = useRoutes({
+    weekday: selectedWeekday as Weekday,
+  });
   const moveAppointment = useMoveAppointment();
 
   useCloseOnMapClick(onClose, !confirmOpen);
 
   const targetEmployee = employees.find((emp) => emp.id === selectedUserId);
-  const ownRoute = findEmployeeDayRoute(routes, selectedUserId, selectedWeekday, isAreaTourDay);
+  const ownRoute = findEmployeeDayRoute(
+    routes,
+    selectedUserId,
+    selectedWeekday,
+    isAreaTourDay,
+  );
   if (!patient || !appointment || appointment.id == null) {
     return null;
   }
   const visitTypeLabels = {
-    HB: 'Hausbesuch',
-    TK: 'Telefonkontakt',
-    NA: 'Neuaufnahme',
+    HB: "Hausbesuch",
+    TK: "Telefonkontakt",
+    NA: "Neuaufnahme",
   };
 
-  const accent = isAreaTourDay ? '#ff9800' : '#007AFF';
-  const areaLabel = marker.area || appointment.area || 'Bereich';
-  const employeeName = employee ? `${employee.first_name} ${employee.last_name}` : null;
+  const accent = isAreaTourDay ? "#ff9800" : "#007AFF";
+  const areaLabel = marker.area || appointment.area || "Bereich";
+  const employeeName = employee
+    ? `${employee.first_name} ${employee.last_name}`
+    : null;
   const overlayLabel = isAreaTourDay
     ? employeeName
       ? `AW ${areaLabel} · ${employeeName}`
@@ -111,10 +128,12 @@ export const StopPopup: React.FC<StopPopupProps> = ({
   const address = `${patient.street}, ${patient.zip_code} ${patient.city}`;
   const fromLabel = employee
     ? `${employee.first_name} ${employee.last_name}`
-    : appointment.area || marker.area || 'unbekannt';
+    : appointment.area || marker.area || "unbekannt";
   const toLabel = `${
-    targetEmployee ? `${targetEmployee.first_name} ${targetEmployee.last_name}` : 'eigene Tour'
-  }${isAreaTourDay && ownRoute?.area ? ` (${ownRoute.area})` : ''}`;
+    targetEmployee
+      ? `${targetEmployee.first_name} ${targetEmployee.last_name}`
+      : "eigene Tour"
+  }${isAreaTourDay && ownRoute?.area ? ` (${ownRoute.area})` : ""}`;
 
   const handleMove = async () => {
     if (!appointment.id) return;
@@ -123,7 +142,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
         const sourceArea = appointment.area || marker.area;
         const targetArea = ownRoute?.area;
         if (!sourceArea || !targetArea) {
-          setMoveError('Bitte zuerst eine AW-Tour übernehmen.');
+          setMoveError("Bitte zuerst eine AW-Tour übernehmen.");
           return;
         }
         await moveAppointment.mutateAsync({
@@ -134,7 +153,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
       } else {
         const sourceEmployeeId = employee?.id ?? appointment.employee_id;
         if (!sourceEmployeeId || !selectedUserId) {
-          setMoveError('Quell- oder Zielmitarbeiter fehlt.');
+          setMoveError("Quell- oder Zielmitarbeiter fehlt.");
           return;
         }
         await moveAppointment.mutateAsync({
@@ -146,8 +165,8 @@ export const StopPopup: React.FC<StopPopupProps> = ({
       setConfirmOpen(false);
       onClose();
     } catch (error) {
-      console.error('Failed to move appointment:', error);
-      setMoveError('Patient konnte nicht verschoben werden.');
+      console.error("Failed to move appointment:", error);
+      setMoveError("Patient konnte nicht verschoben werden.");
     }
   };
 
@@ -182,7 +201,9 @@ export const StopPopup: React.FC<StopPopupProps> = ({
       >
         <Box sx={{ p: 1.75, width: 268 }}>
           {isAdditionalRoute ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.25 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.25 }}
+            >
               <Chip
                 label={`Tour: ${overlayLabel}`}
                 size="small"
@@ -190,16 +211,16 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                   flex: 1,
                   minWidth: 0,
                   bgcolor: overlayColor,
-                  color: 'white',
+                  color: "white",
                   fontWeight: 600,
-                  fontSize: '0.8rem',
+                  fontSize: "0.8rem",
                   height: 26,
-                  justifyContent: 'flex-start',
+                  justifyContent: "flex-start",
                   borderRadius: 1.5,
-                  '& .MuiChip-label': {
+                  "& .MuiChip-label": {
                     px: 1.25,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   },
                 }}
               />
@@ -209,10 +230,10 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                 sx={{
                   width: 32,
                   height: 32,
-                  bgcolor: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  bgcolor: "rgba(0, 0, 0, 0.06)",
+                  color: "#1d1d1f",
                   flexShrink: 0,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.1)' },
+                  "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
                 }}
                 aria-label="Schließen"
               >
@@ -221,19 +242,21 @@ export const StopPopup: React.FC<StopPopupProps> = ({
             </Box>
           ) : null}
 
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.25 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 1.25 }}
+          >
             {marker.routePosition ? (
               <Box
                 sx={{
                   width: 28,
                   height: 28,
-                  borderRadius: '50%',
-                  bgcolor: isAdditionalRoute ? overlayColor : '#007AFF',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.8rem',
+                  borderRadius: "50%",
+                  bgcolor: isAdditionalRoute ? overlayColor : "#007AFF",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.8rem",
                   fontWeight: 700,
                   flexShrink: 0,
                   mt: 0.15,
@@ -245,7 +268,12 @@ export const StopPopup: React.FC<StopPopupProps> = ({
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 variant="subtitle1"
-                sx={{ fontWeight: 600, color: '#1d1d1f', lineHeight: 1.25, fontSize: '1rem' }}
+                sx={{
+                  fontWeight: 600,
+                  color: "#1d1d1f",
+                  lineHeight: 1.25,
+                  fontSize: "1rem",
+                }}
               >
                 {patient.first_name} {patient.last_name}
               </Typography>
@@ -256,7 +284,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                   mt: 0.5,
                   bgcolor: `${getColorForVisitType(appointment.visit_type)}20`,
                   color: getColorForVisitType(appointment.visit_type),
-                  fontSize: '0.7rem',
+                  fontSize: "0.7rem",
                   height: 20,
                   fontWeight: 600,
                 }}
@@ -269,10 +297,10 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                 sx={{
                   width: 32,
                   height: 32,
-                  bgcolor: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  bgcolor: "rgba(0, 0, 0, 0.06)",
+                  color: "#1d1d1f",
                   flexShrink: 0,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.1)' },
+                  "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
                 }}
                 aria-label="Schließen"
               >
@@ -281,23 +309,28 @@ export const StopPopup: React.FC<StopPopupProps> = ({
             ) : null}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.25 }}>
+          <Box sx={{ display: "flex", alignItems: "flex-start", mb: 1.25 }}>
             <IconButton
               aria-label="In Google Maps öffnen"
               onClick={() => openMaps(address)}
-              sx={inlineActionSx('#007AFF')}
+              sx={inlineActionSx("#007AFF")}
             >
               <MapIcon sx={{ fontSize: 16 }} />
             </IconButton>
             <Typography
               variant="body2"
-              sx={{ color: '#1d1d1f', fontWeight: 500, cursor: 'pointer' }}
+              sx={{ color: "#1d1d1f", fontWeight: 500, cursor: "pointer" }}
               onClick={() => openMaps(address)}
             >
               {patient.street}
               <Box
                 component="span"
-                sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}
+                sx={{
+                  display: "block",
+                  color: "#8E8E93",
+                  fontWeight: 400,
+                  fontSize: "0.75rem",
+                }}
               >
                 {patient.zip_code} {patient.city}
               </Box>
@@ -305,28 +338,38 @@ export const StopPopup: React.FC<StopPopupProps> = ({
           </Box>
 
           {appointment.time ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.25 }}>
-              <TimeIcon sx={{ fontSize: 18, color: '#8E8E93', mr: 1.25 }} />
-              <Typography variant="body2" sx={{ color: '#1d1d1f', fontWeight: 500 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1.25 }}>
+              <TimeIcon sx={{ fontSize: 18, color: "#8E8E93", mr: 1.25 }} />
+              <Typography
+                variant="body2"
+                sx={{ color: "#1d1d1f", fontWeight: 500 }}
+              >
                 {appointment.time} Uhr
               </Typography>
             </Box>
           ) : null}
 
           {(patient.phone1 || patient.phone2) && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 1.25 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.75,
+                mb: 1.25,
+              }}
+            >
               {patient.phone1 ? (
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   <IconButton
                     aria-label="Anrufen"
                     onClick={() => callPhone(patient.phone1!)}
-                    sx={inlineActionSx('#34C759')}
+                    sx={inlineActionSx("#34C759")}
                   >
                     <PhoneIcon sx={{ fontSize: 16 }} />
                   </IconButton>
                   <Typography
                     variant="body2"
-                    sx={{ color: '#1d1d1f', cursor: 'pointer' }}
+                    sx={{ color: "#1d1d1f", cursor: "pointer" }}
                     onClick={() => callPhone(patient.phone1!)}
                   >
                     {patient.phone1}
@@ -334,17 +377,17 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                 </Box>
               ) : null}
               {patient.phone2 ? (
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   <IconButton
                     aria-label="Anrufen"
                     onClick={() => callPhone(patient.phone2!)}
-                    sx={inlineActionSx('#34C759')}
+                    sx={inlineActionSx("#34C759")}
                   >
                     <PhoneIcon sx={{ fontSize: 16 }} />
                   </IconButton>
                   <Typography
                     variant="body2"
-                    sx={{ color: '#1d1d1f', cursor: 'pointer' }}
+                    sx={{ color: "#1d1d1f", cursor: "pointer" }}
                     onClick={() => callPhone(patient.phone2!)}
                   >
                     {patient.phone2}
@@ -355,13 +398,15 @@ export const StopPopup: React.FC<StopPopupProps> = ({
           )}
 
           {appointment.info ? (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.25 }}>
-              <InfoIcon sx={{ fontSize: 18, color: '#007AFF', mr: 1.25, mt: 0.15 }} />
+            <Box sx={{ display: "flex", alignItems: "flex-start", mb: 1.25 }}>
+              <InfoIcon
+                sx={{ fontSize: 18, color: "#007AFF", mr: 1.25, mt: 0.15 }}
+              />
               <Typography
                 variant="body2"
                 sx={{
-                  color: '#007AFF',
-                  bgcolor: 'rgba(0, 122, 255, 0.1)',
+                  color: "#007AFF",
+                  bgcolor: "rgba(0, 122, 255, 0.1)",
                   px: 1,
                   py: 0.5,
                   borderRadius: 1,
@@ -383,12 +428,15 @@ export const StopPopup: React.FC<StopPopupProps> = ({
               }}
               sx={{
                 mt: 0.25,
-                textTransform: 'none',
+                textTransform: "none",
                 borderRadius: 1.5,
                 fontWeight: 600,
                 bgcolor: accent,
-                boxShadow: 'none',
-                '&:hover': { bgcolor: isAreaTourDay ? '#f57c00' : '#0062CC', boxShadow: 'none' },
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: isAreaTourDay ? "#f57c00" : "#0062CC",
+                  boxShadow: "none",
+                },
               }}
             >
               Patient verschieben
@@ -404,31 +452,46 @@ export const StopPopup: React.FC<StopPopupProps> = ({
         maxWidth="xs"
         slotProps={{ paper: { sx: dialogPaperSx } }}
       >
-        <DialogTitle sx={{ fontWeight: 600, color: '#1d1d1f', pb: 0.5, pt: 2.5, px: 2.5 }}>
+        <DialogTitle
+          sx={{ fontWeight: 600, color: "#1d1d1f", pb: 0.5, pt: 2.5, px: 2.5 }}
+        >
           Patient verschieben?
         </DialogTitle>
         <DialogContent sx={{ px: 2.5, pb: 1 }}>
-          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            {patient.first_name} {patient.last_name} auf die eigene Tour übernehmen?
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+            {patient.first_name} {patient.last_name} auf die eigene Tour
+            übernehmen?
           </Typography>
           <Box
             sx={{
               p: 1.5,
               borderRadius: 2,
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              background: "linear-gradient(135deg, #ffffff 0%, #fafafa 100%)",
             }}
           >
-            <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93' }}>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 600, color: "#8E8E93" }}
+            >
               Von
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#1d1d1f', mb: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: "#1d1d1f", mb: 1 }}
+            >
               {fromLabel}
             </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: '#8E8E93' }}>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 600, color: "#8E8E93" }}
+            >
               Nach
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#1d1d1f' }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: "#1d1d1f" }}
+            >
               {toLabel}
             </Typography>
           </Box>
@@ -441,7 +504,12 @@ export const StopPopup: React.FC<StopPopupProps> = ({
         <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 1.5, gap: 1 }}>
           <Button
             onClick={() => setConfirmOpen(false)}
-            sx={{ textTransform: 'none', borderRadius: 1.5, color: '#1d1d1f', fontWeight: 600 }}
+            sx={{
+              textTransform: "none",
+              borderRadius: 1.5,
+              color: "#1d1d1f",
+              fontWeight: 600,
+            }}
           >
             Abbrechen
           </Button>
@@ -450,22 +518,24 @@ export const StopPopup: React.FC<StopPopupProps> = ({
             disabled={moveAppointment.isPending}
             onClick={handleMove}
             sx={{
-              textTransform: 'none',
+              textTransform: "none",
               borderRadius: 1.5,
               fontWeight: 600,
               bgcolor: accent,
-              boxShadow: 'none',
-              '&:hover': {
-                bgcolor: isAreaTourDay ? '#f57c00' : '#0062CC',
-                boxShadow: 'none',
+              boxShadow: "none",
+              "&:hover": {
+                bgcolor: isAreaTourDay ? "#f57c00" : "#0062CC",
+                boxShadow: "none",
               },
-              '&.Mui-disabled': {
-                bgcolor: isAreaTourDay ? 'rgba(255, 152, 0, 0.4)' : 'rgba(0, 122, 255, 0.4)',
-                color: 'white',
+              "&.Mui-disabled": {
+                bgcolor: isAreaTourDay
+                  ? "rgba(255, 152, 0, 0.4)"
+                  : "rgba(0, 122, 255, 0.4)",
+                color: "white",
               },
             }}
           >
-            {moveAppointment.isPending ? 'Verschiebe…' : 'Verschieben'}
+            {moveAppointment.isPending ? "Verschiebe…" : "Verschieben"}
           </Button>
         </DialogActions>
       </Dialog>

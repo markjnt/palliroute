@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,8 +9,8 @@ import {
   Box,
   CircularProgress,
   Alert,
-} from '@mui/material';
-import { Place as PlaceIcon } from '@mui/icons-material';
+} from "@mui/material";
+import { Place as PlaceIcon } from "@mui/icons-material";
 
 interface AddCustomMarkerDialogProps {
   open: boolean;
@@ -27,14 +27,14 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!name.trim() || !address.trim()) {
-      setError('Bitte Name und Adresse eingeben.');
+      setError("Bitte Name und Adresse eingeben.");
       return;
     }
     setError(null);
@@ -42,18 +42,25 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
 
     try {
       const geocoder = new google.maps.Geocoder();
-      const result = await new Promise<google.maps.GeocoderResult | null>((resolve) => {
-        geocoder.geocode({ address: address.trim(), region: 'DE' }, (results, status) => {
-          if (status === 'OK' && results && results.length > 0) {
-            resolve(results[0]);
-          } else {
-            resolve(null);
-          }
-        });
-      });
+      const result = await new Promise<google.maps.GeocoderResult | null>(
+        (resolve) => {
+          geocoder.geocode(
+            { address: address.trim(), region: "DE" },
+            (results, status) => {
+              if (status === "OK" && results && results.length > 0) {
+                resolve(results[0]);
+              } else {
+                resolve(null);
+              }
+            },
+          );
+        },
+      );
 
       if (!result || !result.geometry?.location) {
-        setError('Adresse konnte nicht gefunden werden. Bitte überprüfen Sie die Eingabe.');
+        setError(
+          "Adresse konnte nicht gefunden werden. Bitte überprüfen Sie die Eingabe.",
+        );
         setLoading(false);
         return;
       }
@@ -61,11 +68,11 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
       const lat = result.geometry.location.lat();
       const lng = result.geometry.location.lng();
       onSuccess(name.trim(), address.trim(), lat, lng);
-      setName('');
-      setAddress('');
+      setName("");
+      setAddress("");
       onClose();
     } catch (err) {
-      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+      setError("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
     } finally {
       setLoading(false);
     }
@@ -73,8 +80,8 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
 
   const handleClose = () => {
     if (!loading) {
-      setName('');
-      setAddress('');
+      setName("");
+      setAddress("");
       setError(null);
       onClose();
     }
@@ -82,12 +89,12 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <PlaceIcon sx={{ color: '#ff5722' }} />
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <PlaceIcon sx={{ color: "#ff5722" }} />
         Marker hinzufügen
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           {error && (
             <Alert severity="error" onClose={() => setError(null)}>
               {error}
@@ -120,16 +127,19 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
           variant="contained"
           onClick={handleSubmit}
           disabled={loading || !name.trim() || !address.trim()}
-          sx={{ backgroundColor: '#ff5722', '&:hover': { backgroundColor: '#e64a19' } }}
+          sx={{
+            backgroundColor: "#ff5722",
+            "&:hover": { backgroundColor: "#e64a19" },
+          }}
           startIcon={
             loading ? (
               <CircularProgress size={20} color="inherit" />
             ) : (
-              <PlaceIcon sx={{ color: 'inherit' }} />
+              <PlaceIcon sx={{ color: "inherit" }} />
             )
           }
         >
-          {loading ? 'Suche...' : 'Marker setzen'}
+          {loading ? "Suche..." : "Marker setzen"}
         </Button>
       </DialogActions>
     </Dialog>

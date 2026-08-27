@@ -1,17 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Appointment, Weekday } from '../../types/models';
-import { appointmentsApi } from '../api/appointments';
-import { liveListQueryOptions, routeKeys } from './useRoutes';
-import { patientKeys } from './usePatients';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Appointment, Weekday } from "../../types/models";
+import { appointmentsApi } from "../api/appointments";
+import { liveListQueryOptions, routeKeys } from "./useRoutes";
+import { patientKeys } from "./usePatients";
 
 // Keys für React Query Cache
 export const appointmentKeys = {
-  all: ['appointments'] as const,
-  lists: () => [...appointmentKeys.all, 'list'] as const,
+  all: ["appointments"] as const,
+  lists: () => [...appointmentKeys.all, "list"] as const,
   list: (filters: string) => [...appointmentKeys.lists(), { filters }] as const,
-  byWeekday: (weekday: Weekday) => [...appointmentKeys.lists(), { weekday }] as const,
-  byPatient: (patientId: number) => [...appointmentKeys.lists(), { patientId }] as const,
-  details: () => [...appointmentKeys.all, 'detail'] as const,
+  byWeekday: (weekday: Weekday) =>
+    [...appointmentKeys.lists(), { weekday }] as const,
+  byPatient: (patientId: number) =>
+    [...appointmentKeys.lists(), { patientId }] as const,
+  details: () => [...appointmentKeys.all, "detail"] as const,
   detail: (id: number) => [...appointmentKeys.details(), id] as const,
 };
 
@@ -56,8 +58,13 @@ export const useSetAppointmentCompleted = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ appointmentId, completed }: { appointmentId: number; completed: boolean }) =>
-      appointmentsApi.setCompleted(appointmentId, completed),
+    mutationFn: ({
+      appointmentId,
+      completed,
+    }: {
+      appointmentId: number;
+      completed: boolean;
+    }) => appointmentsApi.setCompleted(appointmentId, completed),
     onMutate: async ({ appointmentId, completed }) => {
       await queryClient.cancelQueries({ queryKey: appointmentKeys.all });
 
@@ -70,8 +77,10 @@ export const useSetAppointmentCompleted = () => {
         queryClient.setQueryData<Appointment[]>(
           queryKey,
           appointments.map((appointment) =>
-            appointment.id === appointmentId ? { ...appointment, completed } : appointment
-          )
+            appointment.id === appointmentId
+              ? { ...appointment, completed }
+              : appointment,
+          ),
         );
       });
 
@@ -111,7 +120,7 @@ export const useMoveAppointment = () => {
         sourceEmployeeId,
         targetEmployeeId,
         sourceArea,
-        targetArea
+        targetArea,
       ),
     onSuccess: () => {
       // Invalidate all appointment queries to refetch data
@@ -133,7 +142,8 @@ export const useBatchMoveAppointments = () => {
     }: {
       sourceEmployeeId: number;
       targetEmployeeId: number;
-    }) => appointmentsApi.batchMoveAppointments(sourceEmployeeId, targetEmployeeId),
+    }) =>
+      appointmentsApi.batchMoveAppointments(sourceEmployeeId, targetEmployeeId),
     onSuccess: () => {
       // Invalidate all appointment queries to refetch data
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });

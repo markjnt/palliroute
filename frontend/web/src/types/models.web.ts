@@ -1,4 +1,4 @@
-export * from '@palliroute/models';
+export * from "@palliroute/models";
 
 export interface Pflegeheim {
   id: number;
@@ -27,26 +27,26 @@ export interface PflegeheimImportResponse {
 }
 
 export type DutyType =
-  | 'rb_nursing_weekday'
-  | 'rb_nursing_weekend_day'
-  | 'rb_nursing_weekend_night'
-  | 'rb_doctors_weekday'
-  | 'rb_doctors_weekend'
-  | 'aw_nursing';
+  | "rb_nursing_weekday"
+  | "rb_nursing_weekend_day"
+  | "rb_nursing_weekend_night"
+  | "rb_doctors_weekday"
+  | "rb_doctors_weekend"
+  | "aw_nursing";
 
-export type OnCallArea = 'Nord' | 'Süd' | 'Mitte';
+export type OnCallArea = "Nord" | "Süd" | "Mitte";
 
-export type ShiftCategory = 'RB_WEEKDAY' | 'RB_WEEKEND' | 'AW';
-export type ShiftRole = 'NURSING' | 'DOCTOR';
-export type ShiftTimeOfDay = 'DAY' | 'NIGHT' | 'NONE';
-export type ShiftArea = 'Nord' | 'Süd' | 'Mitte';
+export type ShiftCategory = "RB_WEEKDAY" | "RB_WEEKEND" | "AW";
+export type ShiftRole = "NURSING" | "DOCTOR";
+export type ShiftTimeOfDay = "DAY" | "NIGHT" | "NONE";
+export type ShiftArea = "Nord" | "Süd" | "Mitte";
 export type CapacityType =
-  | 'RB_NURSING_WEEKDAY'
-  | 'RB_NURSING_WEEKEND'
-  | 'RB_DOCTORS_WEEKDAY'
-  | 'RB_DOCTORS_WEEKEND'
-  | 'AW_NURSING';
-export type AssignmentSource = 'SOLVER' | 'MANUAL';
+  | "RB_NURSING_WEEKDAY"
+  | "RB_NURSING_WEEKEND"
+  | "RB_DOCTORS_WEEKDAY"
+  | "RB_DOCTORS_WEEKEND"
+  | "AW_NURSING";
+export type AssignmentSource = "SOLVER" | "MANUAL";
 
 export interface ShiftDefinition {
   id: number;
@@ -92,7 +92,7 @@ export interface Assignment {
     first_name: string;
     last_name: string;
     function: string;
-    area: import('@palliroute/models').Area;
+    area: import("@palliroute/models").Area;
   };
   shift_instance?: ShiftInstance;
   shift_definition?: ShiftDefinition;

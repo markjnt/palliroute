@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,11 +11,11 @@ import {
   CardContent,
   Avatar,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 import {
   DutyType,
   OnCallArea,
@@ -23,10 +23,13 @@ import {
   Assignment,
   EmployeeCapacity,
   ShiftDefinition,
-} from '../../../types/models';
-import { WEEKDAY_DUTIES, WEEKEND_DUTIES } from '../../../utils/oncall/constants';
-import { getDutyColor } from '../../../utils/oncall/colorUtils';
-import { employeeTypeColors } from '@palliroute/shared';
+} from "../../../types/models";
+import {
+  WEEKDAY_DUTIES,
+  WEEKEND_DUTIES,
+} from "../../../utils/oncall/constants";
+import { getDutyColor } from "../../../utils/oncall/colorUtils";
+import { employeeTypeColors } from "@palliroute/shared";
 
 interface AssignmentDialogProps {
   open: boolean;
@@ -37,7 +40,7 @@ interface AssignmentDialogProps {
   employeeCapacities?: EmployeeCapacity[];
   shiftDefinitions: ShiftDefinition[];
   onClose: () => void;
-  onEmployeeChange: (employeeId: number | '') => void;
+  onEmployeeChange: (employeeId: number | "") => void;
 }
 
 export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
@@ -53,12 +56,14 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
 }) => {
   const dutyLabel =
     selectedDate && selectedDuty
-      ? WEEKDAY_DUTIES.find((d) => d.type === selectedDuty.type && d.area === selectedDuty.area)
-          ?.label ||
-        WEEKEND_DUTIES.find((d) => d.type === selectedDuty.type && d.area === selectedDuty.area)
-          ?.label ||
-        ''
-      : '';
+      ? WEEKDAY_DUTIES.find(
+          (d) => d.type === selectedDuty.type && d.area === selectedDuty.area,
+        )?.label ||
+        WEEKEND_DUTIES.find(
+          (d) => d.type === selectedDuty.type && d.area === selectedDuty.area,
+        )?.label ||
+        ""
+      : "";
 
   const dutyColor =
     selectedDate && selectedDuty
@@ -70,15 +75,15 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
 
     let filtered: Employee[] = [];
 
-    if (selectedDuty.type.includes('doctors')) {
+    if (selectedDuty.type.includes("doctors")) {
       // For doctor duties: only show doctors
       filtered = availableEmployees.filter(
-        (emp) => emp.function === 'Arzt' || emp.function === 'Honorararzt'
+        (emp) => emp.function === "Arzt" || emp.function === "Honorararzt",
       );
     } else {
       // For AW and nursing duties: only show Pflege and PDL
       filtered = availableEmployees.filter(
-        (emp) => emp.function === 'Pflegekraft' || emp.function === 'PDL'
+        (emp) => emp.function === "Pflegekraft" || emp.function === "PDL",
       );
     }
 
@@ -90,15 +95,15 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
       const getAreaOrder = (area?: string) => {
         if (!area) return 3;
         // If tour is Mitte, prioritize Nord first
-        if (targetArea === 'Mitte') {
-          if (area.includes('Nordkreis')) return 0;
-          if (area.includes('Südkreis')) return 1;
+        if (targetArea === "Mitte") {
+          if (area.includes("Nordkreis")) return 0;
+          if (area.includes("Südkreis")) return 1;
         } else {
           // For Nord/Süd tours, matching area first
-          if (targetArea === 'Nord' && area.includes('Nordkreis')) return 0;
-          if (targetArea === 'Süd' && area.includes('Südkreis')) return 0;
-          if (targetArea === 'Nord' && area.includes('Südkreis')) return 1;
-          if (targetArea === 'Süd' && area.includes('Nordkreis')) return 1;
+          if (targetArea === "Nord" && area.includes("Nordkreis")) return 0;
+          if (targetArea === "Süd" && area.includes("Südkreis")) return 0;
+          if (targetArea === "Nord" && area.includes("Südkreis")) return 1;
+          if (targetArea === "Süd" && area.includes("Nordkreis")) return 1;
         }
         return 2;
       };
@@ -112,10 +117,10 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
 
       // Then: Sort by function (Pflege before PDL, Arzt before Honorararzt)
       const getFunctionOrder = (functionName: string) => {
-        if (functionName === 'Pflegekraft') return 0;
-        if (functionName === 'PDL') return 1;
-        if (functionName === 'Arzt') return 0;
-        if (functionName === 'Honorararzt') return 1;
+        if (functionName === "Pflegekraft") return 0;
+        if (functionName === "PDL") return 1;
+        if (functionName === "Arzt") return 0;
+        if (functionName === "Honorararzt") return 1;
         return 2;
       };
 
@@ -140,31 +145,34 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
     if (!employeeCapacities || employeeCapacities.length === 0) return -1;
 
     // Find capacity for this employee
-    const employeeCapacity = employeeCapacities.find((cap) => cap.employee_id === employeeId);
+    const employeeCapacity = employeeCapacities.find(
+      (cap) => cap.employee_id === employeeId,
+    );
     if (!employeeCapacity) return -1;
 
     // Map duty type to capacity type
     let capacityType: string;
-    if (selectedDuty.type === 'rb_nursing_weekday') {
-      capacityType = 'RB_NURSING_WEEKDAY';
+    if (selectedDuty.type === "rb_nursing_weekday") {
+      capacityType = "RB_NURSING_WEEKDAY";
     } else if (
-      selectedDuty.type === 'rb_nursing_weekend_day' ||
-      selectedDuty.type === 'rb_nursing_weekend_night'
+      selectedDuty.type === "rb_nursing_weekend_day" ||
+      selectedDuty.type === "rb_nursing_weekend_night"
     ) {
-      capacityType = 'RB_NURSING_WEEKEND';
-    } else if (selectedDuty.type === 'rb_doctors_weekday') {
-      capacityType = 'RB_DOCTORS_WEEKDAY';
-    } else if (selectedDuty.type === 'rb_doctors_weekend') {
-      capacityType = 'RB_DOCTORS_WEEKEND';
-    } else if (selectedDuty.type === 'aw_nursing') {
-      capacityType = 'AW_NURSING';
+      capacityType = "RB_NURSING_WEEKEND";
+    } else if (selectedDuty.type === "rb_doctors_weekday") {
+      capacityType = "RB_DOCTORS_WEEKDAY";
+    } else if (selectedDuty.type === "rb_doctors_weekend") {
+      capacityType = "RB_DOCTORS_WEEKEND";
+    } else if (selectedDuty.type === "aw_nursing") {
+      capacityType = "AW_NURSING";
     } else {
       return -1;
     }
 
     // Find matching capacity entry
     const matchingCapacity = employeeCapacities.find(
-      (cap) => cap.employee_id === employeeId && cap.capacity_type === capacityType
+      (cap) =>
+        cap.employee_id === employeeId && cap.capacity_type === capacityType,
     );
 
     // Return remaining count from backend (already calculated)
@@ -175,26 +183,27 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
   const getFunctionInfo = (functionName: string) => {
     const functionMap: Record<string, { name: string; color: string }> = {
       Arzt: {
-        name: 'Arzt',
-        color: employeeTypeColors['Arzt'] || employeeTypeColors['default'],
+        name: "Arzt",
+        color: employeeTypeColors["Arzt"] || employeeTypeColors["default"],
       },
       Honorararzt: {
-        name: 'Honorararzt',
-        color: employeeTypeColors['Honorararzt'] || employeeTypeColors['default'],
+        name: "Honorararzt",
+        color:
+          employeeTypeColors["Honorararzt"] || employeeTypeColors["default"],
       },
       Pflegekraft: {
-        name: 'Pflegekraft',
-        color: employeeTypeColors['default'],
+        name: "Pflegekraft",
+        color: employeeTypeColors["default"],
       },
       PDL: {
-        name: 'PDL',
-        color: employeeTypeColors['default'],
+        name: "PDL",
+        color: employeeTypeColors["default"],
       },
     };
     return (
       functionMap[functionName] || {
         name: functionName,
-        color: employeeTypeColors['default'],
+        color: employeeTypeColors["default"],
       }
     );
   };
@@ -203,7 +212,7 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
-  const handleEmployeeSelect = (employeeId: number | '') => {
+  const handleEmployeeSelect = (employeeId: number | "") => {
     onEmployeeChange(employeeId);
     onClose();
   };
@@ -226,45 +235,65 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
         sx={{
           pb: 1,
           backgroundColor: dutyColor,
-          color: 'text.primary',
+          color: "text.primary",
         }}
       >
-        <Box component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, m: 0, mb: 0.5 }}>
-          {selectedDate.toLocaleDateString('de-DE', {
-            weekday: 'long',
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric',
+        <Box
+          component="h2"
+          sx={{ fontSize: "1.25rem", fontWeight: 600, m: 0, mb: 0.5 }}
+        >
+          {selectedDate.toLocaleDateString("de-DE", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
           })}
         </Box>
-        <Typography variant="subtitle1" component="p" sx={{ fontWeight: 500, opacity: 0.9, m: 0 }}>
+        <Typography
+          variant="subtitle1"
+          component="p"
+          sx={{ fontWeight: 500, opacity: 0.9, m: 0 }}
+        >
           {dutyLabel}
         </Typography>
       </DialogTitle>
       <DialogContent sx={{ pt: 3 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: 3 }}>
           {/* Option to remove assignment */}
           <Card
-            onClick={() => handleEmployeeSelect('')}
+            onClick={() => handleEmployeeSelect("")}
             sx={{
-              cursor: 'pointer',
+              cursor: "pointer",
               borderRadius: 2,
-              border: assignment?.employee_id ? '1px solid' : '2px solid',
-              borderColor: assignment?.employee_id ? 'divider' : 'text.disabled',
-              backgroundColor: assignment?.employee_id ? 'background.paper' : 'action.hover',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
+              border: assignment?.employee_id ? "1px solid" : "2px solid",
+              borderColor: assignment?.employee_id
+                ? "divider"
+                : "text.disabled",
+              backgroundColor: assignment?.employee_id
+                ? "background.paper"
+                : "action.hover",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
                 boxShadow: 2,
               },
             }}
           >
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.secondary' }}>
+            <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500, color: "text.secondary" }}
+                >
                   Keine Zuweisung
                 </Typography>
-                {!assignment?.employee_id && <CheckCircleIcon sx={{ color: 'text.disabled' }} />}
+                {!assignment?.employee_id && (
+                  <CheckCircleIcon sx={{ color: "text.disabled" }} />
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -282,28 +311,30 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                 key={employee.id}
                 onClick={() => handleEmployeeSelect(employee.id as number)}
                 sx={{
-                  cursor: 'pointer',
+                  cursor: "pointer",
                   borderRadius: 2,
-                  border: isSelected ? '2px solid' : '1px solid',
-                  borderColor: isSelected ? dutyColor : 'divider',
-                  backgroundColor: isSelected ? `${dutyColor}20` : 'background.paper',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
+                  border: isSelected ? "2px solid" : "1px solid",
+                  borderColor: isSelected ? dutyColor : "divider",
+                  backgroundColor: isSelected
+                    ? `${dutyColor}20`
+                    : "background.paper",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
                     boxShadow: 2,
                     borderColor: isSelected ? dutyColor : dutyColor,
                   },
                 }}
               >
-                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
                   <Box display="flex" alignItems="center" gap={1.5}>
                     <Avatar
                       sx={{
                         width: 40,
                         height: 40,
-                        bgcolor: isSelected ? dutyColor : '#f0f0f0',
-                        color: isSelected ? 'text.primary' : '#666',
-                        fontSize: '1rem',
+                        bgcolor: isSelected ? dutyColor : "#f0f0f0",
+                        color: isSelected ? "text.primary" : "#666",
+                        fontSize: "1rem",
                         fontWeight: 600,
                       }}
                     >
@@ -319,20 +350,27 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                       >
                         {employee.first_name} {employee.last_name}
                       </Typography>
-                      <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        flexWrap="wrap"
+                      >
                         {employee.area && (
                           <Chip
-                            label={employee.area.includes('Nordkreis') ? 'N' : 'S'}
+                            label={
+                              employee.area.includes("Nordkreis") ? "N" : "S"
+                            }
                             size="small"
                             sx={{
-                              bgcolor: employee.area.includes('Nordkreis')
-                                ? 'primary.main'
-                                : 'secondary.main',
-                              color: 'white',
-                              fontSize: '0.7rem',
+                              bgcolor: employee.area.includes("Nordkreis")
+                                ? "primary.main"
+                                : "secondary.main",
+                              color: "white",
+                              fontSize: "0.7rem",
                               height: 20,
-                              fontWeight: 'bold',
-                              '& .MuiChip-label': {
+                              fontWeight: "bold",
+                              "& .MuiChip-label": {
                                 px: 0.75,
                               },
                             }}
@@ -343,10 +381,10 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                           size="small"
                           sx={{
                             bgcolor: functionInfo.color,
-                            color: 'white',
-                            fontSize: '0.7rem',
+                            color: "white",
+                            fontSize: "0.7rem",
                             height: 20,
-                            '& .MuiChip-label': {
+                            "& .MuiChip-label": {
                               px: 0.75,
                             },
                           }}
@@ -354,7 +392,9 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                         <Typography
                           variant="caption"
                           sx={{
-                            color: hasNoCapacity ? 'error.main' : 'text.secondary',
+                            color: hasNoCapacity
+                              ? "error.main"
+                              : "text.secondary",
                             fontWeight: hasNoCapacity ? 600 : 400,
                           }}
                         >
@@ -365,7 +405,9 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
                     {isSelected ? (
                       <CheckCircleIcon sx={{ color: dutyColor }} />
                     ) : (
-                      <RadioButtonUncheckedIcon sx={{ color: 'text.disabled' }} />
+                      <RadioButtonUncheckedIcon
+                        sx={{ color: "text.disabled" }}
+                      />
                     )}
                   </Box>
                 </CardContent>
@@ -378,7 +420,7 @@ export const AssignmentDialog: React.FC<AssignmentDialogProps> = ({
         <Button
           onClick={onClose}
           sx={{
-            textTransform: 'none',
+            textTransform: "none",
             fontWeight: 500,
             borderRadius: 2,
             px: 2,

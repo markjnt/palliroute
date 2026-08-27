@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface CustomMarkerData {
   name: string;
@@ -22,8 +22,8 @@ export const useCustomMarkerStore = create<CustomMarkerState>()(
       clearMarker: () => set({ marker: null }),
     }),
     {
-      name: 'custom-marker-storage',
+      name: "custom-marker-storage",
       partialize: (state) => ({ marker: state.marker }),
-    }
-  )
+    },
+  ),
 );

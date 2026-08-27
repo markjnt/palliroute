@@ -1,13 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { configApi } from '../api/config';
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { configApi } from "../api/config";
 
 // Keys für React Query Cache
 export const configKeys = {
-  all: ['config'] as const,
-  googleMapsApiKey: () => [...configKeys.all, 'googleMapsApiKey'] as const,
-  lastImportTime: () => [...configKeys.all, 'lastImportTime'] as const,
-  nrwpHolidays: (year: number) => [...configKeys.all, 'nrwpHolidays', year] as const,
+  all: ["config"] as const,
+  googleMapsApiKey: () => [...configKeys.all, "googleMapsApiKey"] as const,
+  lastImportTime: () => [...configKeys.all, "lastImportTime"] as const,
+  nrwpHolidays: (year: number) =>
+    [...configKeys.all, "nrwpHolidays", year] as const,
 };
 
 export const useGoogleMapsApiKey = () =>
@@ -48,11 +49,13 @@ export const useNrwpHolidaysMap = (year: number) => {
 /** Merge NRW holidays for several calendar years (on-call grid spanning Dec/Jan). */
 export const useNrwpHolidaysForYears = (years: number[]) => {
   const uniqueYears = [...new Set(years)].sort((a, b) => a - b);
-  const sortedKey = uniqueYears.join(',');
+  const sortedKey = uniqueYears.join(",");
   const query = useQuery({
-    queryKey: [...configKeys.all, 'nrwpHolidaysMulti', sortedKey],
+    queryKey: [...configKeys.all, "nrwpHolidaysMulti", sortedKey],
     queryFn: async () => {
-      const results = await Promise.all(uniqueYears.map((yr) => configApi.getHolidays(yr)));
+      const results = await Promise.all(
+        uniqueYears.map((yr) => configApi.getHolidays(yr)),
+      );
       const m = new Map<string, string>();
       for (const r of results) {
         for (const h of r.holidays) {

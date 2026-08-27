@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { MsalProvider } from '@azure/msal-react';
-import { EventType, type AuthenticationResult } from '@azure/msal-browser';
-import { setTokenProvider } from '@palliroute/shared';
-import { getAccessToken } from './getAccessToken';
-import { isAuthConfigured, msalInstance } from './msalConfig';
+import React, { useEffect, useState } from "react";
+import { MsalProvider } from "@azure/msal-react";
+import { EventType, type AuthenticationResult } from "@azure/msal-browser";
+import { setTokenProvider } from "@palliroute/shared";
+import { getAccessToken } from "./getAccessToken";
+import { isAuthConfigured, msalInstance } from "./msalConfig";
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setTokenProvider(getAccessToken);
       } else {
         console.warn(
-          'Azure auth not configured (runtime /config.js or VITE_AZURE_* ) — auth disabled in UI'
+          "Azure auth not configured (runtime /config.js or VITE_AZURE_* ) — auth disabled in UI",
         );
       }
 

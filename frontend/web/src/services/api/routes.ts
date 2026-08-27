@@ -1,5 +1,5 @@
-import { api } from '@palliroute/shared';
-import { Route, Weekday } from '../../types/models';
+import { api } from "@palliroute/shared";
+import { Route, Weekday } from "../../types/models";
 
 export type AssignAwTourEmployeeResult = {
   route: Route;
@@ -17,10 +17,10 @@ export const routesApi = {
     calendar_week?: number;
   }): Promise<Route[]> {
     try {
-      const response = await api.get('/routes/', { params });
+      const response = await api.get("/routes/", { params });
       return response.data.routes || [];
     } catch (error) {
-      console.error('Failed to fetch routes:', error);
+      console.error("Failed to fetch routes:", error);
       throw error;
     }
   },
@@ -43,7 +43,7 @@ export const routesApi = {
       if (employee_id) {
         params.employee_id = employee_id;
       }
-      const response = await api.get('/routes', { params });
+      const response = await api.get("/routes", { params });
       return response.data.routes || [];
     } catch (error) {
       console.error(`Failed to fetch routes for date ${date}:`, error);
@@ -52,7 +52,11 @@ export const routesApi = {
   },
 
   // Optimize routes for a specific day and employee
-  async optimizeRoutes(weekday: string, employeeId: number, calendarWeek?: number): Promise<void> {
+  async optimizeRoutes(
+    weekday: string,
+    employeeId: number,
+    calendarWeek?: number,
+  ): Promise<void> {
     try {
       const requestData: any = {
         weekday: weekday.toLowerCase(),
@@ -66,7 +70,7 @@ export const routesApi = {
     } catch (error) {
       console.error(
         `Failed to optimize routes for weekday ${weekday} and employee ${employeeId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -75,7 +79,7 @@ export const routesApi = {
   async optimizeTourAreaRoutes(
     weekday: string,
     area: string,
-    calendarWeek?: number
+    calendarWeek?: number,
   ): Promise<void> {
     try {
       const requestData: any = {
@@ -90,7 +94,7 @@ export const routesApi = {
     } catch (error) {
       console.error(
         `Failed to optimize tour-area routes for weekday ${weekday} and area ${area}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -99,7 +103,7 @@ export const routesApi = {
   async assignAwTourEmployee(
     routeId: number,
     employeeId: number | null,
-    options?: { resetToAplano?: boolean }
+    options?: { resetToAplano?: boolean },
   ): Promise<AssignAwTourEmployeeResult> {
     try {
       const body: { employee_id: number | null; reset_to_aplano?: boolean } = {
@@ -108,7 +112,10 @@ export const routesApi = {
       if (options?.resetToAplano || employeeId === null) {
         body.reset_to_aplano = true;
       }
-      const response = await api.put(`/routes/${routeId}/assign-employee`, body);
+      const response = await api.put(
+        `/routes/${routeId}/assign-employee`,
+        body,
+      );
       return {
         route: response.data.route,
         planning_failed: Boolean(response.data.planning_failed),
@@ -120,26 +127,34 @@ export const routesApi = {
   },
 
   // Download route PDF for a calendar week
-  async downloadRoutePdf(calendarWeek: number, selectedWeekday: Weekday): Promise<void> {
+  async downloadRoutePdf(
+    calendarWeek: number,
+    selectedWeekday: Weekday,
+  ): Promise<void> {
     try {
-      const response = await api.get('/routes/download-pdf', {
-        params: { calendar_week: calendarWeek, selected_weekday: selectedWeekday },
-        responseType: 'blob',
+      const response = await api.get("/routes/download-pdf", {
+        params: {
+          calendar_week: calendarWeek,
+          selected_weekday: selectedWeekday,
+        },
+        responseType: "blob",
       });
 
-      const rawContentType = response.headers['content-type'];
-      const contentType = typeof rawContentType === 'string' ? rawContentType : '';
-      const disposition = response.headers['content-disposition'] as string | undefined;
+      const rawContentType = response.headers["content-type"];
+      const contentType =
+        typeof rawContentType === "string" ? rawContentType : "";
+      const disposition = response.headers["content-disposition"] as
+        string | undefined;
       let filename = disposition?.match(/filename="?([^";]+)"?/i)?.[1];
       if (!filename) {
-        filename = contentType.includes('application/zip')
+        filename = contentType.includes("application/zip")
           ? `PalliRoute_Routenplanung_KW${calendarWeek}.zip`
           : `PalliRoute_Routenplanung_Pflege_KW${calendarWeek}.pdf`;
       }
 
       // Create download link
       const url = window.URL.createObjectURL(response.data);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
@@ -147,7 +162,10 @@ export const routesApi = {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(`Failed to download route PDF for calendar week ${calendarWeek}:`, error);
+      console.error(
+        `Failed to download route PDF for calendar week ${calendarWeek}:`,
+        error,
+      );
       throw error;
     }
   },

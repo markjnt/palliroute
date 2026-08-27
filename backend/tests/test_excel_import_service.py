@@ -166,7 +166,9 @@ def test_completed_appointments_snapshot_roundtrip():
 def test_completed_appointments_snapshot_ignores_invalid_payload():
     assert ExcelImportService._deserialize_completed_appointments_snapshot(None) == []
     assert ExcelImportService._deserialize_completed_appointments_snapshot("not-json") == []
-    assert ExcelImportService._deserialize_completed_appointments_snapshot(json.dumps({"x": 1})) == []
+    assert (
+        ExcelImportService._deserialize_completed_appointments_snapshot(json.dumps({"x": 1})) == []
+    )
     assert (
         ExcelImportService._deserialize_completed_appointments_snapshot(
             json.dumps([{"weekday": "monday"}])
@@ -188,15 +190,21 @@ def test_completion_identity_includes_week_and_weekday():
         "51545",
         "HB",
     )
-    assert ExcelImportService._normalize_completion_identity(None, "monday", "A", "B", "C", "1", "HB") is None
-    assert ExcelImportService._completion_identity_from_dict(
-        {
-            "calendar_week": 34,
-            "weekday": "monday",
-            "first_name": "Anna",
-            "last_name": "Arzt",
-            "street": "Hauptstr. 1",
-            "zip_code": "51545",
-            "visit_type": "HB",
-        }
-    ) == identity
+    assert (
+        ExcelImportService._normalize_completion_identity(None, "monday", "A", "B", "C", "1", "HB")
+        is None
+    )
+    assert (
+        ExcelImportService._completion_identity_from_dict(
+            {
+                "calendar_week": 34,
+                "weekday": "monday",
+                "first_name": "Anna",
+                "last_name": "Arzt",
+                "street": "Hauptstr. 1",
+                "zip_code": "51545",
+                "visit_type": "HB",
+            }
+        )
+        == identity
+    )

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -13,31 +13,32 @@ import {
   Switch,
   ToggleButton,
   ToggleButtonGroup,
-} from '@mui/material';
+} from "@mui/material";
 import {
   LocalHospital as DoctorIcon,
   Healing as NursingIcon,
   Weekend as AWIcon,
   People as PeopleIcon,
-} from '@mui/icons-material';
-import { employeeTypeColors } from '@palliroute/shared';
-import { Employee, EmployeeCapacity } from '../../../types/models';
+} from "@mui/icons-material";
+import { employeeTypeColors } from "@palliroute/shared";
+import { Employee, EmployeeCapacity } from "../../../types/models";
 import {
   EmployeePlanningPreference,
   DutyPreference,
   AwRhythm,
   StoredEmployeePlanningPreference,
-} from '../../../services/api/scheduling';
+} from "../../../services/api/scheduling";
 
-type EmployeeFilter = 'all' | 'pflege_n' | 'pflege_s' | 'arzt';
+type EmployeeFilter = "all" | "pflege_n" | "pflege_s" | "arzt";
 
 const isNursing = (employee: Employee) =>
-  employee.function === 'Pflegekraft' || employee.function === 'PDL';
+  employee.function === "Pflegekraft" || employee.function === "PDL";
 
 const isDoctor = (employee: Employee) =>
-  employee.function === 'Arzt' || employee.function === 'Honorararzt';
+  employee.function === "Arzt" || employee.function === "Honorararzt";
 
-const isPlanableRole = (employee: Employee) => isNursing(employee) || isDoctor(employee);
+const isPlanableRole = (employee: Employee) =>
+  isNursing(employee) || isDoctor(employee);
 
 const getTotalCapacity = (employeeId: number, capacities: EmployeeCapacity[]) =>
   capacities
@@ -47,7 +48,7 @@ const getTotalCapacity = (employeeId: number, capacities: EmployeeCapacity[]) =>
 export const createDefaultEmployeePreferences = (
   employees: Employee[],
   capacities: EmployeeCapacity[],
-  saved?: StoredEmployeePlanningPreference[]
+  saved?: StoredEmployeePlanningPreference[],
 ): Record<number, EmployeePlanningPreference> => {
   const savedMap = new Map((saved ?? []).map((s) => [s.employee_id, s]));
   const prefs: Record<number, EmployeePlanningPreference> = {};
@@ -60,53 +61,59 @@ export const createDefaultEmployeePreferences = (
       included: hasCapacity,
       rb_even_weeks: stored?.rb_even_weeks ?? true,
       rb_odd_weeks: stored?.rb_odd_weeks ?? true,
-      duty_preference: stored?.duty_preference ?? 'neutral',
-      aw_rhythm: stored?.aw_rhythm ?? 'regular',
+      duty_preference: stored?.duty_preference ?? "neutral",
+      aw_rhythm: stored?.aw_rhythm ?? "regular",
     };
   }
   return prefs;
 };
 
 export const toStoredPreferences = (
-  prefs: Record<number, EmployeePlanningPreference>
+  prefs: Record<number, EmployeePlanningPreference>,
 ): StoredEmployeePlanningPreference[] =>
   Object.values(prefs).map(
-    ({ employee_id, rb_even_weeks, rb_odd_weeks, duty_preference, aw_rhythm }) => ({
+    ({
       employee_id,
       rb_even_weeks,
       rb_odd_weeks,
       duty_preference,
       aw_rhythm,
-    })
+    }) => ({
+      employee_id,
+      rb_even_weeks,
+      rb_odd_weeks,
+      duty_preference,
+      aw_rhythm,
+    }),
   );
 
 interface AutoPlanningEmployeeTableProps {
   employees: Employee[];
   employeeCapacities: EmployeeCapacity[];
   preferences: Record<number, EmployeePlanningPreference>;
-  onPreferencesChange: (prefs: Record<number, EmployeePlanningPreference>) => void;
+  onPreferencesChange: (
+    prefs: Record<number, EmployeePlanningPreference>,
+  ) => void;
 }
 
-export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps> = ({
-  employees,
-  employeeCapacities,
-  preferences,
-  onPreferencesChange,
-}) => {
-  const [employeeFilter, setEmployeeFilter] = React.useState<EmployeeFilter>('all');
+export const AutoPlanningEmployeeTable: React.FC<
+  AutoPlanningEmployeeTableProps
+> = ({ employees, employeeCapacities, preferences, onPreferencesChange }) => {
+  const [employeeFilter, setEmployeeFilter] =
+    React.useState<EmployeeFilter>("all");
 
   const planableEmployees = useMemo(
     () => employees.filter((e) => e.id && isPlanableRole(e)),
-    [employees]
+    [employees],
   );
 
   const filteredEmployees = useMemo(() => {
     let base = planableEmployees;
-    if (employeeFilter === 'pflege_n') {
-      base = base.filter((e) => isNursing(e) && e.area?.includes('Nordkreis'));
-    } else if (employeeFilter === 'pflege_s') {
-      base = base.filter((e) => isNursing(e) && e.area?.includes('Südkreis'));
-    } else if (employeeFilter === 'arzt') {
+    if (employeeFilter === "pflege_n") {
+      base = base.filter((e) => isNursing(e) && e.area?.includes("Nordkreis"));
+    } else if (employeeFilter === "pflege_s") {
+      base = base.filter((e) => isNursing(e) && e.area?.includes("Südkreis"));
+    } else if (employeeFilter === "arzt") {
       base = base.filter((e) => isDoctor(e));
     }
     return base;
@@ -125,8 +132,8 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
       if (aPriority !== bPriority) return aPriority - bPriority;
       const getAreaOrder = (area?: string) => {
         if (!area) return 2;
-        if (area.includes('Nordkreis')) return 0;
-        if (area.includes('Südkreis')) return 1;
+        if (area.includes("Nordkreis")) return 0;
+        if (area.includes("Südkreis")) return 1;
         return 2;
       };
       const areaOrderA = getAreaOrder(a.area);
@@ -147,13 +154,16 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
         [employeeId]: { ...current, ...patch },
       });
     },
-    [preferences, onPreferencesChange]
+    [preferences, onPreferencesChange],
   );
 
   const visibleIds = sortedEmployees.map((e) => e.id!).filter(Boolean);
   const allVisibleIncluded =
-    visibleIds.length > 0 && visibleIds.every((id) => preferences[id]?.included);
-  const someVisibleIncluded = visibleIds.some((id) => preferences[id]?.included);
+    visibleIds.length > 0 &&
+    visibleIds.every((id) => preferences[id]?.included);
+  const someVisibleIncluded = visibleIds.some(
+    (id) => preferences[id]?.included,
+  );
 
   const handleToggleAllVisible = () => {
     const nextIncluded = !allVisibleIncluded;
@@ -166,20 +176,36 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
 
   const getAreaLabel = (area?: string) => {
     if (!area) return null;
-    if (area.includes('Nordkreis')) return 'N';
-    if (area.includes('Südkreis')) return 'S';
+    if (area.includes("Nordkreis")) return "N";
+    if (area.includes("Südkreis")) return "S";
     return null;
   };
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>
+      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 2 }}>
         {(
           [
-            { key: 'all', label: 'Alle', icon: <PeopleIcon sx={{ fontSize: 14 }} /> },
-            { key: 'pflege_n', label: 'Pflege N', icon: <NursingIcon sx={{ fontSize: 14 }} /> },
-            { key: 'pflege_s', label: 'Pflege S', icon: <NursingIcon sx={{ fontSize: 14 }} /> },
-            { key: 'arzt', label: 'Ärzte', icon: <DoctorIcon sx={{ fontSize: 14 }} /> },
+            {
+              key: "all",
+              label: "Alle",
+              icon: <PeopleIcon sx={{ fontSize: 14 }} />,
+            },
+            {
+              key: "pflege_n",
+              label: "Pflege N",
+              icon: <NursingIcon sx={{ fontSize: 14 }} />,
+            },
+            {
+              key: "pflege_s",
+              label: "Pflege S",
+              icon: <NursingIcon sx={{ fontSize: 14 }} />,
+            },
+            {
+              key: "arzt",
+              label: "Ärzte",
+              icon: <DoctorIcon sx={{ fontSize: 14 }} />,
+            },
           ] as const
         ).map(({ key, label, icon }) => (
           <Chip
@@ -188,15 +214,15 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
             label={label}
             size="small"
             clickable
-            color={employeeFilter === key ? 'primary' : 'default'}
-            variant={employeeFilter === key ? 'filled' : 'outlined'}
+            color={employeeFilter === key ? "primary" : "default"}
+            variant={employeeFilter === key ? "filled" : "outlined"}
             onClick={() => setEmployeeFilter(key)}
             sx={{
-              fontSize: '0.72rem',
+              fontSize: "0.72rem",
               height: 28,
               fontWeight: 500,
-              '& .MuiChip-icon': {
-                color: employeeFilter === key ? 'inherit' : 'text.secondary',
+              "& .MuiChip-icon": {
+                color: employeeFilter === key ? "inherit" : "text.secondary",
                 ml: 0.75,
               },
             }}
@@ -207,15 +233,15 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
       <TableContainer
         sx={{
           maxHeight: 320,
-          border: '1px solid',
-          borderColor: 'rgba(0, 0, 0, 0.06)',
+          border: "1px solid",
+          borderColor: "rgba(0, 0, 0, 0.06)",
           borderRadius: 2,
         }}
       >
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox" sx={{ backgroundColor: 'grey.50' }}>
+              <TableCell padding="checkbox" sx={{ backgroundColor: "grey.50" }}>
                 <Checkbox
                   size="small"
                   checked={allVisibleIncluded}
@@ -223,60 +249,82 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                   onChange={handleToggleAllVisible}
                 />
               </TableCell>
-              <TableCell sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 160 }}>
+              <TableCell
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: "grey.50",
+                  minWidth: 160,
+                }}
+              >
                 Mitarbeiter
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: "grey.50",
+                  minWidth: 90,
+                }}
               >
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     gap: 0.5,
                   }}
                 >
-                  <NursingIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  <NursingIcon sx={{ fontSize: 14, color: "text.secondary" }} />
                   RB gerade
                 </Box>
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: "grey.50",
+                  minWidth: 90,
+                }}
               >
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     gap: 0.5,
                   }}
                 >
-                  <NursingIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  <NursingIcon sx={{ fontSize: 14, color: "text.secondary" }} />
                   RB ungerade
                 </Box>
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 180 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: "grey.50",
+                  minWidth: 180,
+                }}
               >
                 Bevorzugt
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 110 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: "grey.50",
+                  minWidth: 110,
+                }}
               >
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     gap: 0.5,
                   }}
                 >
-                  <AWIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                  <AWIcon sx={{ fontSize: 14, color: "text.secondary" }} />
                   AW-Rhythmus
                 </Box>
               </TableCell>
@@ -285,7 +333,11 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
           <TableBody>
             {sortedEmployees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                <TableCell
+                  colSpan={6}
+                  align="center"
+                  sx={{ py: 3, color: "text.secondary" }}
+                >
                   Keine Mitarbeiter für diesen Filter
                 </TableCell>
               </TableRow>
@@ -297,7 +349,8 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                 const doctor = isDoctor(employee);
                 const areaLabel = getAreaLabel(employee.area);
                 const funcColor =
-                  employeeTypeColors[employee.function] || employeeTypeColors.default;
+                  employeeTypeColors[employee.function] ||
+                  employeeTypeColors.default;
 
                 return (
                   <TableRow key={empId} hover selected={pref.included}>
@@ -305,21 +358,30 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                       <Checkbox
                         size="small"
                         checked={pref.included}
-                        onChange={(e) => updatePreference(empId, { included: e.target.checked })}
+                        onChange={(e) =>
+                          updatePreference(empId, {
+                            included: e.target.checked,
+                          })
+                        }
                       />
                     </TableCell>
                     <TableCell>
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.75,
+                          flexWrap: "wrap",
+                        }}
                       >
                         <Box
                           sx={{
                             width: 22,
                             height: 22,
                             borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             backgroundColor: `${funcColor}22`,
                             color: funcColor,
                             flexShrink: 0,
@@ -331,7 +393,10 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                             <NursingIcon sx={{ fontSize: 13 }} />
                           )}
                         </Box>
-                        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 500, fontSize: "0.85rem" }}
+                        >
                           {employee.last_name}, {employee.first_name}
                         </Typography>
                         {areaLabel && (
@@ -340,11 +405,11 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                             size="small"
                             sx={{
                               height: 18,
-                              fontSize: '0.65rem',
+                              fontSize: "0.65rem",
                               fontWeight: 600,
-                              backgroundColor: 'transparent',
-                              border: '1px solid',
-                              borderColor: 'divider',
+                              backgroundColor: "transparent",
+                              border: "1px solid",
+                              borderColor: "divider",
                             }}
                           />
                         )}
@@ -356,7 +421,9 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                         checked={pref.rb_even_weeks}
                         disabled={!pref.included}
                         onChange={(e) =>
-                          updatePreference(empId, { rb_even_weeks: e.target.checked })
+                          updatePreference(empId, {
+                            rb_even_weeks: e.target.checked,
+                          })
                         }
                       />
                     </TableCell>
@@ -366,7 +433,9 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                         checked={pref.rb_odd_weeks}
                         disabled={!pref.included}
                         onChange={(e) =>
-                          updatePreference(empId, { rb_odd_weeks: e.target.checked })
+                          updatePreference(empId, {
+                            rb_odd_weeks: e.target.checked,
+                          })
                         }
                       />
                     </TableCell>
@@ -382,18 +451,21 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                           value={pref.duty_preference}
                           disabled={!pref.included}
                           onChange={(_, value: DutyPreference | null) => {
-                            if (value) updatePreference(empId, { duty_preference: value });
+                            if (value)
+                              updatePreference(empId, {
+                                duty_preference: value,
+                              });
                           }}
                           sx={{
                             gap: 0.5,
-                            '& .MuiToggleButtonGroup-grouped': {
-                              borderRadius: '6px !important',
-                              border: '1px solid !important',
-                              marginLeft: '0 !important',
+                            "& .MuiToggleButtonGroup-grouped": {
+                              borderRadius: "6px !important",
+                              border: "1px solid !important",
+                              marginLeft: "0 !important",
                             },
-                            '& .MuiToggleButton-root': {
-                              textTransform: 'none',
-                              fontSize: '0.7rem',
+                            "& .MuiToggleButton-root": {
+                              textTransform: "none",
+                              fontSize: "0.7rem",
                               px: 0.85,
                               py: 0.25,
                               gap: 0.4,
@@ -420,28 +492,32 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                       ) : (
                         <Box
                           sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
                             gap: 0.25,
                           }}
                         >
                           <Switch
                             size="small"
-                            checked={pref.aw_rhythm === 'regular'}
+                            checked={pref.aw_rhythm === "regular"}
                             disabled={!pref.included}
                             onChange={(e) =>
                               updatePreference(empId, {
-                                aw_rhythm: (e.target.checked ? 'regular' : 'irregular') as AwRhythm,
+                                aw_rhythm: (e.target.checked
+                                  ? "regular"
+                                  : "irregular") as AwRhythm,
                               })
                             }
                           />
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ fontSize: '0.65rem' }}
+                            sx={{ fontSize: "0.65rem" }}
                           >
-                            {pref.aw_rhythm === 'regular' ? 'Regelmäßig' : 'Unregelmäßig'}
+                            {pref.aw_rhythm === "regular"
+                              ? "Regelmäßig"
+                              : "Unregelmäßig"}
                           </Typography>
                         </Box>
                       )}

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
-import { useAuth } from './useAuth';
+import React, { useEffect, useRef } from "react";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { useAuth } from "./useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,7 +13,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const redirectStarted = useRef(false);
 
   useEffect(() => {
-    if (!configured || isAuthenticated || isLoading || redirectStarted.current) {
+    if (
+      !configured ||
+      isAuthenticated ||
+      isLoading ||
+      redirectStarted.current
+    ) {
       return;
     }
 
@@ -31,7 +36,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
         <CircularProgress />
       </Box>
     );

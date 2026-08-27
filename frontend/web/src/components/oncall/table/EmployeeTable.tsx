@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import React, { useMemo, useState, useCallback } from "react";
+import { Box, Typography, Chip } from "@mui/material";
 import {
   Employee,
   Assignment,
@@ -7,21 +7,27 @@ import {
   OnCallArea,
   EmployeeCapacity,
   ShiftDefinition,
-} from '../../../types/models';
-import { EmployeeTableRow } from './EmployeeTableRow';
-import { EmployeeDutyDialog } from './EmployeeDutyDialog';
-import { DemandRow } from './DemandRow';
-import { formatDate, isWeekendLayoutDate } from '../../../utils/oncall/dateUtils';
-import { useNrwpHolidaysForYears } from '../../../services/queries/useConfig';
-import { HolidayChip } from '../../common/HolidayChip';
-import { WEEK_DAYS } from '../../../utils/oncall/constants';
-import { shiftDefinitionToDutyType, findShiftDefinition } from '../../../utils/oncall/shiftMapping';
+} from "../../../types/models";
+import { EmployeeTableRow } from "./EmployeeTableRow";
+import { EmployeeDutyDialog } from "./EmployeeDutyDialog";
+import { DemandRow } from "./DemandRow";
+import {
+  formatDate,
+  isWeekendLayoutDate,
+} from "../../../utils/oncall/dateUtils";
+import { useNrwpHolidaysForYears } from "../../../services/queries/useConfig";
+import { HolidayChip } from "../../common/HolidayChip";
+import { WEEK_DAYS } from "../../../utils/oncall/constants";
+import {
+  shiftDefinitionToDutyType,
+  findShiftDefinition,
+} from "../../../utils/oncall/shiftMapping";
 
 interface EmployeeTableProps {
   employees: Employee[];
   dates: Date[];
   assignments: Assignment[];
-  viewMode: 'month' | 'week';
+  viewMode: "month" | "week";
   employeeCapacities?: EmployeeCapacity[];
   shiftDefinitions: ShiftDefinition[];
   onCreateAssignment: (data: {
@@ -49,11 +55,13 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onDeleteAssignment,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [employeeFilter, setEmployeeFilter] = useState<'all' | 'pflege_n' | 'pflege_s' | 'arzt'>(
-    'all'
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
   );
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [employeeFilter, setEmployeeFilter] = useState<
+    "all" | "pflege_n" | "pflege_s" | "arzt"
+  >("all");
 
   const holidayYears = useMemo(() => {
     const s = new Set<number>();
@@ -65,7 +73,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
   const weekendLayoutForDate = useCallback(
     (d: Date) => isWeekendLayoutDate(d, holidayByYmd),
-    [holidayByYmd]
+    [holidayByYmd],
   );
 
   // Filter employees based on filter selection
@@ -73,25 +81,28 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
     let base = employees;
 
     // Apply employee filter
-    if (employeeFilter === 'pflege_n') {
+    if (employeeFilter === "pflege_n") {
       base = base.filter(
         (employee) =>
-          (employee.function === 'Pflegekraft' || employee.function === 'PDL') &&
-          employee.area?.includes('Nordkreis')
+          (employee.function === "Pflegekraft" ||
+            employee.function === "PDL") &&
+          employee.area?.includes("Nordkreis"),
       );
     }
 
-    if (employeeFilter === 'pflege_s') {
+    if (employeeFilter === "pflege_s") {
       base = base.filter(
         (employee) =>
-          (employee.function === 'Pflegekraft' || employee.function === 'PDL') &&
-          employee.area?.includes('Südkreis')
+          (employee.function === "Pflegekraft" ||
+            employee.function === "PDL") &&
+          employee.area?.includes("Südkreis"),
       );
     }
 
-    if (employeeFilter === 'arzt') {
+    if (employeeFilter === "arzt") {
       base = base.filter(
-        (employee) => employee.function === 'Arzt' || employee.function === 'Honorararzt'
+        (employee) =>
+          employee.function === "Arzt" || employee.function === "Honorararzt",
       );
     }
 
@@ -120,8 +131,8 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       // Then sort by area (Nordkreis first, then Südkreis)
       const getAreaOrder = (area?: string) => {
         if (!area) return 2;
-        if (area.includes('Nordkreis')) return 0;
-        if (area.includes('Südkreis')) return 1;
+        if (area.includes("Nordkreis")) return 0;
+        if (area.includes("Südkreis")) return 1;
         return 2;
       };
 
@@ -148,13 +159,18 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
   const handleDutyToggle = useCallback(
     async (dutyType: DutyType, area?: OnCallArea) => {
-      if (!selectedEmployee || !selectedDate || shiftDefinitions.length === 0) return;
+      if (!selectedEmployee || !selectedDate || shiftDefinitions.length === 0)
+        return;
 
       const dateStr = formatDate(selectedDate);
 
       // Find existing assignment for this employee, date, and duty
       const existing = assignments.find((a) => {
-        if (!a.shift_instance || !a.shift_definition || a.employee_id !== selectedEmployee.id) {
+        if (
+          !a.shift_instance ||
+          !a.shift_definition ||
+          a.employee_id !== selectedEmployee.id
+        ) {
           return false;
         }
         if (a.shift_instance.date !== dateStr) {
@@ -184,7 +200,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       onCreateAssignment,
       onDeleteAssignment,
       shiftDefinitions,
-    ]
+    ],
   );
 
   const handleDialogClose = useCallback(() => {
@@ -198,15 +214,20 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       assignmentId: number,
       targetEmployeeId: number,
       sourceDate: string,
-      targetDate: string
+      targetDate: string,
     ) => {
       // Guard: only allow drag-move inside the same day column.
       if (sourceDate !== targetDate) return;
 
-      const assignmentToMove = assignments.find((assignment) => assignment.id === assignmentId);
+      const assignmentToMove = assignments.find(
+        (assignment) => assignment.id === assignmentId,
+      );
       if (!assignmentToMove?.id) return;
       if (assignmentToMove.employee_id === targetEmployeeId) return;
-      if (!assignmentToMove.shift_instance || assignmentToMove.shift_instance.date !== sourceDate)
+      if (
+        !assignmentToMove.shift_instance ||
+        assignmentToMove.shift_instance.date !== sourceDate
+      )
         return;
 
       await onUpdateAssignment({
@@ -214,7 +235,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         assignmentData: { employee_id: targetEmployeeId },
       });
     },
-    [assignments, onUpdateAssignment]
+    [assignments, onUpdateAssignment],
   );
 
   // Get assignments for selected employee and date
@@ -231,108 +252,112 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
   // Calculate grid columns based on number of dates
   // Use 1fr for all columns to distribute space evenly, with fixed employee column
-  const employeeColumnWidth = viewMode === 'month' ? 180 : 250;
+  const employeeColumnWidth = viewMode === "month" ? 180 : 250;
   const gridTemplateColumns = `${employeeColumnWidth}px repeat(${dates.length}, 1fr)`;
 
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
+    <Box sx={{ width: "100%", height: "100%" }}>
       {/* Wie WeeklyPlanningTable: ein Sticky-Block für Wochentage + Demand Row; Scroll ist im OnCallPlanningView-Container */}
-      <Box sx={{ minWidth: 'fit-content' }}>
+      <Box sx={{ minWidth: "fit-content" }}>
         {/* Sticky-Header: Header-Zeile + Bedarfszeile gemeinsam, top: 0 – dann scrollt nichts davon */}
         <Box
           sx={{
-            position: 'sticky',
+            position: "sticky",
             top: 0,
             left: 0,
             right: 0,
             zIndex: 2,
-            backgroundColor: 'background.paper',
+            backgroundColor: "background.paper",
           }}
         >
           {/* Zeile 1: Wochentage / Mitarbeiter-Header */}
           <Box
             sx={{
-              display: 'grid',
+              display: "grid",
               gridTemplateColumns,
-              minWidth: 'fit-content',
-              borderBottom: '1px solid',
-              borderColor: 'divider',
+              minWidth: "fit-content",
+              borderBottom: "1px solid",
+              borderColor: "divider",
             }}
           >
             {/* Employee column header – sticky links */}
             <Box
               sx={{
-                px: viewMode === 'month' ? 1 : 1.5,
+                px: viewMode === "month" ? 1 : 1.5,
                 py: 1,
-                position: 'sticky',
+                position: "sticky",
                 left: 0,
-                backgroundColor: 'background.paper',
+                backgroundColor: "background.paper",
                 zIndex: 3,
-                borderRight: '1px solid',
-                borderColor: 'divider',
-                boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
+                borderRight: "1px solid",
+                borderColor: "divider",
+                boxShadow: "2px 0 4px rgba(0,0,0,0.06)",
               }}
             >
               <Typography
                 variant="subtitle2"
                 sx={{
                   fontWeight: 600,
-                  color: 'text.secondary',
-                  textTransform: 'uppercase',
-                  fontSize: viewMode === 'month' ? '0.7rem' : '0.75rem',
-                  letterSpacing: '0.05em',
+                  color: "text.secondary",
+                  textTransform: "uppercase",
+                  fontSize: viewMode === "month" ? "0.7rem" : "0.75rem",
+                  letterSpacing: "0.05em",
                   mb: 1,
                 }}
               >
                 Mitarbeiter
               </Typography>
-              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+              <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
                 <Chip
                   label="Alle"
                   size="small"
                   clickable
-                  color={employeeFilter === 'all' ? 'primary' : 'default'}
-                  variant={employeeFilter === 'all' ? 'filled' : 'outlined'}
-                  onClick={() => setEmployeeFilter('all')}
+                  color={employeeFilter === "all" ? "primary" : "default"}
+                  variant={employeeFilter === "all" ? "filled" : "outlined"}
+                  onClick={() => setEmployeeFilter("all")}
                   sx={{
-                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                    height: viewMode === 'month' ? 22 : 24,
+                    fontSize: viewMode === "month" ? "0.65rem" : "0.7rem",
+                    height: viewMode === "month" ? 22 : 24,
                   }}
                 />
                 <Chip
                   label="Pflege N"
                   size="small"
                   clickable
-                  color={employeeFilter === 'pflege_n' ? 'primary' : 'default'}
-                  variant={employeeFilter === 'pflege_n' ? 'filled' : 'outlined'}
-                  onClick={() => setEmployeeFilter('pflege_n')}
+                  color={employeeFilter === "pflege_n" ? "primary" : "default"}
+                  variant={
+                    employeeFilter === "pflege_n" ? "filled" : "outlined"
+                  }
+                  onClick={() => setEmployeeFilter("pflege_n")}
                   sx={{
-                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                    height: viewMode === 'month' ? 22 : 24,
+                    fontSize: viewMode === "month" ? "0.65rem" : "0.7rem",
+                    height: viewMode === "month" ? 22 : 24,
                   }}
                 />
                 <Chip
                   label="Pflege S"
                   size="small"
                   clickable
-                  color={employeeFilter === 'pflege_s' ? 'primary' : 'default'}
-                  variant={employeeFilter === 'pflege_s' ? 'filled' : 'outlined'}
-                  onClick={() => setEmployeeFilter('pflege_s')}
+                  color={employeeFilter === "pflege_s" ? "primary" : "default"}
+                  variant={
+                    employeeFilter === "pflege_s" ? "filled" : "outlined"
+                  }
+                  onClick={() => setEmployeeFilter("pflege_s")}
                   sx={{
-                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                    height: viewMode === 'month' ? 22 : 24,
+                    fontSize: viewMode === "month" ? "0.65rem" : "0.7rem",
+                    height: viewMode === "month" ? 22 : 24,
                   }}
                 />
                 <Chip
                   label="Arzt"
                   size="small"
                   clickable
-                  color={employeeFilter === 'arzt' ? 'primary' : 'default'}
-                  variant={employeeFilter === 'arzt' ? 'filled' : 'outlined'}
-                  onClick={() => setEmployeeFilter('arzt')}
+                  color={employeeFilter === "arzt" ? "primary" : "default"}
+                  variant={employeeFilter === "arzt" ? "filled" : "outlined"}
+                  onClick={() => setEmployeeFilter("arzt")}
                   sx={{
-                    fontSize: viewMode === 'month' ? '0.65rem' : '0.7rem',
-                    height: viewMode === 'month' ? 22 : 24,
+                    fontSize: viewMode === "month" ? "0.65rem" : "0.7rem",
+                    height: viewMode === "month" ? 22 : 24,
                   }}
                 />
               </Box>
@@ -351,23 +376,25 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                 <Box
                   key={date.toISOString()}
                   sx={{
-                    textAlign: 'center',
-                    py: viewMode === 'month' ? 0.5 : 0.75,
-                    px: viewMode === 'month' ? 0.25 : 0.5,
-                    backgroundColor: weekendStyle ? 'rgba(255, 152, 0, 0.08)' : 'transparent',
-                    borderRight: idx < dates.length - 1 ? '1px solid' : 'none',
-                    borderColor: 'divider',
+                    textAlign: "center",
+                    py: viewMode === "month" ? 0.5 : 0.75,
+                    px: viewMode === "month" ? 0.25 : 0.5,
+                    backgroundColor: weekendStyle
+                      ? "rgba(255, 152, 0, 0.08)"
+                      : "transparent",
+                    borderRight: idx < dates.length - 1 ? "1px solid" : "none",
+                    borderColor: "divider",
                   }}
                 >
                   <Typography
                     variant="caption"
                     sx={{
-                      display: 'block',
+                      display: "block",
                       fontWeight: 600,
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      fontSize: viewMode === 'month' ? '0.6rem' : '0.65rem',
-                      letterSpacing: '0.05em',
+                      color: "text.secondary",
+                      textTransform: "uppercase",
+                      fontSize: viewMode === "month" ? "0.6rem" : "0.65rem",
+                      letterSpacing: "0.05em",
                     }}
                   >
                     {dayOfWeek}
@@ -376,16 +403,26 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     variant="body2"
                     sx={{
                       fontWeight: 600,
-                      color: 'text.primary',
-                      fontSize: viewMode === 'month' ? '0.75rem' : '0.8rem',
+                      color: "text.primary",
+                      fontSize: viewMode === "month" ? "0.75rem" : "0.8rem",
                       mt: 0.25,
                     }}
                   >
                     {date.getDate()}.{date.getMonth() + 1}
                   </Typography>
                   {holidayNameCol ? (
-                    <Box sx={{ mt: 0.25, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
-                      <HolidayChip name={holidayNameCol} compact={viewMode === 'month'} />
+                    <Box
+                      sx={{
+                        mt: 0.25,
+                        display: "flex",
+                        justifyContent: "center",
+                        minWidth: 0,
+                      }}
+                    >
+                      <HolidayChip
+                        name={holidayNameCol}
+                        compact={viewMode === "month"}
+                      />
                     </Box>
                   ) : null}
                 </Box>
@@ -428,7 +465,9 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         date={selectedDate}
         assignments={selectedAssignments}
         employeeCapacities={employeeCapacities}
-        treatAsWeekendForDuties={selectedDate ? weekendLayoutForDate(selectedDate) : undefined}
+        treatAsWeekendForDuties={
+          selectedDate ? weekendLayoutForDate(selectedDate) : undefined
+        }
         onClose={handleDialogClose}
         onDutyToggle={handleDutyToggle}
       />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,12 +15,15 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
-} from '@mui/material';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { Employee, EmployeeFormData } from '../../types/models';
-import { useCreateEmployee, useUpdateEmployee } from '../../services/queries/useEmployees';
-import { useNotificationStore } from '../../stores/useNotificationStore';
+} from "@mui/material";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { Employee, EmployeeFormData } from "../../types/models";
+import {
+  useCreateEmployee,
+  useUpdateEmployee,
+} from "../../services/queries/useEmployees";
+import { useNotificationStore } from "../../stores/useNotificationStore";
 
 interface EmployeeFormProps {
   open: boolean;
@@ -29,50 +32,54 @@ interface EmployeeFormProps {
 }
 
 const areaOptions = [
-  { value: 'Nordkreis', label: 'Nordkreis' },
-  { value: 'Südkreis', label: 'Südkreis' },
+  { value: "Nordkreis", label: "Nordkreis" },
+  { value: "Südkreis", label: "Südkreis" },
 ];
 
 const validationSchema = Yup.object({
-  first_name: Yup.string().required('Vorname ist erforderlich'),
-  last_name: Yup.string().required('Nachname ist erforderlich'),
-  street: Yup.string().required('Straße ist erforderlich'),
-  zip_code: Yup.string().required('PLZ ist erforderlich'),
-  city: Yup.string().required('Ort ist erforderlich'),
-  function: Yup.string().required('Funktion ist erforderlich'),
+  first_name: Yup.string().required("Vorname ist erforderlich"),
+  last_name: Yup.string().required("Nachname ist erforderlich"),
+  street: Yup.string().required("Straße ist erforderlich"),
+  zip_code: Yup.string().required("PLZ ist erforderlich"),
+  city: Yup.string().required("Ort ist erforderlich"),
+  function: Yup.string().required("Funktion ist erforderlich"),
   work_hours: Yup.number()
-    .required('Stellenumfang ist erforderlich')
-    .min(0, 'Stellenumfang muss mindestens 0% sein')
-    .max(100, 'Stellenumfang kann maximal 100% sein'),
+    .required("Stellenumfang ist erforderlich")
+    .min(0, "Stellenumfang muss mindestens 0% sein")
+    .max(100, "Stellenumfang kann maximal 100% sein"),
   area: Yup.string()
     .oneOf(areaOptions.map((opt) => opt.value))
-    .required('Gebiet ist erforderlich'),
+    .required("Gebiet ist erforderlich"),
   alias: Yup.string().optional(),
   email: Yup.string()
-    .transform((value) => (value === '' ? undefined : value))
-    .email('Ungültige E-Mail')
+    .transform((value) => (value === "" ? undefined : value))
+    .email("Ungültige E-Mail")
     .optional(),
   entra_oid: Yup.string().optional().nullable(),
 });
 
-export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, employee }) => {
+export const EmployeeForm: React.FC<EmployeeFormProps> = ({
+  open,
+  onClose,
+  employee,
+}) => {
   const { setNotification } = useNotificationStore();
   const createEmployeeMutation = useCreateEmployee();
   const updateEmployeeMutation = useUpdateEmployee();
 
   const formik = useFormik<EmployeeFormData>({
     initialValues: {
-      first_name: employee?.first_name || '',
-      last_name: employee?.last_name || '',
-      street: employee?.street || '',
-      zip_code: employee?.zip_code || '',
-      city: employee?.city || '',
-      function: employee?.function || 'Pflegekraft',
+      first_name: employee?.first_name || "",
+      last_name: employee?.last_name || "",
+      street: employee?.street || "",
+      zip_code: employee?.zip_code || "",
+      city: employee?.city || "",
+      function: employee?.function || "Pflegekraft",
       work_hours: employee?.work_hours || 100,
-      area: employee?.area || 'Nordkreis',
-      alias: employee?.alias || '',
-      email: employee?.email || '',
-      entra_oid: employee?.entra_oid || '',
+      area: employee?.area || "Nordkreis",
+      alias: employee?.alias || "",
+      email: employee?.email || "",
+      entra_oid: employee?.entra_oid || "",
     },
     validationSchema,
     enableReinitialize: true,
@@ -88,22 +95,27 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
             id: employee.id!,
             employeeData: payload,
           });
-          setNotification('Mitarbeiter erfolgreich aktualisiert', 'success');
+          setNotification("Mitarbeiter erfolgreich aktualisiert", "success");
         } else {
           await createEmployeeMutation.mutateAsync(payload);
-          setNotification('Mitarbeiter erfolgreich erstellt', 'success');
+          setNotification("Mitarbeiter erfolgreich erstellt", "success");
         }
         onClose(true);
       } catch (error: any) {
-        console.error('Error saving employee:', error);
-        setNotification(error.message || 'Fehler beim Speichern des Mitarbeiters', 'error');
+        console.error("Error saving employee:", error);
+        setNotification(
+          error.message || "Fehler beim Speichern des Mitarbeiters",
+          "error",
+        );
       }
     },
   });
 
   return (
     <Dialog open={open} onClose={() => onClose(false)} maxWidth="md" fullWidth>
-      <DialogTitle>{employee ? 'Mitarbeiter bearbeiten' : 'Neuer Mitarbeiter'}</DialogTitle>
+      <DialogTitle>
+        {employee ? "Mitarbeiter bearbeiten" : "Neuer Mitarbeiter"}
+      </DialogTitle>
       <form onSubmit={formik.handleSubmit}>
         <DialogContent>
           <Grid container spacing={2}>
@@ -115,8 +127,12 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 label="Vorname"
                 value={formik.values.first_name}
                 onChange={formik.handleChange}
-                error={formik.touched.first_name && Boolean(formik.errors.first_name)}
-                helperText={formik.touched.first_name && formik.errors.first_name}
+                error={
+                  formik.touched.first_name && Boolean(formik.errors.first_name)
+                }
+                helperText={
+                  formik.touched.first_name && formik.errors.first_name
+                }
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -127,7 +143,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 label="Nachname"
                 value={formik.values.last_name}
                 onChange={formik.handleChange}
-                error={formik.touched.last_name && Boolean(formik.errors.last_name)}
+                error={
+                  formik.touched.last_name && Boolean(formik.errors.last_name)
+                }
                 helperText={formik.touched.last_name && formik.errors.last_name}
               />
             </Grid>
@@ -151,7 +169,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 label="PLZ"
                 value={formik.values.zip_code}
                 onChange={formik.handleChange}
-                error={formik.touched.zip_code && Boolean(formik.errors.zip_code)}
+                error={
+                  formik.touched.zip_code && Boolean(formik.errors.zip_code)
+                }
                 helperText={formik.touched.zip_code && formik.errors.zip_code}
               />
             </Grid>
@@ -170,7 +190,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl
                 fullWidth
-                error={formik.touched.function && Boolean(formik.errors.function)}
+                error={
+                  formik.touched.function && Boolean(formik.errors.function)
+                }
               >
                 <InputLabel>Funktion</InputLabel>
                 <Select
@@ -197,15 +219,22 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 type="number"
                 value={formik.values.work_hours}
                 onChange={formik.handleChange}
-                error={formik.touched.work_hours && Boolean(formik.errors.work_hours)}
-                helperText={formik.touched.work_hours && formik.errors.work_hours}
+                error={
+                  formik.touched.work_hours && Boolean(formik.errors.work_hours)
+                }
+                helperText={
+                  formik.touched.work_hours && formik.errors.work_hours
+                }
                 InputProps={{
                   inputProps: { min: 0, max: 100 },
                 }}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth error={formik.touched.area && Boolean(formik.errors.area)}>
+              <FormControl
+                fullWidth
+                error={formik.touched.area && Boolean(formik.errors.area)}
+              >
                 <InputLabel id="area-label">Gebiet</InputLabel>
                 <Select
                   labelId="area-label"
@@ -234,7 +263,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 error={formik.touched.alias && Boolean(formik.errors.alias)}
                 helperText={
                   (formik.touched.alias && formik.errors.alias) ||
-                  'Optionaler Alias für den Mitarbeiter'
+                  "Optionaler Alias für den Mitarbeiter"
                 }
               />
             </Grid>
@@ -249,7 +278,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 error={formik.touched.email && Boolean(formik.errors.email)}
                 helperText={
                   (formik.touched.email && formik.errors.email) ||
-                  'Optional: wird beim PWA-Login aus Entra befüllt (Match vorname.nachname@…)'
+                  "Optional: wird beim PWA-Login aus Entra befüllt (Match vorname.nachname@…)"
                 }
               />
             </Grid>
@@ -261,10 +290,12 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
                 label="Entra OID (optional)"
                 value={formik.values.entra_oid}
                 onChange={formik.handleChange}
-                error={formik.touched.entra_oid && Boolean(formik.errors.entra_oid)}
+                error={
+                  formik.touched.entra_oid && Boolean(formik.errors.entra_oid)
+                }
                 helperText={
                   (formik.touched.entra_oid && formik.errors.entra_oid) ||
-                  'Optional: wird beim ersten PWA-Login automatisch gesetzt'
+                  "Optional: wird beim ersten PWA-Login automatisch gesetzt"
                 }
               />
             </Grid>
@@ -292,10 +323,10 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ open, onClose, emplo
             {formik.isSubmitting ||
             createEmployeeMutation.isPending ||
             updateEmployeeMutation.isPending
-              ? 'Speichern...'
+              ? "Speichern..."
               : employee
-                ? 'Aktualisieren'
-                : 'Erstellen'}
+                ? "Aktualisieren"
+                : "Erstellen"}
           </Button>
         </DialogActions>
       </form>

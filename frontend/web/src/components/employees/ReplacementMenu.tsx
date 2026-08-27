@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Menu,
   MenuItem,
@@ -8,12 +8,12 @@ import {
   ListItemText,
   Divider,
   Avatar,
-} from '@mui/material';
-import { Employee } from '../../types/models';
-import { getColorForTour, employeeTypeColors } from '@palliroute/shared';
-import { useEmployeePlanning } from '../../services/queries/useEmployeePlanning';
-import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
-import { EmployeePlanningData } from '../../services/api/employeePlanning';
+} from "@mui/material";
+import { Employee } from "../../types/models";
+import { getColorForTour, employeeTypeColors } from "@palliroute/shared";
+import { useEmployeePlanning } from "../../services/queries/useEmployeePlanning";
+import { usePlanningWeekStore } from "../../stores/usePlanningWeekStore";
+import { EmployeePlanningData } from "../../services/api/employeePlanning";
 
 interface ReplacementMenuProps {
   open: boolean;
@@ -36,70 +36,71 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
   patientCountByEmployee = new Map(),
   onSelectReplacement,
 }) => {
-  const { selectedPlanningWeek, getCurrentPlanningWeek } = usePlanningWeekStore();
+  const { selectedPlanningWeek, getCurrentPlanningWeek } =
+    usePlanningWeekStore();
   const currentWeek = selectedPlanningWeek || getCurrentPlanningWeek();
   const { data: planningData } = useEmployeePlanning();
 
   // Map German weekday names to English database format
   const weekdayMapping: { [key: string]: string } = {
-    Montag: 'monday',
-    Dienstag: 'tuesday',
-    Mittwoch: 'wednesday',
-    Donnerstag: 'thursday',
-    Freitag: 'friday',
-    Samstag: 'saturday',
-    Sonntag: 'sunday',
+    Montag: "monday",
+    Dienstag: "tuesday",
+    Mittwoch: "wednesday",
+    Donnerstag: "thursday",
+    Freitag: "friday",
+    Samstag: "saturday",
+    Sonntag: "sunday",
   };
 
   const dbWeekday = weekdayMapping[weekday] || weekday.toLowerCase();
 
   // Helper: backend liefert `available` + optional `custom_text`, kein Feld `status`
   const getEmployeeStatus = (employeeId: number) => {
-    if (!dbWeekday) return 'available';
+    if (!dbWeekday) return "available";
 
     const planningEntry = (planningData ?? []).find(
       (entry: EmployeePlanningData) =>
-        entry.employee_id === employeeId && entry.weekday === dbWeekday
+        entry.employee_id === employeeId && entry.weekday === dbWeekday,
     );
 
-    if (!planningEntry) return 'available';
+    if (!planningEntry) return "available";
 
     if (planningEntry.available === false) {
-      return planningEntry.custom_text ? 'custom' : 'unavailable';
+      return planningEntry.custom_text ? "custom" : "unavailable";
     }
-    return 'available';
+    return "available";
   };
 
   // Helper function to get status display text
   const getStatusDisplayText = (status: string, customText?: string) => {
     switch (status) {
-      case 'available':
-        return 'Verfügbar';
-      case 'vacation':
-        return 'Urlaub';
-      case 'sick':
-        return 'Krank';
-      case 'custom':
-        return customText || 'Benutzerdefiniert';
-      case 'unavailable':
-        return 'Abwesend';
+      case "available":
+        return "Verfügbar";
+      case "vacation":
+        return "Urlaub";
+      case "sick":
+        return "Krank";
+      case "custom":
+        return customText || "Benutzerdefiniert";
+      case "unavailable":
+        return "Abwesend";
       default:
-        return 'Verfügbar';
+        return "Verfügbar";
     }
   };
 
   // Helper function to get status color
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available':
-        return 'success';
-      case 'vacation':
-      case 'sick':
-      case 'custom':
-      case 'unavailable':
-        return 'error';
+      case "available":
+        return "success";
+      case "vacation":
+      case "sick":
+      case "custom":
+      case "unavailable":
+        return "error";
       default:
-        return 'success';
+        return "success";
     }
   };
 
@@ -134,12 +135,12 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
 
   const availableEmployeesList = filteredEmployees.filter((emp) => {
     const status = getEmployeeStatus(emp.id || 0);
-    return status === 'available';
+    return status === "available";
   });
 
   const unavailableEmployeesList = filteredEmployees.filter((emp) => {
     const status = getEmployeeStatus(emp.id || 0);
-    return status !== 'available';
+    return status !== "available";
   });
 
   // Function to create avatar props using tour colors
@@ -150,11 +151,12 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
         bgcolor: tourColor,
         width: 24,
         height: 24,
-        fontSize: '0.75rem',
-        color: 'white',
-        fontWeight: 'bold',
+        fontSize: "0.75rem",
+        color: "white",
+        fontWeight: "bold",
       },
-      children: `${employee.first_name[0]}${employee.last_name[0]}`.toUpperCase(),
+      children:
+        `${employee.first_name[0]}${employee.last_name[0]}`.toUpperCase(),
     };
   };
 
@@ -164,10 +166,10 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
       open={open}
       onClose={onClose}
       sx={{
-        '& .MuiPaper-root': {
+        "& .MuiPaper-root": {
           maxHeight: 300,
-          overflow: 'auto',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          overflow: "auto",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           borderRadius: 2,
         },
       }}
@@ -180,19 +182,19 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
         }}
         sx={{
           py: 1,
-          '&:hover': {
-            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+          "&:hover": {
+            backgroundColor: "rgba(0, 0, 0, 0.04)",
           },
         }}
       >
         <ListItemText>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Avatar
               sx={{
                 width: 24,
                 height: 24,
-                bgcolor: 'grey.400',
-                fontSize: '0.75rem',
+                bgcolor: "grey.400",
+                fontSize: "0.75rem",
               }}
             >
               ×
@@ -212,7 +214,7 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
         <MenuItem disabled sx={{ py: 0.5, px: 2, opacity: 1 }}>
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 'bold', color: 'success.main', opacity: 1 }}
+            sx={{ fontWeight: "bold", color: "success.main", opacity: 1 }}
           >
             Verfügbare Mitarbeiter
           </Typography>
@@ -224,7 +226,7 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
         const status = getEmployeeStatus(emp.id || 0);
         const planningEntry = (planningData ?? []).find(
           (entry: EmployeePlanningData) =>
-            entry.employee_id === emp.id && entry.weekday === dbWeekday
+            entry.employee_id === emp.id && entry.weekday === dbWeekday,
         );
 
         return (
@@ -237,24 +239,31 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
             sx={{
               py: 1,
               ml: 1,
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.04)",
               },
             }}
           >
             <ListItemText>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
                 <Avatar {...createTourAvatar(emp)} />
                 <Chip
                   label={`${emp.first_name} ${emp.last_name}`}
                   size="small"
                   sx={{
                     height: 20,
-                    bgcolor: emp.id ? getColorForTour(emp.id) : 'primary.main',
-                    color: 'white',
-                    '& .MuiChip-label': {
+                    bgcolor: emp.id ? getColorForTour(emp.id) : "primary.main",
+                    color: "white",
+                    "& .MuiChip-label": {
                       px: 1,
-                      fontSize: '0.75rem',
+                      fontSize: "0.75rem",
                     },
                   }}
                 />
@@ -264,25 +273,32 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                   variant="outlined"
                   sx={{
                     height: 20,
-                    fontSize: '0.7rem',
-                    borderColor: employeeTypeColors[emp.function] || employeeTypeColors.default,
-                    color: employeeTypeColors[emp.function] || employeeTypeColors.default,
-                    '& .MuiChip-label': {
+                    fontSize: "0.7rem",
+                    borderColor:
+                      employeeTypeColors[emp.function] ||
+                      employeeTypeColors.default,
+                    color:
+                      employeeTypeColors[emp.function] ||
+                      employeeTypeColors.default,
+                    "& .MuiChip-label": {
                       px: 1,
-                      fontSize: '0.7rem',
+                      fontSize: "0.7rem",
                     },
                   }}
                 />
                 <Chip
-                  label={getStatusDisplayText(status, planningEntry?.custom_text)}
+                  label={getStatusDisplayText(
+                    status,
+                    planningEntry?.custom_text,
+                  )}
                   size="small"
                   color={getStatusColor(status) as any}
                   sx={{
                     height: 20,
-                    fontSize: '0.7rem',
-                    '& .MuiChip-label': {
+                    fontSize: "0.7rem",
+                    "& .MuiChip-label": {
                       px: 1,
-                      fontSize: '0.7rem',
+                      fontSize: "0.7rem",
                     },
                   }}
                 />
@@ -293,9 +309,9 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                     variant="outlined"
                     sx={{
                       height: 20,
-                      fontSize: '0.7rem',
-                      borderColor: 'warning.main',
-                      color: 'warning.main',
+                      fontSize: "0.7rem",
+                      borderColor: "warning.main",
+                      color: "warning.main",
                     }}
                   />
                 )}
@@ -303,11 +319,12 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                   <Typography
                     variant="caption"
                     sx={{
-                      color: 'text.secondary',
-                      fontSize: '0.7rem',
+                      color: "text.secondary",
+                      fontSize: "0.7rem",
                     }}
                   >
-                    {patientCount} {patientCount === 1 ? 'Patient' : 'Patienten'}
+                    {patientCount}{" "}
+                    {patientCount === 1 ? "Patient" : "Patienten"}
                   </Typography>
                 )}
               </Box>
@@ -317,16 +334,15 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
       })}
 
       {/* Divider between sections */}
-      {availableEmployeesList.length > 0 && unavailableEmployeesList.length > 0 && (
-        <Divider sx={{ my: 1 }} />
-      )}
+      {availableEmployeesList.length > 0 &&
+        unavailableEmployeesList.length > 0 && <Divider sx={{ my: 1 }} />}
 
       {/* Unavailable Employees Section */}
       {unavailableEmployeesList.length > 0 && (
         <MenuItem disabled sx={{ py: 0.5, px: 2, opacity: 1 }}>
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 'bold', color: 'error.main', opacity: 1 }}
+            sx={{ fontWeight: "bold", color: "error.main", opacity: 1 }}
           >
             Nicht verfügbare Mitarbeiter
           </Typography>
@@ -338,7 +354,7 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
         const status = getEmployeeStatus(emp.id || 0);
         const planningEntry = (planningData ?? []).find(
           (entry: EmployeePlanningData) =>
-            entry.employee_id === emp.id && entry.weekday === dbWeekday
+            entry.employee_id === emp.id && entry.weekday === dbWeekday,
         );
 
         return (
@@ -351,24 +367,31 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
             sx={{
               py: 1,
               ml: 1,
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.04)",
               },
             }}
           >
             <ListItemText>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
                 <Avatar {...createTourAvatar(emp)} />
                 <Chip
                   label={`${emp.first_name} ${emp.last_name}`}
                   size="small"
                   sx={{
                     height: 20,
-                    bgcolor: emp.id ? getColorForTour(emp.id) : 'primary.main',
-                    color: 'white',
-                    '& .MuiChip-label': {
+                    bgcolor: emp.id ? getColorForTour(emp.id) : "primary.main",
+                    color: "white",
+                    "& .MuiChip-label": {
                       px: 1,
-                      fontSize: '0.75rem',
+                      fontSize: "0.75rem",
                     },
                   }}
                 />
@@ -378,25 +401,32 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                   variant="outlined"
                   sx={{
                     height: 20,
-                    fontSize: '0.7rem',
-                    borderColor: employeeTypeColors[emp.function] || employeeTypeColors.default,
-                    color: employeeTypeColors[emp.function] || employeeTypeColors.default,
-                    '& .MuiChip-label': {
+                    fontSize: "0.7rem",
+                    borderColor:
+                      employeeTypeColors[emp.function] ||
+                      employeeTypeColors.default,
+                    color:
+                      employeeTypeColors[emp.function] ||
+                      employeeTypeColors.default,
+                    "& .MuiChip-label": {
                       px: 1,
-                      fontSize: '0.7rem',
+                      fontSize: "0.7rem",
                     },
                   }}
                 />
                 <Chip
-                  label={getStatusDisplayText(status, planningEntry?.custom_text)}
+                  label={getStatusDisplayText(
+                    status,
+                    planningEntry?.custom_text,
+                  )}
                   size="small"
                   color={getStatusColor(status) as any}
                   sx={{
                     height: 20,
-                    fontSize: '0.7rem',
-                    '& .MuiChip-label': {
+                    fontSize: "0.7rem",
+                    "& .MuiChip-label": {
                       px: 1,
-                      fontSize: '0.7rem',
+                      fontSize: "0.7rem",
                     },
                   }}
                 />
@@ -407,9 +437,9 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                     variant="outlined"
                     sx={{
                       height: 20,
-                      fontSize: '0.7rem',
-                      borderColor: 'warning.main',
-                      color: 'warning.main',
+                      fontSize: "0.7rem",
+                      borderColor: "warning.main",
+                      color: "warning.main",
                     }}
                   />
                 )}
@@ -417,11 +447,12 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
                   <Typography
                     variant="caption"
                     sx={{
-                      color: 'text.secondary',
-                      fontSize: '0.7rem',
+                      color: "text.secondary",
+                      fontSize: "0.7rem",
                     }}
                   >
-                    {patientCount} {patientCount === 1 ? 'Patient' : 'Patienten'}
+                    {patientCount}{" "}
+                    {patientCount === 1 ? "Patient" : "Patienten"}
                   </Typography>
                 )}
               </Box>
