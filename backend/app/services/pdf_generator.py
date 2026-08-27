@@ -5,8 +5,6 @@ from io import BytesIO
 
 import requests
 from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
-from weasyprint.text.fonts import FontConfiguration
 
 from ..models.appointment import Appointment
 from ..models.employee import Employee
@@ -16,6 +14,14 @@ from ..models.patient import Patient
 
 class PDFGenerator:
     """Service for generating route PDFs using WeasyPrint"""
+
+    @staticmethod
+    def _weasyprint():
+        """Import WeasyPrint only when generating PDFs (needs native GTK/Pango libs)."""
+        from weasyprint import HTML
+        from weasyprint.text.fonts import FontConfiguration
+
+        return HTML, FontConfiguration
 
     @staticmethod
     def _translate_weekday(weekday):
@@ -462,12 +468,9 @@ class PDFGenerator:
         html_content = template.render(**template_data)
 
         # Generate PDF with WeasyPrint
+        HTML, FontConfiguration = PDFGenerator._weasyprint()
         buffer = BytesIO()
-
-        # Configure font settings for better rendering
         font_config = FontConfiguration()
-
-        # Generate PDF
         html_doc = HTML(string=html_content)
         html_doc.write_pdf(buffer, font_config=font_config)
 
@@ -629,6 +632,7 @@ class PDFGenerator:
         template = env.get_template("pdf_template_weekend.html")
 
         html_content = template.render(**template_data)
+        HTML, FontConfiguration = PDFGenerator._weasyprint()
         buffer = BytesIO()
         font_config = FontConfiguration()
         HTML(string=html_content).write_pdf(buffer, font_config=font_config)
