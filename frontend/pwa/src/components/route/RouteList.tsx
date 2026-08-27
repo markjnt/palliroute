@@ -1,18 +1,22 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, Chip, Divider } from '@mui/material';
-import { Phone as PhoneIcon, Info as InfoIcon, AccessTime as TimeIcon } from '@mui/icons-material';
+import { Phone as PhoneIcon, AccessTime as TimeIcon } from '@mui/icons-material';
 import { useUserStore } from '../../stores/useUserStore';
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore';
 import { useEmployees } from '../../services/queries/useEmployees';
 import { usePatients } from '../../services/queries/usePatients';
-import { useAppointmentsByWeekday } from '../../services/queries/useAppointments';
+import {
+  useAppointmentsByWeekday,
+  useSetAppointmentCompleted,
+} from '../../services/queries/useAppointments';
 import { useRoutes } from '../../services/queries/useRoutes';
 import { findEmployeeDayRoute } from '../../utils/mapUtils';
 import { getOwnRouteOrder } from '@palliroute/shared';
 import { Weekday } from '../../types/models';
 import RouteStopItem from './RouteStopItem';
-import { StopActionButtons } from './StopActionButtons';
+import { AppointmentCheckControl } from './AppointmentCheckControl';
+import { StopCallButton, StopInfoIcon } from './StopActionButtons';
 import { callPhone } from './stopContactActions';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 
@@ -26,6 +30,7 @@ interface RouteStop {
   phone1?: string;
   phone2?: string;
   info?: string;
+  completed?: boolean;
   responsibleEmployeeName?: string; // For tour_employee appointments: shows "Zuständig: [Name]"
   responsibleEmployeeId?: number;
   tourEmployeeName?: string; // For responsible employee: shows "Ursprungstour: [Name]"
@@ -55,6 +60,12 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
   const { data: routes = [] } = useRoutes({
     weekday: selectedWeekday as Weekday,
   });
+  const setAppointmentCompleted = useSetAppointmentCompleted();
+
+  const handleToggleCompleted = (appointmentId: number, completed: boolean) => {
+    if (!appointmentId) return;
+    setAppointmentCompleted.mutate({ appointmentId, completed });
+  };
 
   const showAsAdditionalRoute = (employeeId?: number) => {
     if (!employeeId || Number(employeeId) === Number(selectedUserId)) return;
@@ -190,6 +201,7 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
               phone1: patient.phone1,
               phone2: patient.phone2,
               info: appointment.info,
+              completed: Boolean(appointment.completed),
               responsibleEmployeeName: responsibleEmployee
                 ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
                 : undefined,
@@ -324,6 +336,7 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
         phone1: patient.phone1,
         phone2: patient.phone2,
         info: appointment.info,
+        completed: Boolean(appointment.completed),
         responsibleEmployeeName: responsibleEmployee
           ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
           : undefined,
@@ -421,6 +434,7 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
       phone2?: string;
       time?: string;
       info?: string;
+      completed?: boolean;
       responsibleEmployeeName?: string;
       responsibleEmployeeId?: number;
       tourEmployeeName?: string;
@@ -489,6 +503,7 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
           phone2: patient.phone2,
           time: appointment.time,
           info: appointment.info,
+          completed: Boolean(appointment.completed),
           responsibleEmployeeName: undefined,
           tourEmployeeName: tourEmployee
             ? `${tourEmployee.first_name} ${tourEmployee.last_name}`
@@ -556,6 +571,7 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
           phone2: patient.phone2,
           time: appointment.time,
           info: appointment.info,
+          completed: Boolean(appointment.completed),
           responsibleEmployeeName: responsibleEmployee
             ? `${responsibleEmployee.first_name} ${responsibleEmployee.last_name}`
             : undefined,
@@ -643,7 +659,11 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
         >
           {displayedStops.map((stop, index) => (
             <React.Fragment key={stop.id}>
-              <RouteStopItem stop={stop} onShowAdditionalRoute={onShowAdditionalRoute} />
+              <RouteStopItem
+                stop={stop}
+                onShowAdditionalRoute={onShowAdditionalRoute}
+                onToggleCompleted={handleToggleCompleted}
+              />
               {index < displayedStops.length - 1 && <Divider sx={{ mx: 1.5 }} />}
             </React.Fragment>
           ))}
@@ -653,7 +673,11 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
               {displayedStops.length > 0 && <Divider sx={{ mx: 1.5, my: 1 }} />}
               {tourEmployeeStops.map((stop, index) => (
                 <React.Fragment key={`tour-${stop.id}`}>
-                  <RouteStopItem stop={stop} onShowAdditionalRoute={onShowAdditionalRoute} />
+                  <RouteStopItem
+                    stop={stop}
+                    onShowAdditionalRoute={onShowAdditionalRoute}
+                    onToggleCompleted={handleToggleCompleted}
+                  />
                   {index < tourEmployeeStops.length - 1 && <Divider sx={{ mx: 1.5 }} />}
                 </React.Fragment>
               ))}
@@ -672,11 +696,13 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
               overflow: 'hidden',
             }}
           >
-            {tkAppointments.map((tkApp, index) => (
+            {tkAppointments.map((tkApp, index) => {
+              const tkCompleted = Boolean(tkApp.completed);
+              return (
               <Box
                 key={tkApp.id}
                 sx={{
-                  opacity: tkApp.isTourEmployeeAppointment ? 0.5 : 1,
+                  opacity: tkApp.isTourEmployeeAppointment ? 0.5 : tkCompleted ? 0.72 : 1,
                   filter: tkApp.isTourEmployeeAppointment ? 'grayscale(0.3)' : 'none',
                 }}
               >
@@ -702,187 +728,191 @@ export const RouteList: React.FC<RouteListProps> = ({ onShowAdditionalRoute }) =
                       justifyContent: 'center',
                       mr: { xs: 1.5, sm: 2 },
                       flexShrink: 0,
-                      alignSelf: 'flex-start',
+                      alignSelf: 'center',
                       boxShadow: '0 2px 8px rgba(76, 175, 80, 0.25)',
                     }}
                   >
                     <PhoneIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
                   </Box>
 
-                  <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.75 }}>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'stretch',
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        color: tkCompleted ? '#8E8E93' : '#1d1d1f',
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        lineHeight: 1.3,
+                        textDecoration: tkCompleted ? 'line-through' : 'none',
+                        mb: 0.75,
+                      }}
+                    >
+                      {tkApp.patientName}
+                    </Typography>
+
+                    {tkApp.responsibleEmployeeName && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                         <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 600,
-                            color: '#1d1d1f',
-                            flex: 1,
-                            fontSize: { xs: '0.875rem', sm: '1rem' },
-                            lineHeight: 1.3,
-                          }}
+                          variant="caption"
+                          onClick={() => showAsAdditionalRoute(tkApp.responsibleEmployeeId)}
+                          sx={employeeLinkSx}
                         >
-                          {tkApp.patientName}
+                          Zuständig: {tkApp.responsibleEmployeeName}
                         </Typography>
                       </Box>
+                    )}
 
-                      {tkApp.responsibleEmployeeName && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                          <Typography
-                            variant="caption"
-                            onClick={() => showAsAdditionalRoute(tkApp.responsibleEmployeeId)}
-                            sx={employeeLinkSx}
-                          >
-                            Zuständig: {tkApp.responsibleEmployeeName}
-                          </Typography>
-                        </Box>
-                      )}
+                    {tkApp.tourEmployeeName && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                        <Typography
+                          variant="caption"
+                          onClick={() => showAsAdditionalRoute(tkApp.tourEmployeeId)}
+                          sx={employeeLinkSx}
+                        >
+                          Ursprungstour: {tkApp.tourEmployeeName}
+                        </Typography>
+                      </Box>
+                    )}
 
-                      {tkApp.tourEmployeeName && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                          <Typography
-                            variant="caption"
-                            onClick={() => showAsAdditionalRoute(tkApp.tourEmployeeId)}
-                            sx={employeeLinkSx}
-                          >
-                            Ursprungstour: {tkApp.tourEmployeeName}
-                          </Typography>
-                        </Box>
-                      )}
+                    {tkApp.originEmployeeName && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: '#007AFF',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Ursprünglich (Vertretung): {tkApp.originEmployeeName}
+                        </Typography>
+                      </Box>
+                    )}
 
-                      {tkApp.originEmployeeName && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: '#007AFF',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                            }}
-                          >
-                            Ursprünglich (Vertretung): {tkApp.originEmployeeName}
-                          </Typography>
-                        </Box>
-                      )}
+                    {(tkApp.phone1 || tkApp.phone2) && (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                        {tkApp.phone1 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
+                            <StopCallButton phone={tkApp.phone1} />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: '#8E8E93',
+                                fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                cursor: 'pointer',
+                                lineHeight: 1.35,
+                              }}
+                              onClick={() => callPhone(tkApp.phone1!)}
+                            >
+                              {tkApp.phone1}
+                            </Typography>
+                          </Box>
+                        )}
+                        {tkApp.phone2 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
+                            <StopCallButton phone={tkApp.phone2} />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: '#8E8E93',
+                                fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                cursor: 'pointer',
+                                lineHeight: 1.35,
+                              }}
+                              onClick={() => callPhone(tkApp.phone2!)}
+                            >
+                              {tkApp.phone2}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
 
-                      {tkApp.info && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                          <InfoIcon sx={{ fontSize: 14, color: '#007AFF', mr: 0.5 }} />
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: '#007AFF',
-                              fontSize: '0.75rem',
-                              bgcolor: 'rgba(0, 122, 255, 0.1)',
-                              px: 1,
-                              py: 0.25,
-                              borderRadius: 1,
-                            }}
-                          >
-                            {tkApp.info}
-                          </Typography>
-                        </Box>
-                      )}
+                    {tkApp.time && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                        <TimeIcon
+                          sx={{
+                            fontSize: { xs: 13, sm: 14 },
+                            color: '#8E8E93',
+                            mr: 0.5,
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: '#8E8E93',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          }}
+                        >
+                          {tkApp.time}
+                        </Typography>
+                      </Box>
+                    )}
 
-                      {(tkApp.phone1 || tkApp.phone2) && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          {tkApp.phone1 && (
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <PhoneIcon
-                                sx={{
-                                  fontSize: { xs: 13, sm: 14 },
-                                  color: '#8E8E93',
-                                  mr: 0.5,
-                                }}
-                              />
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: '#8E8E93',
-                                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                                  cursor: 'pointer',
-                                }}
-                                onClick={() => callPhone(tkApp.phone1!)}
-                              >
-                                {tkApp.phone1}
-                              </Typography>
-                            </Box>
-                          )}
-                          {tkApp.phone2 && (
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <PhoneIcon
-                                sx={{
-                                  fontSize: { xs: 13, sm: 14 },
-                                  color: '#8E8E93',
-                                  mr: 0.5,
-                                }}
-                              />
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: '#8E8E93',
-                                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                                  cursor: 'pointer',
-                                }}
-                                onClick={() => callPhone(tkApp.phone2!)}
-                              >
-                                {tkApp.phone2}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                      )}
-
-                      {tkApp.time && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                          <TimeIcon
-                            sx={{
-                              fontSize: { xs: 13, sm: 14 },
-                              color: '#8E8E93',
-                              mr: 0.5,
-                            }}
-                          />
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: '#8E8E93',
-                              fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            }}
-                          >
-                            {tkApp.time}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                    <Box sx={{ ml: 1, flexShrink: 0 }}>
-                      <StopActionButtons
-                        showMaps={false}
-                        phone1={tkApp.phone1}
-                        phone2={tkApp.phone2}
-                      />
-                    </Box>
+                    {tkApp.info && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0, mt: 0.5 }}>
+                        <StopInfoIcon />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: '#007AFF',
+                            fontSize: '0.75rem',
+                            bgcolor: 'rgba(0, 122, 255, 0.1)',
+                            px: 1,
+                            py: 0.25,
+                            borderRadius: 1,
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {tkApp.info}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
 
-                  <Chip
-                    label="TK"
-                    size="small"
+                  <Box
                     sx={{
-                      alignSelf: 'flex-start',
-                      flexShrink: 0,
                       ml: 0.75,
-                      bgcolor: 'rgba(76, 175, 80, 0.15)',
-                      color: '#4CAF50',
-                      fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                      height: { xs: 18, sm: 20 },
-                      fontWeight: 600,
-                      border: '1px solid rgba(76, 175, 80, 0.3)',
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      minWidth: 44,
+                      alignSelf: 'flex-start',
                     }}
-                  />
+                  >
+                    <Chip
+                      label="TK"
+                      size="small"
+                      sx={{
+                        bgcolor: 'rgba(76, 175, 80, 0.15)',
+                        color: '#4CAF50',
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        height: { xs: 18, sm: 20 },
+                        fontWeight: 600,
+                        border: '1px solid rgba(76, 175, 80, 0.3)',
+                      }}
+                    />
+                    <AppointmentCheckControl
+                      completed={tkCompleted}
+                      onToggle={() => handleToggleCompleted(tkApp.id, !tkCompleted)}
+                    />
+                  </Box>
                 </Box>
 
                 {index < tkAppointments.length - 1 && <Divider sx={{ mx: 2 }} />}
               </Box>
-            ))}
+              );
+            })}
           </Box>
         </Box>
       )}

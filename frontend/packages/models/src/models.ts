@@ -67,6 +67,8 @@ export interface Appointment {
   info?: string;
   area: Area;
   calendar_week?: number;
+  /** PWA day checklist – keyed by appointment id, survives route reordering */
+  completed?: boolean;
   created_at?: string;
   updated_at?: string;
 }

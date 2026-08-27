@@ -35,6 +35,7 @@ class ExcelImportService:
     GEOCODE_CACHE_KEY = "geocode_address_cache"
     AW_TOUR_EMPLOYEE_SNAPSHOT_KEY = "aw_tour_employee_assignments"
     CUSTOM_ORDER_SNAPSHOT_KEY = "route_custom_order_snapshots"
+    COMPLETED_APPOINTMENTS_SNAPSHOT_KEY = "appointment_completed_snapshots"
     # Class-level cache for geocoding to avoid redundant API calls
     _geocode_cache: dict[str, tuple[float, float]] = {}
 
@@ -590,6 +591,177 @@ class ExcelImportService:
         if restored:
             db.session.commit()
             print(f"    Restored {restored} active custom orders")
+        return restored
+
+    @staticmethod
+    def _normalize_completion_identity(
+        calendar_week: int | None,
+        weekday: str | None,
+        first_name: str | None,
+        last_name: str | None,
+        street: str | None,
+        zip_code: str | None,
+        visit_type: str | None,
+    ) -> tuple[int, str, str, str, str, str, str] | None:
+        if calendar_week is None or not weekday:
+            return None
+        stop = ExcelImportService._normalize_stop_identity(
+            first_name, last_name, street, zip_code, visit_type
+        )
+        return (int(calendar_week), str(weekday).strip().lower(), *stop)
+
+    @staticmethod
+    def _completion_identity_from_appointment(
+        appointment: Appointment,
+    ) -> tuple[int, str, str, str, str, str, str] | None:
+        patient = appointment.patient
+        if not patient:
+            return None
+        return ExcelImportService._normalize_completion_identity(
+            appointment.calendar_week,
+            appointment.weekday,
+            patient.first_name,
+            patient.last_name,
+            patient.street,
+            patient.zip_code,
+            appointment.visit_type,
+        )
+
+    @staticmethod
+    def _completion_identity_from_dict(
+        item: dict[str, Any],
+    ) -> tuple[int, str, str, str, str, str, str] | None:
+        return ExcelImportService._normalize_completion_identity(
+            item.get("calendar_week"),
+            item.get("weekday"),
+            item.get("first_name"),
+            item.get("last_name"),
+            item.get("street"),
+            item.get("zip_code"),
+            item.get("visit_type"),
+        )
+
+    @staticmethod
+    def _snapshot_completed_appointments() -> list[dict[str, Any]]:
+        """Preserve PWA completed flags across patient re-import (matched by stop identity)."""
+        appointments = (
+            Appointment.query.options(joinedload(Appointment.patient))
+            .filter(Appointment.completed.is_(True))
+            .all()
+        )
+        snapshots: list[dict[str, Any]] = []
+        for appointment in appointments:
+            patient = appointment.patient
+            if not patient or appointment.calendar_week is None or not appointment.weekday:
+                continue
+            snapshots.append(
+                {
+                    "calendar_week": int(appointment.calendar_week),
+                    "weekday": str(appointment.weekday),
+                    "first_name": patient.first_name or "",
+                    "last_name": patient.last_name or "",
+                    "street": patient.street or "",
+                    "zip_code": patient.zip_code or "",
+                    "visit_type": appointment.visit_type or "",
+                }
+            )
+        return snapshots
+
+    @staticmethod
+    def _serialize_completed_appointments_snapshot(snapshots: list[dict[str, Any]]) -> str:
+        return json.dumps(snapshots)
+
+    @staticmethod
+    def _deserialize_completed_appointments_snapshot(raw: str | None) -> list[dict[str, Any]]:
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(data, list):
+            return []
+        snapshots: list[dict[str, Any]] = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            calendar_week = item.get("calendar_week")
+            weekday = item.get("weekday")
+            if calendar_week is None or not weekday:
+                continue
+            snapshots.append(
+                {
+                    "calendar_week": int(calendar_week),
+                    "weekday": str(weekday),
+                    "first_name": str(item.get("first_name") or ""),
+                    "last_name": str(item.get("last_name") or ""),
+                    "street": str(item.get("street") or ""),
+                    "zip_code": str(item.get("zip_code") or ""),
+                    "visit_type": str(item.get("visit_type") or ""),
+                }
+            )
+        return snapshots
+
+    @staticmethod
+    def _load_persisted_completed_appointments_snapshot() -> list[dict[str, Any]]:
+        raw = SystemInfo.get_value(ExcelImportService.COMPLETED_APPOINTMENTS_SNAPSHOT_KEY)
+        return ExcelImportService._deserialize_completed_appointments_snapshot(raw)
+
+    @staticmethod
+    def _persist_completed_appointments_snapshot(snapshots: list[dict[str, Any]]) -> None:
+        SystemInfo.set_value(
+            ExcelImportService.COMPLETED_APPOINTMENTS_SNAPSHOT_KEY,
+            ExcelImportService._serialize_completed_appointments_snapshot(snapshots),
+        )
+
+    @staticmethod
+    def _clear_completed_appointments_snapshot() -> None:
+        SystemInfo.set_value(ExcelImportService.COMPLETED_APPOINTMENTS_SNAPSHOT_KEY, "[]")
+
+    @staticmethod
+    def _prepare_completed_appointments_snapshot() -> list[dict[str, Any]]:
+        """
+        Live completed appointments win. If data was already wiped by a failed import,
+        fall back to the last persisted snapshot.
+        """
+        live = ExcelImportService._snapshot_completed_appointments()
+        stored = ExcelImportService._load_persisted_completed_appointments_snapshot()
+        merged = live if live else stored
+        if merged:
+            ExcelImportService._persist_completed_appointments_snapshot(merged)
+        return merged
+
+    @staticmethod
+    def _restore_completed_appointments(snapshots: list[dict[str, Any]]) -> int:
+        """Re-apply completed flags after appointments were recreated."""
+        if not snapshots:
+            return 0
+
+        appointments = Appointment.query.options(joinedload(Appointment.patient)).all()
+        buckets: dict[tuple[int, str, str, str, str, str, str], deque[Appointment]] = defaultdict(
+            deque
+        )
+        for appointment in appointments:
+            identity = ExcelImportService._completion_identity_from_appointment(appointment)
+            if identity:
+                buckets[identity].append(appointment)
+
+        restored = 0
+        for item in snapshots:
+            identity = ExcelImportService._completion_identity_from_dict(item)
+            if not identity:
+                continue
+            queue = buckets.get(identity)
+            if not queue:
+                continue
+            appointment = queue.popleft()
+            if not appointment.completed:
+                appointment.completed = True
+                restored += 1
+
+        if restored:
+            db.session.commit()
+            print(f"    Restored completed flag on {restored} appointments")
         return restored
 
     @staticmethod
@@ -2038,6 +2210,9 @@ class ExcelImportService:
             # Preserve AW tour employee assignments (survives delete + failed import retry)
             aw_tour_employee_snapshots = ExcelImportService._prepare_aw_tour_employee_snapshot()
             custom_order_snapshots = ExcelImportService._prepare_custom_order_snapshot()
+            completed_appointments_snapshots = (
+                ExcelImportService._prepare_completed_appointments_snapshot()
+            )
 
             # Step 1: Delete existing patient data (keep employees and their planning)
             print("Step 1: Deleting existing patient data...")
@@ -2137,8 +2312,15 @@ class ExcelImportService:
                 print("\nRestoring active custom orders...")
                 ExcelImportService._restore_custom_orders(custom_order_snapshots)
 
+            if completed_appointments_snapshots:
+                print("\nRestoring completed appointments...")
+                ExcelImportService._restore_completed_appointments(
+                    completed_appointments_snapshots
+                )
+
             ExcelImportService._clear_aw_tour_employee_snapshot()
             ExcelImportService._clear_custom_order_snapshot()
+            ExcelImportService._clear_completed_appointments_snapshot()
 
             # Calculate final statistics
             calendar_weeks_str = ", ".join(map(str, calendar_weeks)) if calendar_weeks else "None"

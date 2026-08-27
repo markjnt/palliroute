@@ -239,6 +239,7 @@ def update_replacement(employee_id, weekday):
                     }
                 )
                 appointment.employee_id = current_responsible
+                appointment.completed = False
 
         moved_count = len(moved_appointments)
 

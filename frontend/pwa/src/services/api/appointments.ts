@@ -57,6 +57,16 @@ export const appointmentsApi = {
     }
   },
 
+  async setCompleted(id: number, completed: boolean): Promise<Appointment> {
+    try {
+      const response = await api.put(`/appointments/${id}/completed`, { completed });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update completed state for appointment ${id}:`, error);
+      throw error;
+    }
+  },
+
   async moveAppointment(
     appointmentId: number,
     sourceEmployeeId?: number,

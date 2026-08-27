@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Weekday } from '../../types/models';
+import { Appointment, Weekday } from '../../types/models';
 import { appointmentsApi } from '../api/appointments';
 import { liveListQueryOptions, routeKeys } from './useRoutes';
 import { patientKeys } from './usePatients';
@@ -48,6 +48,43 @@ export const useAppointment = (id: number) => {
     queryKey: appointmentKeys.detail(id),
     queryFn: () => appointmentsApi.getById(id),
     enabled: !!id, // Nur ausführen, wenn eine ID angegeben ist
+  });
+};
+
+/** Toggle/set completed on an appointment (persisted by appointment id). */
+export const useSetAppointmentCompleted = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ appointmentId, completed }: { appointmentId: number; completed: boolean }) =>
+      appointmentsApi.setCompleted(appointmentId, completed),
+    onMutate: async ({ appointmentId, completed }) => {
+      await queryClient.cancelQueries({ queryKey: appointmentKeys.all });
+
+      const previousLists = queryClient.getQueriesData<Appointment[]>({
+        queryKey: appointmentKeys.lists(),
+      });
+
+      previousLists.forEach(([queryKey, appointments]) => {
+        if (!appointments) return;
+        queryClient.setQueryData<Appointment[]>(
+          queryKey,
+          appointments.map((appointment) =>
+            appointment.id === appointmentId ? { ...appointment, completed } : appointment
+          )
+        );
+      });
+
+      return { previousLists };
+    },
+    onError: (_error, _variables, context) => {
+      context?.previousLists.forEach(([queryKey, appointments]) => {
+        queryClient.setQueryData(queryKey, appointments);
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
+    },
   });
 };
 
