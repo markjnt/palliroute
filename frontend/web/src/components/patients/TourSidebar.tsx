@@ -143,9 +143,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
       ? new Date(lastImportTimeData.last_import_time)
       : null;
     if (fromApi && lastPatientImportTime) {
-      return fromApi.getTime() >= lastPatientImportTime.getTime()
-        ? fromApi
-        : lastPatientImportTime;
+      return fromApi.getTime() >= lastPatientImportTime.getTime() ? fromApi : lastPatientImportTime;
     }
     return fromApi || lastPatientImportTime;
   }, [lastImportTimeData, lastPatientImportTime]);
