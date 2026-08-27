@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -138,18 +138,33 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
   const optimizeTourAreaRoutesMutation = useOptimizeTourAreaRoutes();
   const { data: lastImportTimeData } = useLastPatientImportTime();
 
-  // Update local store when API data changes
+  const displayImportTime = useMemo(() => {
+    const fromApi = lastImportTimeData?.last_import_time
+      ? new Date(lastImportTimeData.last_import_time)
+      : null;
+    if (fromApi && lastPatientImportTime) {
+      return fromApi.getTime() >= lastPatientImportTime.getTime()
+        ? fromApi
+        : lastPatientImportTime;
+    }
+    return fromApi || lastPatientImportTime;
+  }, [lastImportTimeData, lastPatientImportTime]);
+
+  // Keep the store in sync when the API reports a newer import time
   useEffect(() => {
-    if (lastImportTimeData?.last_import_time) {
-      setLastPatientImportTime(new Date(lastImportTimeData.last_import_time));
+    if (!lastImportTimeData?.last_import_time) {
+      return;
+    }
+    const apiTime = new Date(lastImportTimeData.last_import_time);
+    const current = useLastUpdateStore.getState().lastPatientImportTime;
+    if (!current || apiTime.getTime() > current.getTime()) {
+      setLastPatientImportTime(apiTime);
     }
   }, [lastImportTimeData, setLastPatientImportTime]);
 
   // Show warning dialog if last import is older than 2 hours
   useEffect(() => {
-    const effectiveTime = lastImportTimeData?.last_import_time
-      ? new Date(lastImportTimeData.last_import_time)
-      : lastPatientImportTime || null;
+    const effectiveTime = displayImportTime;
 
     if (!effectiveTime || staleWarningShown) {
       return;
@@ -164,7 +179,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
       setShowStaleImportDialog(true);
       setStaleWarningShown(true);
     }
-  }, [lastImportTimeData, lastPatientImportTime, staleWarningShown]);
+  }, [displayImportTime, staleWarningShown]);
 
   // Update available calendar weeks when API data changes
   useEffect(() => {
@@ -769,7 +784,7 @@ export const TourPlanSidebar: React.FC<TourPlanSidebarProps> = () => {
           >
             {patientImportMutation.isPending
               ? 'Importiere...'
-              : `PalliDOC Import${lastImportTimeData?.last_import_time || lastPatientImportTime ? ` (${formatLastUpdateTime(lastImportTimeData?.last_import_time ? new Date(lastImportTimeData.last_import_time) : lastPatientImportTime)})` : ''}`}
+              : `PalliDOC Import${displayImportTime ? ` (${formatLastUpdateTime(displayImportTime)})` : ''}`}
           </Button>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>

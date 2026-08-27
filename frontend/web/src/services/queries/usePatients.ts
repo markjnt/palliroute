@@ -6,6 +6,7 @@ import { employeeKeys } from './useEmployees';
 import { useLastUpdateStore } from '../../stores/useLastUpdateStore';
 import { useCalendarWeekStore } from '../../stores/useCalendarWeekStore';
 import { employeePlanningKeys } from './useEmployeePlanning';
+import { configKeys } from './useConfig';
 
 // Keys für React Query Cache
 export const patientKeys = {
@@ -58,7 +59,7 @@ export const usePatientImport = () => {
 
   return useMutation({
     mutationFn: () => patientsApi.import(),
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       // Patienten-Daten im Cache invalidieren
       queryClient.invalidateQueries({ queryKey: patientKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
@@ -66,8 +67,13 @@ export const usePatientImport = () => {
       queryClient.invalidateQueries({ queryKey: employeeKeys.all });
       queryClient.invalidateQueries({ queryKey: employeePlanningKeys.all });
 
-      // Update last import time in store
-      setLastPatientImportTime(new Date());
+      // Import-Zeit aus der Antwort übernehmen, damit der Button sofort aktualisiert
+      const lastImportTime = data.last_import_time ?? new Date().toISOString();
+      setLastPatientImportTime(new Date(lastImportTime));
+      await queryClient.cancelQueries({ queryKey: configKeys.lastImportTime() });
+      queryClient.setQueryData(configKeys.lastImportTime(), {
+        last_import_time: lastImportTime,
+      });
 
       // Lade verfügbare Kalenderwochen und setze sie im Store
       try {

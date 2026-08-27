@@ -98,6 +98,7 @@ export interface PatientImportResponse {
   calendar_week?: number;
   calendar_weeks?: number[];
   calendar_weeks_str?: string;
+  last_import_time?: string;
 }
 
 export interface Route {
