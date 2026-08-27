@@ -123,7 +123,11 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
               <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                 <Stack spacing={1.5}>
                   <Box
-                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
@@ -179,7 +183,14 @@ export const UnassignedWeekendAppointments: React.FC<UnassignedWeekendAppointmen
                       gap: 1,
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        flexWrap: 'wrap',
+                      }}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Bereich zuweisen:
                       </Typography>

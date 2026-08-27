@@ -384,7 +384,14 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     {date.getDate()}.{date.getMonth() + 1}
                   </Typography>
                   {holidayNameCol ? (
-                    <Box sx={{ mt: 0.25, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        mt: 0.25,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        minWidth: 0,
+                      }}
+                    >
                       <HolidayChip name={holidayNameCol} compact={viewMode === 'month'} />
                     </Box>
                   ) : null}

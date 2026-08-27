@@ -111,7 +111,14 @@ const AreaSelection: React.FC<AreaSelectionProps> = ({
               borderColor: 'divider',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                minWidth: 0,
+              }}
+            >
               <Box
                 sx={{
                   width: 40,

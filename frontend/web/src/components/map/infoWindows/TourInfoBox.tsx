@@ -61,7 +61,15 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
           maxWidth: '100%',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flexShrink: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            minWidth: 0,
+            flexShrink: 1,
+          }}
+        >
           {employeeName && (
             <Chip
               label={employeeName}
@@ -118,7 +126,11 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
           >
             <Typography
               variant="body2"
-              sx={{ fontWeight: 'bold', color: barColor, fontVariantNumeric: 'tabular-nums' }}
+              sx={{
+                fontWeight: 'bold',
+                color: barColor,
+                fontVariantNumeric: 'tabular-nums',
+              }}
             >
               {formatTime(durationMinutes)} / {formatTime(targetMinutes)}
             </Typography>
@@ -156,7 +168,13 @@ export const TourInfoBox: React.FC<TourInfoBoxProps> = ({
             </Box>
             <Typography
               variant="body2"
-              sx={{ minWidth: 36, textAlign: 'right', fontWeight: 'bold', color: barColor, ml: 1 }}
+              sx={{
+                minWidth: 36,
+                textAlign: 'right',
+                fontWeight: 'bold',
+                color: barColor,
+                ml: 1,
+              }}
             >
               {utilization !== undefined ? `${Math.round(utilization)}%` : '-'}
             </Typography>

@@ -7,11 +7,11 @@ const tooltipTitle = (name: string) => `Feiertag: ${name}`;
 /**
  * Orangener Hinweis-Punkt für Feiertage; Name nur im Tooltip (RB/AW-Planung Spaltenkopf).
  */
-export const HolidayChip: React.FC<{ name: string; compact?: boolean; sx?: SxProps<Theme> }> = ({
-  name,
-  compact,
-  sx,
-}) => {
+export const HolidayChip: React.FC<{
+  name: string;
+  compact?: boolean;
+  sx?: SxProps<Theme>;
+}> = ({ name, compact, sx }) => {
   const size = compact ? 14 : 16;
   return (
     <Tooltip title={tooltipTitle(name)} arrow>

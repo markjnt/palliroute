@@ -117,7 +117,10 @@ export const NursingAreaRouteSummary: React.FC<NursingAreaRouteSummaryProps> = (
   }, [employees, routes, selectedDay]);
 
   const formatKm = (km: number) =>
-    km.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' km';
+    km.toLocaleString('de-DE', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }) + ' km';
 
   const formatPct = (p: number | undefined) => (p !== undefined ? `${Math.round(p)}%` : '–');
 
@@ -194,7 +197,14 @@ export const NursingAreaRouteSummary: React.FC<NursingAreaRouteSummaryProps> = (
           sx={{ ...areaChipSx(row), flexShrink: 0 }}
         />
         <Tooltip title={UTILIZATION_FILTER_TOOLTIP} arrow>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.35, flexShrink: 0 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.35,
+              flexShrink: 0,
+            }}
+          >
             <AccessTimeIcon fontSize="small" sx={{ color: 'primary.main' }} />
             <Typography
               variant="body2"

@@ -39,7 +39,9 @@ export const useWeekdayStore = create<WeekdayState>()(
           currentDay === 'wednesday' ||
           currentDay === 'thursday' ||
           currentDay === 'friday';
-        set({ selectedWeekday: isBusinessDay && currentDay ? currentDay : 'monday' });
+        set({
+          selectedWeekday: isBusinessDay && currentDay ? currentDay : 'monday',
+        });
       },
     }),
     {

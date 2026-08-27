@@ -54,7 +54,15 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
 
   return (
     <>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.25, pr: 4.5 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 1,
+          mb: 1.25,
+          pr: 4.5,
+        }}
+      >
         {marker.routePosition ? (
           <Box
             sx={{
@@ -78,7 +86,12 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 600, color: '#1d1d1f', lineHeight: 1.25, fontSize: '1rem' }}
+            sx={{
+              fontWeight: 600,
+              color: '#1d1d1f',
+              lineHeight: 1.25,
+              fontSize: '1rem',
+            }}
           >
             {patient.first_name} {patient.last_name}
           </Typography>
@@ -109,7 +122,12 @@ export const TourPatientInfoContent: React.FC<TourPatientInfoContentProps> = ({
           {patient.street}
           <Box
             component="span"
-            sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}
+            sx={{
+              display: 'block',
+              color: '#8E8E93',
+              fontWeight: 400,
+              fontSize: '0.75rem',
+            }}
           >
             {patient.zip_code} {patient.city}
           </Box>

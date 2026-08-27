@@ -127,7 +127,11 @@ export const useReorderAppointment = () => {
       appointmentId: number;
       direction?: 'up' | 'down';
       index?: number;
-    }) => routesApi.reorderAppointment(routeId, appointmentId, { direction, index }),
+    }) =>
+      routesApi.reorderAppointment(routeId, appointmentId, {
+        direction,
+        index,
+      }),
     onSuccess: (updatedRoute) => {
       // Invalidate the specific route
       queryClient.invalidateQueries({

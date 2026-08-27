@@ -185,7 +185,9 @@ export const MainLayout: React.FC = () => {
 
     if (currentResizeHandler && currentStopHandler) {
       // Use passive: false for mousemove to allow preventDefault
-      window.addEventListener('mousemove', currentResizeHandler, { passive: false });
+      window.addEventListener('mousemove', currentResizeHandler, {
+        passive: false,
+      });
       window.addEventListener('mouseup', currentStopHandler, { passive: true });
 
       // Disable text selection and pointer events during resize
@@ -544,7 +546,9 @@ export const MainLayout: React.FC = () => {
                 onTouchStart={(e) => {
                   e.preventDefault();
                   const touch = e.touches[0];
-                  startRightResizing({ clientX: touch.clientX } as React.MouseEvent);
+                  startRightResizing({
+                    clientX: touch.clientX,
+                  } as React.MouseEvent);
                 }}
               />
 

@@ -65,7 +65,10 @@ export const PflegeheimeDialog: React.FC<PflegeheimeDialogProps> = ({ open, onCl
           : 'Keine Änderungen erforderlich';
       setNotification(message, 'success');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      const e = err as {
+        response?: { data?: { error?: string } };
+        message?: string;
+      };
       const message =
         e?.response?.data?.error ?? e?.message ?? 'Fehler beim Importieren der Pflegeheime';
       setNotification(message, 'error');

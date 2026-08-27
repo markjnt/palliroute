@@ -182,8 +182,14 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
     setSelectedCalendarWeek(week);
     queryClient.setQueryData(calendarWeekKeys.best(), week);
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: patientKeys.all, exact: false }),
-      queryClient.invalidateQueries({ queryKey: appointmentKeys.all, exact: false }),
+      queryClient.invalidateQueries({
+        queryKey: patientKeys.all,
+        exact: false,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: appointmentKeys.all,
+        exact: false,
+      }),
       queryClient.invalidateQueries({ queryKey: routeKeys.all, exact: false }),
     ]);
   };
@@ -311,7 +317,10 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
       closeClaimDialogs();
     } catch (error) {
       console.error('Failed to claim AW tour:', error);
-      setFeedback({ message: 'Tour konnte nicht übernommen werden', severity: 'error' });
+      setFeedback({
+        message: 'Tour konnte nicht übernommen werden',
+        severity: 'error',
+      });
     }
   };
 
@@ -501,7 +510,16 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
           })}
         </Box>
 
-        <Box sx={{ px: 1, pt: 0.25, pb: 1, display: 'flex', gap: 1, alignItems: 'stretch' }}>
+        <Box
+          sx={{
+            px: 1,
+            pt: 0.25,
+            pb: 1,
+            display: 'flex',
+            gap: 1,
+            alignItems: 'stretch',
+          }}
+        >
           {(sortedCalendarWeeks.length > 0
             ? sortedCalendarWeeks
             : [selectedCalendarWeek].filter(Boolean)
@@ -750,7 +768,6 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
       <AwTourPreviewSheet
         open={Boolean(claimWeekday && previewArea)}
         onClose={() => setPreviewArea(null)}
-        weekday={claimWeekday ?? selectedWeekday}
         weekdayLabel={claimDayLabel}
         area={previewArea ?? 'Nord'}
         route={previewRoute}
@@ -838,7 +855,10 @@ export const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({ isOpen, onWeek
               bgcolor: '#d32f2f',
               boxShadow: 'none',
               '&:hover': { bgcolor: '#b71c1c', boxShadow: 'none' },
-              '&.Mui-disabled': { bgcolor: 'rgba(211, 47, 47, 0.4)', color: 'white' },
+              '&.Mui-disabled': {
+                bgcolor: 'rgba(211, 47, 47, 0.4)',
+                color: 'white',
+              },
             }}
           >
             {assignAwTourEmployee.isPending ? 'Weise zu…' : 'Zuweisen'}

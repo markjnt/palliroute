@@ -51,9 +51,10 @@ export const OnCallPlanningView: React.FC = () => {
   const { viewMode, displayType, currentDate } = useOnCallPlanningStore();
   const { notification, closeNotification, setNotification } = useNotificationStore();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedDuty, setSelectedDuty] = useState<{ type: DutyType; area?: OnCallArea } | null>(
-    null
-  );
+  const [selectedDuty, setSelectedDuty] = useState<{
+    type: DutyType;
+    area?: OnCallArea;
+  } | null>(null);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [capacityDialogOpen, setCapacityDialogOpen] = useState(false);
   const [autoPlanningDialogOpen, setAutoPlanningDialogOpen] = useState(false);
@@ -93,7 +94,9 @@ export const OnCallPlanningView: React.FC = () => {
 
   // Fetch employee capacities (month parameter is optional, used for calculating assigned/remaining)
   const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-  const { data: employeeCapacities = [] } = useEmployeeCapacities({ month: monthString });
+  const { data: employeeCapacities = [] } = useEmployeeCapacities({
+    month: monthString,
+  });
   const { data: unplannedShifts = [], isLoading: isLoadingUnplanned } = useUnplannedShiftInstances({
     month: monthString,
   });
@@ -499,7 +502,14 @@ export const OnCallPlanningView: React.FC = () => {
             zIndex: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              flexWrap: 'wrap',
+            }}
+          >
             <Button
               variant="outlined"
               startIcon={<BarChartIcon sx={{ fontSize: 18 }} />}

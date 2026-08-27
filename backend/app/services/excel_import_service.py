@@ -35,6 +35,7 @@ class ExcelImportService:
     GEOCODE_CACHE_KEY = "geocode_address_cache"
     AW_TOUR_EMPLOYEE_SNAPSHOT_KEY = "aw_tour_employee_assignments"
     CUSTOM_ORDER_SNAPSHOT_KEY = "route_custom_order_snapshots"
+    COMPLETED_APPOINTMENTS_SNAPSHOT_KEY = "appointment_completed_snapshots"
     # Class-level cache for geocoding to avoid redundant API calls
     _geocode_cache: dict[str, tuple[float, float]] = {}
 
@@ -209,20 +210,28 @@ class ExcelImportService:
             raise Exception(f"Error deleting patient data: {str(e)}")
 
     @staticmethod
-    def _snapshot_aw_tour_employees() -> list[tuple[int, str, str, int]]:
+    def _snapshot_aw_tour_employees() -> list[tuple[int, str, str, int, bool]]:
         """Preserve AW tour employee assignments across patient re-import."""
         routes = Route.query.filter(
             Route.area.in_(AW_TOUR_AREAS),
             Route.employee_id.isnot(None),
         ).all()
         return [
-            (route.calendar_week, route.weekday, route.area, route.employee_id)
+            (
+                route.calendar_week,
+                route.weekday,
+                route.area,
+                route.employee_id,
+                bool(route.employee_override),
+            )
             for route in routes
             if route.calendar_week and route.weekday and route.area and route.employee_id
         ]
 
     @staticmethod
-    def _serialize_aw_tour_employee_snapshot(snapshots: list[tuple[int, str, str, int]]) -> str:
+    def _serialize_aw_tour_employee_snapshot(
+        snapshots: list[tuple[int, str, str, int, bool]],
+    ) -> str:
         return json.dumps(
             [
                 {
@@ -230,13 +239,16 @@ class ExcelImportService:
                     "weekday": weekday,
                     "area": area,
                     "employee_id": employee_id,
+                    "employee_override": employee_override,
                 }
-                for calendar_week, weekday, area, employee_id in snapshots
+                for calendar_week, weekday, area, employee_id, employee_override in snapshots
             ]
         )
 
     @staticmethod
-    def _deserialize_aw_tour_employee_snapshot(raw: str | None) -> list[tuple[int, str, str, int]]:
+    def _deserialize_aw_tour_employee_snapshot(
+        raw: str | None,
+    ) -> list[tuple[int, str, str, int, bool]]:
         if not raw:
             return []
         try:
@@ -245,7 +257,7 @@ class ExcelImportService:
             return []
         if not isinstance(data, list):
             return []
-        snapshots: list[tuple[int, str, str, int]] = []
+        snapshots: list[tuple[int, str, str, int, bool]] = []
         for item in data:
             if not isinstance(item, dict):
                 continue
@@ -255,16 +267,28 @@ class ExcelImportService:
             employee_id = item.get("employee_id")
             if calendar_week is None or not weekday or not area or employee_id is None:
                 continue
-            snapshots.append((int(calendar_week), str(weekday), str(area), int(employee_id)))
+            # Legacy snapshots without override: treat as manual to preserve assignment
+            employee_override = bool(item.get("employee_override", True))
+            snapshots.append(
+                (
+                    int(calendar_week),
+                    str(weekday),
+                    str(area),
+                    int(employee_id),
+                    employee_override,
+                )
+            )
         return snapshots
 
     @staticmethod
-    def _load_persisted_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int]]:
+    def _load_persisted_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int, bool]]:
         raw = SystemInfo.get_value(ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY)
         return ExcelImportService._deserialize_aw_tour_employee_snapshot(raw)
 
     @staticmethod
-    def _persist_aw_tour_employee_snapshot(snapshots: list[tuple[int, str, str, int]]) -> None:
+    def _persist_aw_tour_employee_snapshot(
+        snapshots: list[tuple[int, str, str, int, bool]],
+    ) -> None:
         SystemInfo.set_value(
             ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY,
             ExcelImportService._serialize_aw_tour_employee_snapshot(snapshots),
@@ -275,7 +299,7 @@ class ExcelImportService:
         SystemInfo.set_value(ExcelImportService.AW_TOUR_EMPLOYEE_SNAPSHOT_KEY, "[]")
 
     @staticmethod
-    def _prepare_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int]]:
+    def _prepare_aw_tour_employee_snapshot() -> list[tuple[int, str, str, int, bool]]:
         """
         Live DB assignments win. If routes were already wiped by a failed import,
         fall back to the last persisted snapshot.
@@ -288,15 +312,16 @@ class ExcelImportService:
         return merged
 
     @staticmethod
-    def _restore_aw_tour_employees(snapshots: list[tuple[int, str, str, int]]) -> int:
+    def _restore_aw_tour_employees(snapshots: list[tuple[int, str, str, int, bool]]) -> int:
         """Re-apply AW tour employee assignments after routes were recreated."""
         restored = 0
-        for calendar_week, weekday, area, employee_id in snapshots:
+        for calendar_week, weekday, area, employee_id, employee_override in snapshots:
             if not Employee.query.get(employee_id):
                 continue
             route = find_aw_tour_route(weekday, area, calendar_week)
             if route:
                 route.employee_id = employee_id
+                route.employee_override = employee_override
                 route.updated_at = datetime.utcnow()
                 restored += 1
         if restored:
@@ -566,6 +591,177 @@ class ExcelImportService:
         if restored:
             db.session.commit()
             print(f"    Restored {restored} active custom orders")
+        return restored
+
+    @staticmethod
+    def _normalize_completion_identity(
+        calendar_week: int | None,
+        weekday: str | None,
+        first_name: str | None,
+        last_name: str | None,
+        street: str | None,
+        zip_code: str | None,
+        visit_type: str | None,
+    ) -> tuple[int, str, str, str, str, str, str] | None:
+        if calendar_week is None or not weekday:
+            return None
+        stop = ExcelImportService._normalize_stop_identity(
+            first_name, last_name, street, zip_code, visit_type
+        )
+        return (int(calendar_week), str(weekday).strip().lower(), *stop)
+
+    @staticmethod
+    def _completion_identity_from_appointment(
+        appointment: Appointment,
+    ) -> tuple[int, str, str, str, str, str, str] | None:
+        patient = appointment.patient
+        if not patient:
+            return None
+        return ExcelImportService._normalize_completion_identity(
+            appointment.calendar_week,
+            appointment.weekday,
+            patient.first_name,
+            patient.last_name,
+            patient.street,
+            patient.zip_code,
+            appointment.visit_type,
+        )
+
+    @staticmethod
+    def _completion_identity_from_dict(
+        item: dict[str, Any],
+    ) -> tuple[int, str, str, str, str, str, str] | None:
+        return ExcelImportService._normalize_completion_identity(
+            item.get("calendar_week"),
+            item.get("weekday"),
+            item.get("first_name"),
+            item.get("last_name"),
+            item.get("street"),
+            item.get("zip_code"),
+            item.get("visit_type"),
+        )
+
+    @staticmethod
+    def _snapshot_completed_appointments() -> list[dict[str, Any]]:
+        """Preserve PWA completed flags across patient re-import (matched by stop identity)."""
+        appointments = (
+            Appointment.query.options(joinedload(Appointment.patient))
+            .filter(Appointment.completed.is_(True))
+            .all()
+        )
+        snapshots: list[dict[str, Any]] = []
+        for appointment in appointments:
+            patient = appointment.patient
+            if not patient or appointment.calendar_week is None or not appointment.weekday:
+                continue
+            snapshots.append(
+                {
+                    "calendar_week": int(appointment.calendar_week),
+                    "weekday": str(appointment.weekday),
+                    "first_name": patient.first_name or "",
+                    "last_name": patient.last_name or "",
+                    "street": patient.street or "",
+                    "zip_code": patient.zip_code or "",
+                    "visit_type": appointment.visit_type or "",
+                }
+            )
+        return snapshots
+
+    @staticmethod
+    def _serialize_completed_appointments_snapshot(snapshots: list[dict[str, Any]]) -> str:
+        return json.dumps(snapshots)
+
+    @staticmethod
+    def _deserialize_completed_appointments_snapshot(raw: str | None) -> list[dict[str, Any]]:
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(data, list):
+            return []
+        snapshots: list[dict[str, Any]] = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            calendar_week = item.get("calendar_week")
+            weekday = item.get("weekday")
+            if calendar_week is None or not weekday:
+                continue
+            snapshots.append(
+                {
+                    "calendar_week": int(calendar_week),
+                    "weekday": str(weekday),
+                    "first_name": str(item.get("first_name") or ""),
+                    "last_name": str(item.get("last_name") or ""),
+                    "street": str(item.get("street") or ""),
+                    "zip_code": str(item.get("zip_code") or ""),
+                    "visit_type": str(item.get("visit_type") or ""),
+                }
+            )
+        return snapshots
+
+    @staticmethod
+    def _load_persisted_completed_appointments_snapshot() -> list[dict[str, Any]]:
+        raw = SystemInfo.get_value(ExcelImportService.COMPLETED_APPOINTMENTS_SNAPSHOT_KEY)
+        return ExcelImportService._deserialize_completed_appointments_snapshot(raw)
+
+    @staticmethod
+    def _persist_completed_appointments_snapshot(snapshots: list[dict[str, Any]]) -> None:
+        SystemInfo.set_value(
+            ExcelImportService.COMPLETED_APPOINTMENTS_SNAPSHOT_KEY,
+            ExcelImportService._serialize_completed_appointments_snapshot(snapshots),
+        )
+
+    @staticmethod
+    def _clear_completed_appointments_snapshot() -> None:
+        SystemInfo.set_value(ExcelImportService.COMPLETED_APPOINTMENTS_SNAPSHOT_KEY, "[]")
+
+    @staticmethod
+    def _prepare_completed_appointments_snapshot() -> list[dict[str, Any]]:
+        """
+        Live completed appointments win. If data was already wiped by a failed import,
+        fall back to the last persisted snapshot.
+        """
+        live = ExcelImportService._snapshot_completed_appointments()
+        stored = ExcelImportService._load_persisted_completed_appointments_snapshot()
+        merged = live if live else stored
+        if merged:
+            ExcelImportService._persist_completed_appointments_snapshot(merged)
+        return merged
+
+    @staticmethod
+    def _restore_completed_appointments(snapshots: list[dict[str, Any]]) -> int:
+        """Re-apply completed flags after appointments were recreated."""
+        if not snapshots:
+            return 0
+
+        appointments = Appointment.query.options(joinedload(Appointment.patient)).all()
+        buckets: dict[tuple[int, str, str, str, str, str, str], deque[Appointment]] = defaultdict(
+            deque
+        )
+        for appointment in appointments:
+            identity = ExcelImportService._completion_identity_from_appointment(appointment)
+            if identity:
+                buckets[identity].append(appointment)
+
+        restored = 0
+        for item in snapshots:
+            identity = ExcelImportService._completion_identity_from_dict(item)
+            if not identity:
+                continue
+            queue = buckets.get(identity)
+            if not queue:
+                continue
+            appointment = queue.popleft()
+            if not appointment.completed:
+                appointment.completed = True
+                restored += 1
+
+        if restored:
+            db.session.commit()
+            print(f"    Restored completed flag on {restored} appointments")
         return restored
 
     @staticmethod
@@ -1158,7 +1354,7 @@ class ExcelImportService:
             return s
 
         # Numeric types: convert to int and pad to 5 digits
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             try:
                 return f"{int(value):05d}"
             except (ValueError, OverflowError):
@@ -1205,7 +1401,7 @@ class ExcelImportService:
                     return s
             return s
 
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             try:
                 return str(int(value))
             except (ValueError, OverflowError):
@@ -2014,6 +2210,9 @@ class ExcelImportService:
             # Preserve AW tour employee assignments (survives delete + failed import retry)
             aw_tour_employee_snapshots = ExcelImportService._prepare_aw_tour_employee_snapshot()
             custom_order_snapshots = ExcelImportService._prepare_custom_order_snapshot()
+            completed_appointments_snapshots = (
+                ExcelImportService._prepare_completed_appointments_snapshot()
+            )
 
             # Step 1: Delete existing patient data (keep employees and their planning)
             print("Step 1: Deleting existing patient data...")
@@ -2091,6 +2290,20 @@ class ExcelImportService:
                 print("\nRestoring AW tour employee assignments...")
                 ExcelImportService._restore_aw_tour_employees(aw_tour_employee_snapshots)
 
+            # Fill non-overridden AW tours from Aplano (override routes stay as restored/manual)
+            print("\nApplying Aplano AW tour assignments (respecting overrides)...")
+            from app.services.aplano_sync import sync_employee_planning
+
+            for calendar_week in calendar_weeks:
+                try:
+                    ok = sync_employee_planning(calendar_week, force=True)
+                    if ok:
+                        print(f"  KW {calendar_week}: Aplano sync + AW assign OK")
+                    else:
+                        print(f"  KW {calendar_week}: Aplano sync failed")
+                except Exception as e:
+                    print(f"  KW {calendar_week}: Aplano AW assign error: {e}")
+
             # Step 6: Plan all routes (web order / polyline)
             print("\nStep 6: Planning all routes...")
             ExcelImportService._plan_all_routes(all_routes)
@@ -2099,8 +2312,13 @@ class ExcelImportService:
                 print("\nRestoring active custom orders...")
                 ExcelImportService._restore_custom_orders(custom_order_snapshots)
 
+            if completed_appointments_snapshots:
+                print("\nRestoring completed appointments...")
+                ExcelImportService._restore_completed_appointments(completed_appointments_snapshots)
+
             ExcelImportService._clear_aw_tour_employee_snapshot()
             ExcelImportService._clear_custom_order_snapshot()
+            ExcelImportService._clear_completed_appointments_snapshot()
 
             # Calculate final statistics
             calendar_weeks_str = ", ".join(map(str, calendar_weeks)) if calendar_weeks else "None"

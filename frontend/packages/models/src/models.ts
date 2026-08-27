@@ -67,6 +67,8 @@ export interface Appointment {
   info?: string;
   area: Area;
   calendar_week?: number;
+  /** PWA day checklist – keyed by appointment id, survives route reordering */
+  completed?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -98,11 +100,16 @@ export interface PatientImportResponse {
   calendar_week?: number;
   calendar_weeks?: number[];
   calendar_weeks_str?: string;
+  last_import_time?: string;
 }
 
 export interface Route {
   id: number;
   employee_id: number | null;
+  /** True when AW assignee was set manually (not from Aplano). */
+  employee_override?: boolean;
+  /** Aplano-suggested employee for this AW area day (null if none). */
+  aplano_employee_id?: number | null;
   weekday: string;
   route_order: number[];
   total_duration: number;

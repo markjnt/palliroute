@@ -187,7 +187,9 @@ export const schedulingApi = {
   // Shift Definitions
   async getShiftDefinitions(params?: ShiftDefinitionsQueryParams): Promise<ShiftDefinition[]> {
     try {
-      const response = await api.get('/scheduling/shift-definitions', { params });
+      const response = await api.get('/scheduling/shift-definitions', {
+        params,
+      });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch shift definitions:', error);
@@ -222,7 +224,9 @@ export const schedulingApi = {
     params: UnplannedShiftInstancesQueryParams
   ): Promise<ShiftInstance[]> {
     try {
-      const response = await api.get('/scheduling/shift-instances/unplanned', { params });
+      const response = await api.get('/scheduling/shift-instances/unplanned', {
+        params,
+      });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch unplanned shift instances:', error);
@@ -261,7 +265,9 @@ export const schedulingApi = {
   // Employee Capacities
   async getEmployeeCapacities(params?: EmployeeCapacitiesQueryParams): Promise<EmployeeCapacity[]> {
     try {
-      const response = await api.get('/scheduling/employee-capacities', { params });
+      const response = await api.get('/scheduling/employee-capacities', {
+        params,
+      });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch employee capacities:', error);
@@ -344,9 +350,11 @@ export const schedulingApi = {
   },
 
   // Auto Plan
-  async autoPlan(
-    data: AutoPlanData
-  ): Promise<{ message: string; assignments_created?: number; total_planned?: number }> {
+  async autoPlan(data: AutoPlanData): Promise<{
+    message: string;
+    assignments_created?: number;
+    total_planned?: number;
+  }> {
     try {
       const response = await api.post('/scheduling/auto-plan', data);
       return response.data;
@@ -371,7 +379,9 @@ export const schedulingApi = {
 
   async compareAplanoMonth(month: string): Promise<AplanoCompareResponse> {
     try {
-      const response = await api.get('/scheduling/aplano-compare', { params: { month } });
+      const response = await api.get('/scheduling/aplano-compare', {
+        params: { month },
+      });
       return response.data;
     } catch (error) {
       console.error('Failed to compare Aplano month:', error);

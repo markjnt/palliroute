@@ -70,6 +70,33 @@ def get_appointments_by_weekday(weekday):
     return jsonify([appointment.to_dict() for appointment in appointments])
 
 
+@appointments_bp.route("/<int:appointment_id>/completed", methods=["PUT"])
+def set_appointment_completed(appointment_id):
+    """
+    Mark an appointment as completed or not.
+    Body: { "completed": true|false }
+
+    Stored on the appointment row (by id), so custom route reordering does not affect it.
+    """
+    try:
+        data = request.get_json()
+        if not data or "completed" not in data:
+            return jsonify({"error": "completed is required"}), 400
+
+        completed = data["completed"]
+        if not isinstance(completed, bool):
+            return jsonify({"error": "completed must be a boolean"}), 400
+
+        appointment = Appointment.query.get_or_404(appointment_id)
+        appointment.completed = completed
+        db.session.commit()
+        return jsonify(appointment.to_dict())
+    except Exception:
+        db.session.rollback()
+        appointments_bp.logger.exception("Failed to set appointment completion status")
+        return jsonify({"error": "An internal error has occurred"}), 500
+
+
 @appointments_bp.route("/move", methods=["POST"])
 def move_appointment():
     """
@@ -122,6 +149,7 @@ def move_appointment():
 
             # Update appointment's area
             appointment.area = target_area
+            appointment.completed = False
 
             if source_route:
                 source_route.remove_appointment_id(appointment.id)
@@ -210,6 +238,8 @@ def move_appointment():
 
             # Always update origin_employee_id to the target employee
             appointment.origin_employee_id = target_employee_id
+            # Checklist is per assignee/tour – reset when the appointment is moved
+            appointment.completed = False
 
             # Get target route for the final employee (replacement or original)
             target_route_query = Route.query.filter_by(
@@ -283,6 +313,7 @@ def assign_tour_area():
 
         # Update appointment area
         appointment.area = target_area
+        appointment.completed = False
 
         # Ensure target route exists (only relevant for HB/NA)
         target_route = None

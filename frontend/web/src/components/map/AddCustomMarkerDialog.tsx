@@ -120,7 +120,10 @@ export const AddCustomMarkerDialog: React.FC<AddCustomMarkerDialogProps> = ({
           variant="contained"
           onClick={handleSubmit}
           disabled={loading || !name.trim() || !address.trim()}
-          sx={{ backgroundColor: '#ff5722', '&:hover': { backgroundColor: '#e64a19' } }}
+          sx={{
+            backgroundColor: '#ff5722',
+            '&:hover': { backgroundColor: '#e64a19' },
+          }}
           startIcon={
             loading ? (
               <CircularProgress size={20} color="inherit" />

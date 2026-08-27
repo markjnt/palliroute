@@ -243,7 +243,14 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
             }}
           >
             <ListItemText>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  flexWrap: 'wrap',
+                }}
+              >
                 <Avatar {...createTourAvatar(emp)} />
                 <Chip
                   label={`${emp.first_name} ${emp.last_name}`}
@@ -357,7 +364,14 @@ export const ReplacementMenu: React.FC<ReplacementMenuProps> = ({
             }}
           >
             <ListItemText>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  flexWrap: 'wrap',
+                }}
+              >
                 <Avatar {...createTourAvatar(emp)} />
                 <Chip
                   label={`${emp.first_name} ${emp.last_name}`}

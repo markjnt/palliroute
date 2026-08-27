@@ -85,13 +85,17 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
   const [employeePrefsMap, setEmployeePrefsMap] = useState<
     Record<number, EmployeePlanningPreference>
   >({});
-  const [planScope, setPlanScope] = useState<AutoPlanScope>({ ...DEFAULT_AUTO_PLAN_SCOPE });
+  const [planScope, setPlanScope] = useState<AutoPlanScope>({
+    ...DEFAULT_AUTO_PLAN_SCOPE,
+  });
   const [dutyScopeError, setDutyScopeError] = useState<string | null>(null);
   const [employeeError, setEmployeeError] = useState<string | null>(null);
   const monthParam = `${year}-${String(month + 1).padStart(2, '0')}`;
 
   const { data: employees = [] } = useEmployees();
-  const { data: employeeCapacities = [] } = useEmployeeCapacities({ month: monthParam });
+  const { data: employeeCapacities = [] } = useEmployeeCapacities({
+    month: monthParam,
+  });
   const { data: savedPrefs = [], isLoading: savedPrefsLoading } =
     useEmployeePlanningPreferences(open);
   const savePrefsMutation = useUpsertEmployeePlanningPreferences();
@@ -241,7 +245,11 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
             subtitle="Wie mit bereits geplanten Schichten umgegangen wird"
           >
             <Box
-              sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.25 }}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 1.25,
+              }}
             >
               <AutoPlanningOptionCard
                 icon={<OverwriteIcon />}
@@ -249,7 +257,10 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
                 description="Alle Positionen neu planen, bestehende Zuweisungen ersetzen"
                 selected={settings.existingAssignmentsHandling === 'overwrite'}
                 onClick={() =>
-                  setSettings((prev) => ({ ...prev, existingAssignmentsHandling: 'overwrite' }))
+                  setSettings((prev) => ({
+                    ...prev,
+                    existingAssignmentsHandling: 'overwrite',
+                  }))
                 }
               />
               <AutoPlanningOptionCard
@@ -258,7 +269,10 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
                 description="Bestehende Zuweisungen behalten und nicht verändern"
                 selected={settings.existingAssignmentsHandling === 'respect'}
                 onClick={() =>
-                  setSettings((prev) => ({ ...prev, existingAssignmentsHandling: 'respect' }))
+                  setSettings((prev) => ({
+                    ...prev,
+                    existingAssignmentsHandling: 'respect',
+                  }))
                 }
               />
             </Box>
@@ -272,7 +286,10 @@ export const AutoPlanningDialog: React.FC<AutoPlanningDialogProps> = ({
                 description="Mitarbeiter können über die maximale Kapazität hinaus verplant werden"
                 checked={settings.allowOverplanning}
                 onChange={(checked) =>
-                  setSettings((prev) => ({ ...prev, allowOverplanning: checked }))
+                  setSettings((prev) => ({
+                    ...prev,
+                    allowOverplanning: checked,
+                  }))
                 }
               />
               <Box sx={{ height: '1px', backgroundColor: 'rgba(0, 0, 0, 0.06)' }} />

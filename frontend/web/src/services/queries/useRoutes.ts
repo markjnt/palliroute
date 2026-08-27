@@ -136,8 +136,15 @@ export const useAssignAwTourEmployee = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ routeId, employeeId }: { routeId: number; employeeId: number | null }) =>
-      routesApi.assignAwTourEmployee(routeId, employeeId),
+    mutationFn: ({
+      routeId,
+      employeeId,
+      resetToAplano,
+    }: {
+      routeId: number;
+      employeeId: number | null;
+      resetToAplano?: boolean;
+    }) => routesApi.assignAwTourEmployee(routeId, employeeId, { resetToAplano }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({
         queryKey: routeKeys.detail(result.route.id),

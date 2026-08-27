@@ -43,7 +43,14 @@ const rowBorder = (theme: Theme, isSelected: boolean, areaColor: string) => {
 
 const AreaList: React.FC<AreaListProps> = ({ areas, onAreaSelect, selectedArea }) => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'stretch' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.5,
+        alignItems: 'stretch',
+      }}
+    >
       {areas.map((area) => {
         const isSelected = selectedArea === area;
         const areaColor = getAreaChipColor(area);

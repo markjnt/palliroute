@@ -166,7 +166,11 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
       return;
     }
     try {
-      const result = await assignAwTourEmployee.mutateAsync({ routeId, employeeId });
+      const result = await assignAwTourEmployee.mutateAsync({
+        routeId,
+        employeeId,
+        resetToAplano: employeeId === null,
+      });
       if (result.planning_failed) {
         setNotification(
           'Mitarbeiter zugewiesen, die Route konnte aber nicht neu berechnet werden. Bitte „Optimieren“ nutzen.',
@@ -174,7 +178,9 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
         );
       } else {
         setNotification(
-          employeeId ? 'Mitarbeiter der AW-Tour zugewiesen' : 'Mitarbeiterzuweisung entfernt',
+          employeeId
+            ? 'Mitarbeiter der AW-Tour zugewiesen (manuell)'
+            : 'Zuweisung auf Aplano zurückgesetzt',
           'success'
         );
       }
@@ -182,6 +188,10 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
       console.error('Fehler beim Zuweisen des Mitarbeiters:', error);
       setNotification('Mitarbeiter konnte nicht zugewiesen werden', 'error');
     }
+  };
+
+  const handleResetToAplano = async () => {
+    await handleAssignEmployee(null);
   };
 
   return (
@@ -215,13 +225,22 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
           alignItems: 'flex-start',
         }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pr: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            minWidth: 0,
+            pr: 1,
+          }}
+        >
           <WeekendTourHeader area={area}>
             <AwTourEmployeeSelect
               route={route}
               employees={employees}
               isAssigning={assignAwTourEmployee.isPending}
               onAssign={handleAssignEmployee}
+              onResetToAplano={handleResetToAplano}
             />
           </WeekendTourHeader>
 
@@ -265,7 +284,14 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
             {/* HB Patienten (Route) */}
             {sortedRoutePatients.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'primary.main' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    mb: 2,
+                    color: 'primary.main',
+                  }}
+                >
                   <HomeIcon color="primary" />
                   <Typography variant="h6" sx={{ ml: 1 }}>
                     Route ({sortedRoutePatients.length})
@@ -308,7 +334,14 @@ const WeekendTourContainer: React.FC<WeekendTourContainerProps> = ({
                     bgcolor: 'rgba(76, 175, 80, 0.04)',
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'success.main' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      mb: 2,
+                      color: 'success.main',
+                    }}
+                  >
                     <PhoneIcon color="success" />
                     <Typography variant="h6" sx={{ ml: 1 }}>
                       Telefonkontakte ({tkPatients.length})
@@ -450,7 +483,12 @@ export const WeekendToursView: React.FC<WeekendToursViewProps> = ({ selectedDay 
         <Typography
           variant="h6"
           component="h3"
-          sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
         >
           <WeekendIcon sx={{ color: 'warning.main' }} />
           {toursTitle}

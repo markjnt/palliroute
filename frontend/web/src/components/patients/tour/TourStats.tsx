@@ -48,8 +48,10 @@ export const TourStats: React.FC<TourStatsProps> = ({ employee, route }) => {
   const distance = route && typeof route.total_distance === 'number' ? route.total_distance : null;
   const distanceStr =
     distance !== null
-      ? distance.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) +
-        ' km'
+      ? distance.toLocaleString('de-DE', {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        }) + ' km'
       : '-';
 
   return (

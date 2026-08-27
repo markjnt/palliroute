@@ -176,10 +176,26 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
       <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>
         {(
           [
-            { key: 'all', label: 'Alle', icon: <PeopleIcon sx={{ fontSize: 14 }} /> },
-            { key: 'pflege_n', label: 'Pflege N', icon: <NursingIcon sx={{ fontSize: 14 }} /> },
-            { key: 'pflege_s', label: 'Pflege S', icon: <NursingIcon sx={{ fontSize: 14 }} /> },
-            { key: 'arzt', label: 'Ärzte', icon: <DoctorIcon sx={{ fontSize: 14 }} /> },
+            {
+              key: 'all',
+              label: 'Alle',
+              icon: <PeopleIcon sx={{ fontSize: 14 }} />,
+            },
+            {
+              key: 'pflege_n',
+              label: 'Pflege N',
+              icon: <NursingIcon sx={{ fontSize: 14 }} />,
+            },
+            {
+              key: 'pflege_s',
+              label: 'Pflege S',
+              icon: <NursingIcon sx={{ fontSize: 14 }} />,
+            },
+            {
+              key: 'arzt',
+              label: 'Ärzte',
+              icon: <DoctorIcon sx={{ fontSize: 14 }} />,
+            },
           ] as const
         ).map(({ key, label, icon }) => (
           <Chip
@@ -223,12 +239,22 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                   onChange={handleToggleAllVisible}
                 />
               </TableCell>
-              <TableCell sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 160 }}>
+              <TableCell
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: 'grey.50',
+                  minWidth: 160,
+                }}
+              >
                 Mitarbeiter
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: 'grey.50',
+                  minWidth: 90,
+                }}
               >
                 <Box
                   sx={{
@@ -244,7 +270,11 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 90 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: 'grey.50',
+                  minWidth: 90,
+                }}
               >
                 <Box
                   sx={{
@@ -260,13 +290,21 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 180 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: 'grey.50',
+                  minWidth: 180,
+                }}
               >
                 Bevorzugt
               </TableCell>
               <TableCell
                 align="center"
-                sx={{ fontWeight: 600, backgroundColor: 'grey.50', minWidth: 110 }}
+                sx={{
+                  fontWeight: 600,
+                  backgroundColor: 'grey.50',
+                  minWidth: 110,
+                }}
               >
                 <Box
                   sx={{
@@ -305,12 +343,21 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                       <Checkbox
                         size="small"
                         checked={pref.included}
-                        onChange={(e) => updatePreference(empId, { included: e.target.checked })}
+                        onChange={(e) =>
+                          updatePreference(empId, {
+                            included: e.target.checked,
+                          })
+                        }
                       />
                     </TableCell>
                     <TableCell>
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          flexWrap: 'wrap',
+                        }}
                       >
                         <Box
                           sx={{
@@ -356,7 +403,9 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                         checked={pref.rb_even_weeks}
                         disabled={!pref.included}
                         onChange={(e) =>
-                          updatePreference(empId, { rb_even_weeks: e.target.checked })
+                          updatePreference(empId, {
+                            rb_even_weeks: e.target.checked,
+                          })
                         }
                       />
                     </TableCell>
@@ -366,7 +415,9 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                         checked={pref.rb_odd_weeks}
                         disabled={!pref.included}
                         onChange={(e) =>
-                          updatePreference(empId, { rb_odd_weeks: e.target.checked })
+                          updatePreference(empId, {
+                            rb_odd_weeks: e.target.checked,
+                          })
                         }
                       />
                     </TableCell>
@@ -382,7 +433,10 @@ export const AutoPlanningEmployeeTable: React.FC<AutoPlanningEmployeeTableProps>
                           value={pref.duty_preference}
                           disabled={!pref.included}
                           onChange={(_, value: DutyPreference | null) => {
-                            if (value) updatePreference(empId, { duty_preference: value });
+                            if (value)
+                              updatePreference(empId, {
+                                duty_preference: value,
+                              });
                           }}
                           sx={{
                             gap: 0.5,

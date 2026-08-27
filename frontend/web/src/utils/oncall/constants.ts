@@ -12,9 +12,24 @@ export const WEEKDAY_DUTIES: Array<{
     area: 'Nord',
     shortLabel: 'RB Nord Pflege',
   },
-  { type: 'rb_nursing_weekday', label: 'RB Süd Pflege', area: 'Süd', shortLabel: 'RB Süd Pflege' },
-  { type: 'rb_doctors_weekday', label: 'RB Nord Ärzte', area: 'Nord', shortLabel: 'RB Nord Ärzte' },
-  { type: 'rb_doctors_weekday', label: 'RB Süd Ärzte', area: 'Süd', shortLabel: 'RB Süd Ärzte' },
+  {
+    type: 'rb_nursing_weekday',
+    label: 'RB Süd Pflege',
+    area: 'Süd',
+    shortLabel: 'RB Süd Pflege',
+  },
+  {
+    type: 'rb_doctors_weekday',
+    label: 'RB Nord Ärzte',
+    area: 'Nord',
+    shortLabel: 'RB Nord Ärzte',
+  },
+  {
+    type: 'rb_doctors_weekday',
+    label: 'RB Süd Ärzte',
+    area: 'Süd',
+    shortLabel: 'RB Süd Ärzte',
+  },
 ];
 
 export const WEEKEND_DUTIES: Array<{
@@ -24,7 +39,12 @@ export const WEEKEND_DUTIES: Array<{
   shortLabel: string;
 }> = [
   { type: 'aw_nursing', label: 'AW Nord', area: 'Nord', shortLabel: 'AW Nord' },
-  { type: 'aw_nursing', label: 'AW Mitte', area: 'Mitte', shortLabel: 'AW Mitte' },
+  {
+    type: 'aw_nursing',
+    label: 'AW Mitte',
+    area: 'Mitte',
+    shortLabel: 'AW Mitte',
+  },
   { type: 'aw_nursing', label: 'AW Süd', area: 'Süd', shortLabel: 'AW Süd' },
   {
     type: 'rb_nursing_weekend_day',
@@ -50,8 +70,18 @@ export const WEEKEND_DUTIES: Array<{
     area: 'Süd',
     shortLabel: 'RB Süd Nacht Pflege',
   },
-  { type: 'rb_doctors_weekend', label: 'RB Nord Ärzte', area: 'Nord', shortLabel: 'RB Nord Ärzte' },
-  { type: 'rb_doctors_weekend', label: 'RB Süd Ärzte', area: 'Süd', shortLabel: 'RB Süd Ärzte' },
+  {
+    type: 'rb_doctors_weekend',
+    label: 'RB Nord Ärzte',
+    area: 'Nord',
+    shortLabel: 'RB Nord Ärzte',
+  },
+  {
+    type: 'rb_doctors_weekend',
+    label: 'RB Süd Ärzte',
+    area: 'Süd',
+    shortLabel: 'RB Süd Ärzte',
+  },
 ];
 
 export const WEEK_DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];

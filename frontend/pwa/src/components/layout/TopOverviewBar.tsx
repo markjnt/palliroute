@@ -54,7 +54,9 @@ export const TopOverviewBar: React.FC<TopOverviewBarProps> = ({
   const { data: employees = [] } = useEmployees();
   const { data: patients = [] } = usePatients();
   const { data: appointments = [] } = useAppointmentsByWeekday(selectedWeekday as Weekday);
-  const { data: routes = [] } = useRoutes({ weekday: selectedWeekday as Weekday });
+  const { data: routes = [] } = useRoutes({
+    weekday: selectedWeekday as Weekday,
+  });
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
 
   const selectedEmployee = employees.find((emp) => emp.id === selectedUserId);

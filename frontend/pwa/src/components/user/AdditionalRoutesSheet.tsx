@@ -29,12 +29,8 @@ import { useAdditionalRoutesStore } from '../../stores/useAdditionalRoutesStore'
 import { useWeekdayStore } from '../../stores/useWeekdayStore';
 import { Employee, Weekday } from '../../types/models';
 import { useDeferredSheetMount } from '../../hooks/useDeferredSheetMount';
-import {
-  EmployeeFilterChips,
-  EmployeePickCard,
-  AreaPickCard,
-  filterEmployees,
-} from './EmployeePickCard';
+import { EmployeeFilterChips, EmployeePickCard, AreaPickCard } from './EmployeePickCard';
+import { filterEmployees } from './filterEmployees';
 import AdminEmployeeSelectSheet from './AdminEmployeeSelectSheet';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 import { AW_TOUR_AREAS, findAwAreaRoute, findEmployeeDayRoute } from '../../utils/mapUtils';
@@ -105,7 +101,9 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ op
   const { logout, configured, isAuthenticated } = useAuth();
   const isAdmin = Boolean(me?.is_admin);
   const showLogout = configured && isAuthenticated;
-  const { data: routes = [] } = useRoutes({ weekday: selectedWeekday as Weekday });
+  const { data: routes = [] } = useRoutes({
+    weekday: selectedWeekday as Weekday,
+  });
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
   const selectedEmployee = employees.find((emp) => emp.id === selectedUserId);
 
@@ -194,7 +192,12 @@ export const AdditionalRoutesSheet: React.FC<AdditionalRoutesSheetProps> = ({ op
               >
                 <Typography
                   variant="h6"
-                  sx={{ fontWeight: 600, color: '#1d1d1f', flex: 1, minWidth: 0 }}
+                  sx={{
+                    fontWeight: 600,
+                    color: '#1d1d1f',
+                    flex: 1,
+                    minWidth: 0,
+                  }}
                 >
                   Weitere Routen anzeigen
                 </Typography>

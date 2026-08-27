@@ -126,7 +126,14 @@ export const EmployeeCapacityCard: React.FC<EmployeeCapacityCardProps> = ({
           mb: 2,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
           <Typography
             variant="subtitle2"
             sx={{

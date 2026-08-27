@@ -174,8 +174,12 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           return emp ? { employee: emp, appointmentId: app.id } : null;
         })
         .filter(
-          (item): item is { employee: (typeof employees)[0]; appointmentId: number } =>
-            item !== null
+          (
+            item
+          ): item is {
+            employee: (typeof employees)[0];
+            appointmentId: number;
+          } => item !== null
         )
         // Remove duplicates (same employee_id) - additional safety check
         .filter(
@@ -466,7 +470,14 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           }}
         >
           <Box sx={{ width: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, position: 'relative' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                mb: 0.5,
+                position: 'relative',
+              }}
+            >
               {index !== undefined && !isTourEmployeeAppointment && (
                 <Box
                   sx={{

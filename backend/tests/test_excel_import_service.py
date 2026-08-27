@@ -25,9 +25,21 @@ def test_batch_geocode_uses_cache_without_api(monkeypatch):
 
 
 def test_aw_tour_employee_snapshot_roundtrip():
-    snapshots = [(34, "saturday", "Nord", 7), (34, "sunday", "Mitte", 12)]
+    snapshots = [
+        (34, "saturday", "Nord", 7, False),
+        (34, "sunday", "Mitte", 12, True),
+    ]
     raw = ExcelImportService._serialize_aw_tour_employee_snapshot(snapshots)
     assert ExcelImportService._deserialize_aw_tour_employee_snapshot(raw) == snapshots
+
+
+def test_aw_tour_employee_snapshot_legacy_defaults_override_true():
+    raw = json.dumps(
+        [{"calendar_week": 34, "weekday": "saturday", "area": "Nord", "employee_id": 7}]
+    )
+    assert ExcelImportService._deserialize_aw_tour_employee_snapshot(raw) == [
+        (34, "saturday", "Nord", 7, True)
+    ]
 
 
 def test_aw_tour_employee_snapshot_ignores_invalid_payload():
@@ -133,3 +145,66 @@ def test_match_custom_order_is_case_insensitive():
         }
     ]
     assert ExcelImportService._match_custom_order_ids([5], {5: identity}, snapshot_stops) == [5]
+
+
+def test_completed_appointments_snapshot_roundtrip():
+    snapshots = [
+        {
+            "calendar_week": 34,
+            "weekday": "monday",
+            "first_name": "Anna",
+            "last_name": "Arzt",
+            "street": "Hauptstr. 1",
+            "zip_code": "51545",
+            "visit_type": "HB",
+        }
+    ]
+    raw = ExcelImportService._serialize_completed_appointments_snapshot(snapshots)
+    assert ExcelImportService._deserialize_completed_appointments_snapshot(raw) == snapshots
+
+
+def test_completed_appointments_snapshot_ignores_invalid_payload():
+    assert ExcelImportService._deserialize_completed_appointments_snapshot(None) == []
+    assert ExcelImportService._deserialize_completed_appointments_snapshot("not-json") == []
+    assert (
+        ExcelImportService._deserialize_completed_appointments_snapshot(json.dumps({"x": 1})) == []
+    )
+    assert (
+        ExcelImportService._deserialize_completed_appointments_snapshot(
+            json.dumps([{"weekday": "monday"}])
+        )
+        == []
+    )
+
+
+def test_completion_identity_includes_week_and_weekday():
+    identity = ExcelImportService._normalize_completion_identity(
+        34, "Monday", "Anna", "Arzt", "Hauptstr. 1", "51545", "hb"
+    )
+    assert identity == (
+        34,
+        "monday",
+        "anna",
+        "arzt",
+        "hauptstr. 1",
+        "51545",
+        "HB",
+    )
+    assert (
+        ExcelImportService._normalize_completion_identity(None, "monday", "A", "B", "C", "1", "HB")
+        is None
+    )
+    assert (
+        ExcelImportService._completion_identity_from_dict(
+            {
+                "calendar_week": 34,
+                "weekday": "monday",
+                "first_name": "Anna",
+                "last_name": "Arzt",
+                "street": "Hauptstr. 1",
+                "zip_code": "51545",
+                "visit_type": "HB",
+            }
+        )
+        == identity
+    )

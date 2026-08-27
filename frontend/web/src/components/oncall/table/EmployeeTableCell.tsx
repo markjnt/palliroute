@@ -120,7 +120,10 @@ export const EmployeeTableCell: React.FC<EmployeeTableCellProps> = ({
       }
 
       try {
-        const parsed = JSON.parse(rawData) as { assignmentId?: number; sourceDate?: string };
+        const parsed = JSON.parse(rawData) as {
+          assignmentId?: number;
+          sourceDate?: string;
+        };
         if (!parsed.assignmentId || !parsed.sourceDate) {
           return;
         }

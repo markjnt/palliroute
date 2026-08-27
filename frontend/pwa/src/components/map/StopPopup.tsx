@@ -30,7 +30,7 @@ import { useEmployees } from '../../services/queries/useEmployees';
 import { useRoutes } from '../../services/queries/useRoutes';
 import { useNrwpHolidayForTourDay } from '../../hooks/useNrwpHolidayForTourDay';
 import { useCloseOnMapClick } from '@palliroute/ui';
-import { openMaps, callPhone } from '../route/StopActionButtons';
+import { openMaps, callPhone } from '../route/stopContactActions';
 
 const dialogPaperSx = {
   borderRadius: 3,
@@ -79,7 +79,9 @@ export const StopPopup: React.FC<StopPopupProps> = ({
   const { selectedWeekday } = useWeekdayStore();
   const { isAreaTourDay } = useNrwpHolidayForTourDay(selectedWeekday as Weekday);
   const { data: employees = [] } = useEmployees();
-  const { data: routes = [] } = useRoutes({ weekday: selectedWeekday as Weekday });
+  const { data: routes = [] } = useRoutes({
+    weekday: selectedWeekday as Weekday,
+  });
   const moveAppointment = useMoveAppointment();
 
   useCloseOnMapClick(onClose, !confirmOpen);
@@ -245,7 +247,12 @@ export const StopPopup: React.FC<StopPopupProps> = ({
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 variant="subtitle1"
-                sx={{ fontWeight: 600, color: '#1d1d1f', lineHeight: 1.25, fontSize: '1rem' }}
+                sx={{
+                  fontWeight: 600,
+                  color: '#1d1d1f',
+                  lineHeight: 1.25,
+                  fontSize: '1rem',
+                }}
               >
                 {patient.first_name} {patient.last_name}
               </Typography>
@@ -297,7 +304,12 @@ export const StopPopup: React.FC<StopPopupProps> = ({
               {patient.street}
               <Box
                 component="span"
-                sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}
+                sx={{
+                  display: 'block',
+                  color: '#8E8E93',
+                  fontWeight: 400,
+                  fontSize: '0.75rem',
+                }}
               >
                 {patient.zip_code} {patient.city}
               </Box>
@@ -314,7 +326,14 @@ export const StopPopup: React.FC<StopPopupProps> = ({
           ) : null}
 
           {(patient.phone1 || patient.phone2) && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 1.25 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0.75,
+                mb: 1.25,
+              }}
+            >
               {patient.phone1 ? (
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <IconButton
@@ -388,7 +407,10 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                 fontWeight: 600,
                 bgcolor: accent,
                 boxShadow: 'none',
-                '&:hover': { bgcolor: isAreaTourDay ? '#f57c00' : '#0062CC', boxShadow: 'none' },
+                '&:hover': {
+                  bgcolor: isAreaTourDay ? '#f57c00' : '#0062CC',
+                  boxShadow: 'none',
+                },
               }}
             >
               Patient verschieben
@@ -441,7 +463,12 @@ export const StopPopup: React.FC<StopPopupProps> = ({
         <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 1.5, gap: 1 }}>
           <Button
             onClick={() => setConfirmOpen(false)}
-            sx={{ textTransform: 'none', borderRadius: 1.5, color: '#1d1d1f', fontWeight: 600 }}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 1.5,
+              color: '#1d1d1f',
+              fontWeight: 600,
+            }}
           >
             Abbrechen
           </Button>

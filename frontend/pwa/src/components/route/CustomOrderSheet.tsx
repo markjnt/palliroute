@@ -181,7 +181,15 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
         </Sheet.Header>
         <Sheet.Content>
           <Sheet.Scroller draggableAt="top">
-            <Box sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box
+              sx={{
+                px: 2,
+                pb: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+              }}
+            >
               {displayedStops.map((stop) => {
                 const order = selectedIndex.get(stop.id);
                 const selected = order != null;
@@ -243,7 +251,13 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
                         </Typography>
                       </Box>
                       {stop.info ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            mt: 0.5,
+                          }}
+                        >
                           <InfoIcon sx={{ fontSize: 14, color: '#007AFF', mr: 0.5 }} />
                           <Typography
                             variant="caption"
@@ -291,7 +305,12 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
           <Button
             variant="outlined"
             onClick={handleReset}
-            sx={{ flex: 1, textTransform: 'none', borderRadius: 1.5, fontWeight: 600 }}
+            sx={{
+              flex: 1,
+              textTransform: 'none',
+              borderRadius: 1.5,
+              fontWeight: 600,
+            }}
           >
             Zurücksetzen
           </Button>
@@ -299,7 +318,12 @@ export const CustomOrderSheet: React.FC<CustomOrderSheetProps> = ({
             variant="contained"
             onClick={handleConfirm}
             disabled={!canConfirm || setCustomOrder.isPending}
-            sx={{ flex: 1, textTransform: 'none', borderRadius: 1.5, fontWeight: 600 }}
+            sx={{
+              flex: 1,
+              textTransform: 'none',
+              borderRadius: 1.5,
+              fontWeight: 600,
+            }}
           >
             Speichern
           </Button>

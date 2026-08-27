@@ -1,7 +1,5 @@
 import { api } from '@palliroute/shared';
 import { Appointment, Weekday } from '../../types/models';
-import { getCurrentCalendarWeek, getBestCalendarWeek } from '@palliroute/shared';
-import { patientsApi } from './patients';
 import { calendarWeekService } from './calendarWeek';
 
 export const appointmentsApi = {
@@ -55,6 +53,18 @@ export const appointmentsApi = {
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch appointment with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  async setCompleted(id: number, completed: boolean): Promise<Appointment> {
+    try {
+      const response = await api.put(`/appointments/${id}/completed`, {
+        completed,
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update completed state for appointment ${id}:`, error);
       throw error;
     }
   },

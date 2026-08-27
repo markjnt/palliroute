@@ -26,7 +26,9 @@ export const useAdditionalRoutesStore = create<AdditionalRoutesStore>((set) => (
       const numericId = Number(employeeId);
       if (!numericId || Number.isNaN(numericId)) return state;
       if (state.selectedEmployeeIds.some((id) => Number(id) === numericId)) return state;
-      return { selectedEmployeeIds: [...state.selectedEmployeeIds, numericId] };
+      return {
+        selectedEmployeeIds: [...state.selectedEmployeeIds, numericId],
+      };
     });
   },
 
@@ -49,7 +51,9 @@ export const useAdditionalRoutesStore = create<AdditionalRoutesStore>((set) => (
   toggleArea: (area: string) => {
     set((state) => {
       if (state.selectedAreas.includes(area)) {
-        return { selectedAreas: state.selectedAreas.filter((item) => item !== area) };
+        return {
+          selectedAreas: state.selectedAreas.filter((item) => item !== area),
+        };
       }
       return { selectedAreas: [...state.selectedAreas, area] };
     });

@@ -205,7 +205,12 @@ export const UnplannedShiftsDialog: React.FC<UnplannedShiftsDialogProps> = ({
                                 }}
                               >
                                 <Box
-                                  sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.5,
+                                    flex: 1,
+                                  }}
                                 >
                                   <Chip
                                     label={label}

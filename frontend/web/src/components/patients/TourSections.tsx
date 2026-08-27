@@ -92,7 +92,14 @@ const TourSections: React.FC<TourSectionsProps> = ({
   return (
     <>
       {/* Home visits and new admissions (HB + NA) section */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'primary.main' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          mb: 2,
+          color: 'primary.main',
+        }}
+      >
         <HomeIcon color="primary" />
         <Typography variant="h6" sx={{ ml: 1 }}>
           Route ({allRouteAppointments.length})
@@ -235,7 +242,14 @@ const TourSections: React.FC<TourSectionsProps> = ({
             bgcolor: 'rgba(76, 175, 80, 0.04)',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'success.main' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mb: 2,
+              color: 'success.main',
+            }}
+          >
             <PhoneIcon color="success" />
             <Typography variant="h6" sx={{ ml: 1 }}>
               Telefonkontakte ({normalTkAppointments.length})
@@ -378,7 +392,14 @@ const TourSections: React.FC<TourSectionsProps> = ({
                 bgcolor: 'rgba(158, 158, 158, 0.04)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, color: 'text.secondary' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 2,
+                  color: 'text.secondary',
+                }}
+              >
                 <PersonIcon color="action" />
                 <Typography variant="h6" sx={{ ml: 1 }}>
                   Ohne Besuch ({allEmptyTypePatientIds.size})

@@ -345,7 +345,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         routes.forEach((route) => {
           const routeOrder = parseRouteOrder(route.route_order);
           routeOrder.forEach((appointmentId, idx) => {
-            appointmentPositions.set(appointmentId, { position: idx + 1, routeId: route.id });
+            appointmentPositions.set(appointmentId, {
+              position: idx + 1,
+              routeId: route.id,
+            });
           });
         });
         for (const appointment of appointmentsForDay) {
@@ -457,7 +460,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -601,7 +611,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                     : 'Keine KW gewählt'
                 }
                 primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
+                secondaryTypographyProps={{
+                  variant: 'caption',
+                  color: 'text.secondary',
+                }}
               />
             </MenuItem>
           </MenuList>

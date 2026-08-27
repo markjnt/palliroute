@@ -1,5 +1,5 @@
 import { api } from '@palliroute/shared';
-import { Employee, EmployeeFormData, EmployeeImportResponse } from '../../types/models';
+import { Employee } from '../../types/models';
 
 export const employeesApi = {
   // Get all employees

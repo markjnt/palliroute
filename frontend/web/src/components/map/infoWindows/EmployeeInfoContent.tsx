@@ -98,7 +98,12 @@ export const EmployeeInfoContent: React.FC<EmployeeInfoContentProps> = ({
           {employee.street}
           <Box
             component="span"
-            sx={{ display: 'block', color: '#8E8E93', fontWeight: 400, fontSize: '0.75rem' }}
+            sx={{
+              display: 'block',
+              color: '#8E8E93',
+              fontWeight: 400,
+              fontSize: '0.75rem',
+            }}
           >
             {employee.zip_code} {employee.city}
           </Box>

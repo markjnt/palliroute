@@ -23,7 +23,9 @@ export function RoutePolylines({
   const polylineRefs = useRef<{ [id: number]: google.maps.Polyline }>({});
   const hitRefs = useRef<{ [id: number]: google.maps.Polyline }>({});
   const previousDataRef = useRef<{ [id: number]: string }>({});
-  const listenersRef = useRef<{ [id: number]: google.maps.MapsEventListener[] }>({});
+  const listenersRef = useRef<{
+    [id: number]: google.maps.MapsEventListener[];
+  }>({});
 
   const hoveredRouteId = useRouteHoverStore((state) => (enableHover ? state.hoveredRouteId : null));
   const hoverRoute = useRouteHoverStore((state) => state.hoverRoute);

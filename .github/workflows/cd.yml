@@ -99,6 +99,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Refresh OS package layers at most once per UTC day; npm/pip layers stay cached.
+      - name: OS security cache bust
+        id: os-sec
+        run: echo "bust=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
       - name: Build image
         if: matrix.target != ''
         uses: docker/build-push-action@v7
@@ -111,6 +116,8 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ env.IMAGE_SHA }}
             ${{ env.IMAGE }}:${{ env.STAGE }}
+          build-args: |
+            OS_SEC_UPDATE=${{ steps.os-sec.outputs.bust }}
           cache-from: type=registry,ref=${{ env.CACHE }}
           cache-to: type=registry,ref=${{ env.CACHE }},mode=max
           provenance: false
@@ -127,6 +134,8 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ env.IMAGE_SHA }}
             ${{ env.IMAGE }}:${{ env.STAGE }}
+          build-args: |
+            OS_SEC_UPDATE=${{ steps.os-sec.outputs.bust }}
           cache-from: type=registry,ref=${{ env.CACHE }}
           cache-to: type=registry,ref=${{ env.CACHE }},mode=max
           provenance: false

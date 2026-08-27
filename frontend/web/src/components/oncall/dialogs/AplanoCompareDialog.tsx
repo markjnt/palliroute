@@ -348,14 +348,33 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
         ) : hasError ? (
           <Alert severity="error">Aplano ist momentan nicht verfügbar.</Alert>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 0.5, pt: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+              mt: 0.5,
+              pt: 1,
+            }}
+          >
             {/* Bereichsfilter – ganz oben */}
             <Box sx={filterBarSx}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.25,
+                  flexWrap: 'wrap',
+                }}
+              >
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
                 >
                   Bereich
                 </Typography>
@@ -412,7 +431,13 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                         Gleich
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: '1.1rem',
+                        lineHeight: 1,
+                      }}
+                    >
                       {filteredSummary.equal_count}
                     </Typography>
                   </Box>
@@ -438,7 +463,13 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                         Fehlt in Aplano
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: '1.1rem',
+                        lineHeight: 1,
+                      }}
+                    >
                       {filteredSummary.missing_in_aplano_count}
                     </Typography>
                   </Box>
@@ -464,7 +495,13 @@ export const AplanoCompareDialog: React.FC<AplanoCompareDialogProps> = ({
                         Abweichend
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: '1.1rem',
+                        lineHeight: 1,
+                      }}
+                    >
                       {filteredSummary.different_count}
                     </Typography>
                   </Box>

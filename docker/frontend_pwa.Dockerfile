@@ -25,7 +25,10 @@ RUN npm run build
 
 FROM nginx:alpine
 
-RUN apk update && apk upgrade
+# Bust this layer daily in CI/CD so apk security updates are not stuck behind BuildKit cache.
+ARG OS_SEC_UPDATE=0
+RUN echo "OS_SEC_UPDATE=${OS_SEC_UPDATE}" \
+    && apk update && apk upgrade
 
 COPY --from=build /app/frontend/pwa/dist /usr/share/nginx/html
 

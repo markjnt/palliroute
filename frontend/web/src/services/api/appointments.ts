@@ -28,7 +28,9 @@ export const appointmentsApi = {
   async getByWeekday(weekday: Weekday, calendarWeek?: number): Promise<Appointment[]> {
     try {
       const params = calendarWeek ? { calendar_week: calendarWeek } : {};
-      const response = await api.get(`/appointments/weekday/${weekday}`, { params });
+      const response = await api.get(`/appointments/weekday/${weekday}`, {
+        params,
+      });
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch appointments for weekday ${weekday}:`, error);

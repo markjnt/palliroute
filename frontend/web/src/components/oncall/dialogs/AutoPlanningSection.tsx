@@ -35,7 +35,14 @@ export const AutoPlanningSection: React.FC<AutoPlanningSectionProps> = ({
         mb: children ? 2.25 : 0,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25, minWidth: 0 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 1.25,
+          minWidth: 0,
+        }}
+      >
         <Box
           sx={{
             width: 36,
@@ -63,7 +70,12 @@ export const AutoPlanningSection: React.FC<AutoPlanningSectionProps> = ({
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ display: 'block', mt: 0.35, fontSize: '0.78rem', lineHeight: 1.35 }}
+              sx={{
+                display: 'block',
+                mt: 0.35,
+                fontSize: '0.78rem',
+                lineHeight: 1.35,
+              }}
             >
               {subtitle}
             </Typography>
@@ -140,14 +152,23 @@ export const AutoPlanningOptionCard: React.FC<OptionCardProps> = ({
     <Box sx={{ minWidth: 0, pt: 0.15 }}>
       <Typography
         variant="body2"
-        sx={{ fontWeight: selected ? 600 : 500, fontSize: '0.875rem', lineHeight: 1.25 }}
+        sx={{
+          fontWeight: selected ? 600 : 500,
+          fontSize: '0.875rem',
+          lineHeight: 1.25,
+        }}
       >
         {title}
       </Typography>
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ display: 'block', mt: 0.35, fontSize: '0.75rem', lineHeight: 1.35 }}
+        sx={{
+          display: 'block',
+          mt: 0.35,
+          fontSize: '0.75rem',
+          lineHeight: 1.35,
+        }}
       >
         {description}
       </Typography>
@@ -206,7 +227,12 @@ export const AutoPlanningSwitchRow: React.FC<SwitchRowProps> = ({
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ display: 'block', mt: 0.35, fontSize: '0.75rem', lineHeight: 1.35 }}
+          sx={{
+            display: 'block',
+            mt: 0.35,
+            fontSize: '0.75rem',
+            lineHeight: 1.35,
+          }}
         >
           {description}
         </Typography>

@@ -40,8 +40,10 @@ export const WeekendTourStats: React.FC<WeekendTourStatsProps> = ({ area, route 
   const distance = route?.total_distance;
   const distanceStr =
     distance !== undefined
-      ? distance.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) +
-        ' km'
+      ? distance.toLocaleString('de-DE', {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        }) + ' km'
       : '-';
 
   return (

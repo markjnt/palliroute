@@ -1,5 +1,6 @@
 import calendar
 import re
+import time
 import unicodedata
 from collections import defaultdict
 from datetime import date, datetime
@@ -11,6 +12,16 @@ from config import Config
 from app import db
 from app.models.employee import Employee
 from app.models.employee_planning import EmployeePlanning
+from app.services.holiday_service import is_aw_area_assignment_day
+
+# Per-KW throttle for opportunistic sync (e.g. AW tour routes GET)
+_last_sync_monotonic: dict[int, float] = {}
+_SYNC_MIN_INTERVAL_SEC = 120.0
+
+
+def clear_aplano_sync_throttle() -> None:
+    """Reset sync throttle (tests)."""
+    _last_sync_monotonic.clear()
 
 
 def aplano_user_display_name(user: Any) -> str:
@@ -385,16 +396,30 @@ def date_to_weekday_string(date_str: str) -> str:
     return weekday_map[weekday_num]
 
 
-def sync_employee_planning(calendar_week: int) -> bool:
+def sync_employee_planning(calendar_week: int, *, force: bool = True) -> bool:
     """
     Sync employee planning with Aplano shift data
 
     Args:
         calendar_week: Calendar week number to sync
+        force: If False, skip Aplano fetch when a recent sync exists (still applies AW routes)
 
     Returns:
         True if sync successful, False otherwise
     """
+    if not force:
+        last = _last_sync_monotonic.get(calendar_week)
+        if last is not None and (time.monotonic() - last) < _SYNC_MIN_INTERVAL_SEC:
+            try:
+                from app.services.aw_tour_aplano import apply_aplano_aw_tour_employees
+
+                apply_aplano_aw_tour_employees(calendar_week)
+            except Exception as apply_error:
+                print(
+                    f"[sync_employee_planning] throttled AW apply failed for KW {calendar_week}: {apply_error}"
+                )
+            return True
+
     try:
         if not getattr(Config, "APLANO_API_KEY", None):
             print(
@@ -504,7 +529,8 @@ def sync_employee_planning(calendar_week: int) -> bool:
                         # Check if at least one shift has a valid tour/AW and is not absent (no RB)
                         available_shift = None
                         custom_text = None
-                        is_weekend = weekday in ["saturday", "sunday"]
+                        # Sa/So and Mo–Fr Feiertage use AW Nord/Mitte/Süd workspaces
+                        is_aw_day = is_aw_area_assignment_day(calendar_week, weekday)
                         is_doctor = (employee.function or "") in ("Arzt", "Honorararzt")
 
                         for shift_info in shifts_for_date:
@@ -520,9 +546,9 @@ def sync_employee_planning(calendar_week: int) -> bool:
                                 custom_text = None
                                 break
 
-                            # Check for valid tour/AW based on weekday
-                            if is_weekend:
-                                # Weekend: check if AW is present, then check for Nord, Süd, or Mitte
+                            # Check for valid tour/AW based on weekday / Feiertag
+                            if is_aw_day:
+                                # Weekend / Feiertag: AW Nord, Süd, or Mitte
                                 if "AW" in work_space_value:
                                     if "Nord" in work_space_value:
                                         available_shift = shift_info
@@ -580,6 +606,17 @@ def sync_employee_planning(calendar_week: int) -> bool:
 
         db.session.commit()
 
+        # Auto-assign AW tour routes from Aplano (respects employee_override)
+        try:
+            from app.services.aw_tour_aplano import apply_aplano_aw_tour_employees
+
+            apply_aplano_aw_tour_employees(calendar_week)
+        except Exception as apply_error:
+            print(
+                f"[sync_employee_planning] AW tour aplano apply failed for KW {calendar_week}: {apply_error}"
+            )
+
+        _last_sync_monotonic[calendar_week] = time.monotonic()
         return True
 
     except Exception as e:

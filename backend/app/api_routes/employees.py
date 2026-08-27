@@ -60,7 +60,7 @@ def create_employee():
 
     # Validate work_hours
     work_hours = data["work_hours"]
-    if not isinstance(work_hours, (int, float)) or work_hours < 0 or work_hours > 100:
+    if not isinstance(work_hours, int | float) or work_hours < 0 or work_hours > 100:
         return jsonify({"error": "Stellenumfang muss zwischen 0 und 100 liegen"}), 400
 
     email = data.get("email") or None
@@ -102,7 +102,7 @@ def update_employee(id):
     # Validate work_hours if provided
     if "work_hours" in data:
         work_hours = data["work_hours"]
-        if not isinstance(work_hours, (int, float)) or work_hours < 0 or work_hours > 100:
+        if not isinstance(work_hours, int | float) or work_hours < 0 or work_hours > 100:
             return jsonify({"error": "Stellenumfang muss zwischen 0 und 100 liegen"}), 400
 
     if "email" in data:

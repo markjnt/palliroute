@@ -149,7 +149,15 @@ export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
               {employee.first_name ? `${employee.first_name.charAt(0)}.` : ''} {employee.last_name}
             </Typography>
           </Tooltip>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              mt: 0.5,
+              flexWrap: 'wrap',
+            }}
+          >
             {employee.area && (
               <Chip
                 label={employee.area.includes('Nordkreis') ? 'N' : 'S'}
@@ -182,7 +190,14 @@ export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
             />
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, flexShrink: 0 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.25,
+            flexShrink: 0,
+          }}
+        >
           {activeCapacities.slice(0, 3).map((cap) => {
             const assigned = cap.assigned ?? 0;
             const label = `${CAPACITY_TYPE_ABBR[cap.capacity_type] ?? cap.capacity_type} ${assigned}/${cap.max_count}`;

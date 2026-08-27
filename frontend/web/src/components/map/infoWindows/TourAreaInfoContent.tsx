@@ -122,7 +122,14 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({ marker
                 fontSize: '0.75rem',
               }}
             >
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'white' }} />
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: 'white',
+                }}
+              />
               Nord
             </Box>
             <Box
@@ -138,7 +145,14 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({ marker
                 fontSize: '0.75rem',
               }}
             >
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'white' }} />
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: 'white',
+                }}
+              />
               Mitte
             </Box>
             <Box
@@ -154,7 +168,14 @@ export const TourAreaInfoContent: React.FC<TourAreaInfoContentProps> = ({ marker
                 fontSize: '0.75rem',
               }}
             >
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'white' }} />
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: 'white',
+                }}
+              />
               Süd
             </Box>
           </Box>

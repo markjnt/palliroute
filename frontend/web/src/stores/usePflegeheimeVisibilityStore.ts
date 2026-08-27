@@ -17,7 +17,9 @@ export const usePflegeheimeVisibilityStore = create<PflegeheimeVisibilityState>(
     }),
     {
       name: 'pflegeheime-visibility-storage',
-      partialize: (state) => ({ showPflegeheimeOnMap: state.showPflegeheimeOnMap }),
+      partialize: (state) => ({
+        showPflegeheimeOnMap: state.showPflegeheimeOnMap,
+      }),
     }
   )
 );

@@ -41,7 +41,11 @@ export const routesApi = {
       // Use the calendar week service to get the best week
       const weekToUse = await calendarWeekService.getBestWeek();
 
-      const params: { date: string; employee_id?: number; calendar_week: number } = {
+      const params: {
+        date: string;
+        employee_id?: number;
+        calendar_week: number;
+      } = {
         date,
         calendar_week: weekToUse,
       };
@@ -98,9 +102,13 @@ export const routesApi = {
     employeeId: number | null
   ): Promise<{ route: Route; planning_failed?: boolean }> {
     try {
-      const response = await api.put(`/routes/${routeId}/assign-employee`, {
+      const body: { employee_id: number | null; reset_to_aplano?: boolean } = {
         employee_id: employeeId,
-      });
+      };
+      if (employeeId === null) {
+        body.reset_to_aplano = true;
+      }
+      const response = await api.put(`/routes/${routeId}/assign-employee`, body);
       return {
         route: response.data.route,
         planning_failed: Boolean(response.data.planning_failed),
@@ -118,7 +126,11 @@ export const routesApi = {
     options: { direction?: 'up' | 'down'; index?: number }
   ): Promise<Route> {
     try {
-      const payload: { appointment_id: number; direction?: string; index?: number } = {
+      const payload: {
+        appointment_id: number;
+        direction?: string;
+        index?: number;
+      } = {
         appointment_id: appointmentId,
       };
 

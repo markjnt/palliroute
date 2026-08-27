@@ -151,7 +151,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
         const isOwn = mainRoute != null && route.id === mainRoute.id;
         const routeOrder = isOwn ? getOwnRouteOrder(route) : parseRouteOrder(route.route_order);
         routeOrder.forEach((appointmentId, idx) => {
-          appointmentPositions.set(appointmentId, { position: idx + 1, routeId: route.id });
+          appointmentPositions.set(appointmentId, {
+            position: idx + 1,
+            routeId: route.id,
+          });
         });
       });
 
@@ -258,7 +261,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({ apiKey, onMapClick }
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+        }}
+      >
         <CircularProgress />
       </Box>
     );

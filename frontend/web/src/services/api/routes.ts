@@ -98,12 +98,17 @@ export const routesApi = {
 
   async assignAwTourEmployee(
     routeId: number,
-    employeeId: number | null
+    employeeId: number | null,
+    options?: { resetToAplano?: boolean }
   ): Promise<AssignAwTourEmployeeResult> {
     try {
-      const response = await api.put(`/routes/${routeId}/assign-employee`, {
+      const body: { employee_id: number | null; reset_to_aplano?: boolean } = {
         employee_id: employeeId,
-      });
+      };
+      if (options?.resetToAplano || employeeId === null) {
+        body.reset_to_aplano = true;
+      }
+      const response = await api.put(`/routes/${routeId}/assign-employee`, body);
       return {
         route: response.data.route,
         planning_failed: Boolean(response.data.planning_failed),
@@ -118,7 +123,10 @@ export const routesApi = {
   async downloadRoutePdf(calendarWeek: number, selectedWeekday: Weekday): Promise<void> {
     try {
       const response = await api.get('/routes/download-pdf', {
-        params: { calendar_week: calendarWeek, selected_weekday: selectedWeekday },
+        params: {
+          calendar_week: calendarWeek,
+          selected_weekday: selectedWeekday,
+        },
         responseType: 'blob',
       });
 

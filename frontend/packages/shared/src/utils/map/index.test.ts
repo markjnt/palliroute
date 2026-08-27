@@ -25,15 +25,23 @@ describe('getTourAreaColor', () => {
 
 describe('getMarkerFillColor', () => {
   it('uses routeColor when provided', () => {
-    expect(getMarkerFillColor({ type: 'patient', visitType: 'HB', routeColor: '#FF1493' })).toBe(
-      '#FF1493'
-    );
+    expect(
+      getMarkerFillColor({
+        type: 'patient',
+        visitType: 'HB',
+        routeColor: '#FF1493',
+      })
+    ).toBe('#FF1493');
   });
 
   it('greys out inactive markers', () => {
-    expect(getMarkerFillColor({ type: 'patient', visitType: 'HB', isInactive: true })).toBe(
-      '#9E9E9E'
-    );
+    expect(
+      getMarkerFillColor({
+        type: 'patient',
+        visitType: 'HB',
+        isInactive: true,
+      })
+    ).toBe('#9E9E9E');
   });
 });
 

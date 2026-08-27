@@ -70,7 +70,9 @@ export const useCreateShiftDefinition = () => {
   return useMutation({
     mutationFn: (data: CreateShiftDefinitionData) => schedulingApi.createShiftDefinition(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftDefinitions.lists() });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftDefinitions.lists(),
+      });
     },
   });
 };
@@ -97,7 +99,9 @@ export const useCreateShiftInstance = () => {
   return useMutation({
     mutationFn: (data: CreateShiftInstanceData) => schedulingApi.createShiftInstance(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.lists() });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftInstances.lists(),
+      });
     },
   });
 };
@@ -108,7 +112,9 @@ export const useGenerateShiftInstances = () => {
   return useMutation({
     mutationFn: (data: GenerateShiftInstancesData) => schedulingApi.generateShiftInstances(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.lists() });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftInstances.lists(),
+      });
     },
   });
 };
@@ -135,9 +141,15 @@ export const useCreateAssignment = () => {
   return useMutation({
     mutationFn: (data: CreateAssignmentData) => schedulingApi.createAssignment(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.assignments.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.employeeCapacities.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftInstances.all,
+      }); // unplanned count updates
     },
   });
 };
@@ -149,9 +161,15 @@ export const useUpdateAssignment = () => {
     mutationFn: ({ id, data }: { id: number; data: UpdateAssignmentData }) =>
       schedulingApi.updateAssignment(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.assignments.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.employeeCapacities.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftInstances.all,
+      }); // unplanned count updates
     },
   });
 };
@@ -162,9 +180,15 @@ export const useDeleteAssignment = () => {
   return useMutation({
     mutationFn: (id: number) => schedulingApi.deleteAssignment(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.assignments.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.employeeCapacities.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftInstances.all,
+      }); // unplanned count updates
     },
   });
 };
@@ -177,9 +201,15 @@ export const useAutoPlan = () => {
     mutationFn: (data: AutoPlanData) => schedulingApi.autoPlan(data),
     onSuccess: () => {
       // Invalidate all assignment lists to refetch after planning
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.assignments.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.employeeCapacities.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftInstances.all,
+      }); // unplanned count updates
     },
   });
 };
@@ -192,9 +222,15 @@ export const useResetPlanning = () => {
     mutationFn: (data: ResetPlanningData) => schedulingApi.resetPlanning(data),
     onSuccess: () => {
       // Invalidate all assignment lists to refetch after reset
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.assignments.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.employeeCapacities.lists() });
-      queryClient.invalidateQueries({ queryKey: schedulingKeys.shiftInstances.all }); // unplanned count updates
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.assignments.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.employeeCapacities.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: schedulingKeys.shiftInstances.all,
+      }); // unplanned count updates
     },
   });
 };

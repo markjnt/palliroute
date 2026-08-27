@@ -11,6 +11,9 @@ interface WeeklyPlanningCellProps {
   weekday: string;
   allPlanningData?: any[]; // Alle Planning-Daten werden übergeben
   availableEmployees?: any[]; // Available employees for replacement
+  /** Sa/So or Mo–Fr Feiertag — same as AW tour days (no Vertretung UI). */
+  isAwDay?: boolean;
+  holidayName?: string | null;
 }
 
 export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
@@ -18,6 +21,8 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
   weekday,
   allPlanningData = [],
   availableEmployees = [],
+  isAwDay = false,
+  holidayName = null,
 }) => {
   // Map German weekday names to English database format
   const weekdayMapping: { [key: string]: string } = {
@@ -211,6 +216,8 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
     : { value: false, label: 'Abwesend', color: '#F44336' };
 
   const isWeekend = weekday === 'Samstag' || weekday === 'Sonntag';
+  // Feiertage wie Wochenende: AW-Chips, kein Vertretungs-UI
+  const treatAsAwDay = isAwDay || isWeekend;
 
   return (
     <>
@@ -224,7 +231,7 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
           border: '1px dashed',
           borderColor: hasConflicts ? 'error.main' : 'grey.300',
           borderRadius: 1,
-          backgroundColor: isWeekend ? 'grey.100' : 'grey.50',
+          backgroundColor: treatAsAwDay ? 'grey.100' : 'grey.50',
           position: 'relative',
           px: 1,
           py: 0.5,
@@ -284,6 +291,7 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
             <Chip
               label={currentCustomText ? currentCustomText : statusInfo.label}
               size="small"
+              title={holidayName || undefined}
               sx={{
                 backgroundColor: statusInfo.color,
                 color: 'white',
@@ -300,8 +308,8 @@ export const WeeklyPlanningCell: React.FC<WeeklyPlanningCellProps> = ({
           )}
         </Box>
 
-        {/* Replacement Display - Only for weekdays */}
-        {!isWeekend && (
+        {/* Replacement Display - Only for normal weekdays (not Sa/So/Feiertag) */}
+        {!treatAsAwDay && (
           <Box
             sx={{
               display: 'flex',

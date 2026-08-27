@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Table,
@@ -11,14 +11,20 @@ import {
   Chip,
   Typography,
   Avatar,
+  Tooltip,
 } from '@mui/material';
-import { Employee } from '../../types/models';
-import { getColorForTour } from '@palliroute/shared';
+import { Employee, Weekday } from '../../types/models';
+import {
+  getColorForTour,
+  holidayNameForCalendarWeekday,
+  isoYearForCalendarWeek,
+} from '@palliroute/shared';
 import { getColorForEmployeeType } from '../../utils/mapUtils';
 import { WeeklyPlanningCell } from './WeeklyPlanningCell';
 import { useEmployeePlanning } from '../../services/queries/useEmployeePlanning';
 import { usePlanningWeekStore } from '../../stores/usePlanningWeekStore';
 import { useAreaStore } from '../../stores/useAreaStore';
+import { useNrwpHolidaysForYears } from '../../services/queries/useConfig';
 
 interface WeeklyPlanningTableProps {
   employees: Employee[];
@@ -47,6 +53,16 @@ const getFunctionColor = (functionName: string): string => {
 
 const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
+const GERMAN_TO_ENGLISH_WEEKDAY: Record<string, Weekday> = {
+  Montag: 'monday',
+  Dienstag: 'tuesday',
+  Mittwoch: 'wednesday',
+  Donnerstag: 'thursday',
+  Freitag: 'friday',
+  Samstag: 'saturday',
+  Sonntag: 'sunday',
+};
+
 export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({ employees }) => {
   const [employeeFilter, setEmployeeFilter] = useState<'all' | 'pflege_n' | 'pflege_s' | 'arzt'>(
     'all'
@@ -55,6 +71,28 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({ employ
   const { data: planningEntries = [], isLoading } = useEmployeePlanning();
   const { selectedPlanningWeek } = usePlanningWeekStore();
   const { currentArea } = useAreaStore();
+
+  const currentYear = new Date().getFullYear();
+  const holidayYears = useMemo(
+    () => [currentYear - 1, currentYear, currentYear + 1],
+    [currentYear]
+  );
+  const { holidayByYmd } = useNrwpHolidaysForYears(holidayYears);
+
+  const holidayByGermanWeekday = useMemo(() => {
+    const map = new Map<string, string | null>();
+    if (selectedPlanningWeek == null) {
+      weekdays.forEach((d) => map.set(d, null));
+      return map;
+    }
+    const isoYear = isoYearForCalendarWeek(selectedPlanningWeek);
+    weekdays.forEach((germanDay) => {
+      const en = GERMAN_TO_ENGLISH_WEEKDAY[germanDay];
+      const name = holidayNameForCalendarWeekday(holidayByYmd, isoYear, selectedPlanningWeek, en);
+      map.set(germanDay, name);
+    });
+    return map;
+  }, [selectedPlanningWeek, holidayByYmd]);
 
   // Check if planning week is selected
   const isPlanningWeekSelected = selectedPlanningWeek !== null;
@@ -270,25 +308,52 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({ employ
                   />
                 </Box>
               </TableCell>
-              {weekdays.map((day) => (
-                <TableCell
-                  key={day}
-                  align="center"
-                  sx={{
-                    minWidth: 120,
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 2,
-                    backgroundColor: 'background.paper',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {day}
-                  </Typography>
-                </TableCell>
-              ))}
+              {weekdays.map((day) => {
+                const holidayName = holidayByGermanWeekday.get(day) ?? null;
+                const isWeekend = day === 'Samstag' || day === 'Sonntag';
+                const isWeekdayHoliday = Boolean(holidayName && !isWeekend);
+                return (
+                  <TableCell
+                    key={day}
+                    align="center"
+                    sx={{
+                      minWidth: 120,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 2,
+                      backgroundColor: isWeekdayHoliday
+                        ? 'warning.50'
+                        : isWeekend
+                          ? 'grey.100'
+                          : 'background.paper',
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {day}
+                    </Typography>
+                    {holidayName && (
+                      <Tooltip title={holidayName}>
+                        <Typography
+                          variant="caption"
+                          color="warning.dark"
+                          sx={{
+                            display: 'block',
+                            maxWidth: 110,
+                            mx: 'auto',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {holidayName}
+                        </Typography>
+                      </Tooltip>
+                    )}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -348,24 +413,32 @@ export const WeeklyPlanningTable: React.FC<WeeklyPlanningTableProps> = ({ employ
                 </TableCell>
 
                 {/* Wochentage Spalten */}
-                {weekdays.map((day) => (
-                  <TableCell
-                    key={day}
-                    align="center"
-                    sx={{
-                      minWidth: 100,
-                      borderLeft: 1,
-                      borderColor: 'divider',
-                    }}
-                  >
-                    <WeeklyPlanningCell
-                      employeeId={employee.id || 0}
-                      weekday={day}
-                      allPlanningData={allPlanningData}
-                      availableEmployees={employees}
-                    />
-                  </TableCell>
-                ))}
+                {weekdays.map((day) => {
+                  const holidayName = holidayByGermanWeekday.get(day) ?? null;
+                  const en = GERMAN_TO_ENGLISH_WEEKDAY[day];
+                  const isWeekend = en === 'saturday' || en === 'sunday';
+                  const isAwDay = isWeekend || Boolean(holidayName);
+                  return (
+                    <TableCell
+                      key={day}
+                      align="center"
+                      sx={{
+                        minWidth: 100,
+                        borderLeft: 1,
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <WeeklyPlanningCell
+                        employeeId={employee.id || 0}
+                        weekday={day}
+                        allPlanningData={allPlanningData}
+                        availableEmployees={employees}
+                        isAwDay={isAwDay}
+                        holidayName={holidayName}
+                      />
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>

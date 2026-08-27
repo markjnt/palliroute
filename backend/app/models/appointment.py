@@ -41,6 +41,7 @@ class Appointment(db.Model):
     info = db.Column(db.String(200))  # Additional info from Excel
     area = db.Column(db.String(50), nullable=False)  # Nordkreis, Südkreis, etc.
     calendar_week = db.Column(db.Integer, nullable=True)  # Denormalized for easier filtering
+    completed = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -58,6 +59,7 @@ class Appointment(db.Model):
             "info": self.info,
             "area": self.area,
             "calendar_week": self.calendar_week,
+            "completed": bool(self.completed),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }

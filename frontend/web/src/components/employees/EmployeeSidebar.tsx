@@ -103,9 +103,10 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
   const [openForm, setOpenForm] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState<{ id: number; name: string } | null>(
-    null
-  );
+  const [employeeToDelete, setEmployeeToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const [tablePopupOpen, setTablePopupOpen] = useState(false);
   const [kwAnchorEl, setKwAnchorEl] = useState<null | HTMLElement>(null);
   const [kwPickerSearch, setKwPickerSearch] = useState('');
@@ -435,7 +436,15 @@ export const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ width = 400 })
 
       <Divider />
 
-      <Box sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <Box
+        sx={{
+          p: 2,
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
         <WeeklyPlanningTable employees={employees} />
       </Box>
 
