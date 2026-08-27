@@ -94,9 +94,7 @@ export const AwTourEmployeeSelect: React.FC<AwTourEmployeeSelectProps> = ({
           </Box>
         );
       }}
-      renderInput={(params) => (
-        <TextField {...params} label="Mitarbeiter" placeholder="Suchen…" />
-      )}
+      renderInput={(params) => <TextField {...params} label="Mitarbeiter" placeholder="Suchen…" />}
       sx={{
         flex: 1,
         minWidth: 0,
