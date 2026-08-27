@@ -2115,6 +2115,20 @@ class ExcelImportService:
                 print("\nRestoring AW tour employee assignments...")
                 ExcelImportService._restore_aw_tour_employees(aw_tour_employee_snapshots)
 
+            # Fill non-overridden AW tours from Aplano (override routes stay as restored/manual)
+            print("\nApplying Aplano AW tour assignments (respecting overrides)...")
+            from app.services.aplano_sync import sync_employee_planning
+
+            for calendar_week in calendar_weeks:
+                try:
+                    ok = sync_employee_planning(calendar_week, force=True)
+                    if ok:
+                        print(f"  KW {calendar_week}: Aplano sync + AW assign OK")
+                    else:
+                        print(f"  KW {calendar_week}: Aplano sync failed")
+                except Exception as e:
+                    print(f"  KW {calendar_week}: Aplano AW assign error: {e}")
+
             # Step 6: Plan all routes (web order / polyline)
             print("\nStep 6: Planning all routes...")
             ExcelImportService._plan_all_routes(all_routes)
