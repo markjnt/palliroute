@@ -343,9 +343,7 @@ def assign_employee_to_aw_tour(route_id):
 
             route.employee_id = employee.id
             aplano_id = (
-                resolve_aplano_aw_employee_id(
-                    route.calendar_week, route.weekday, route.area
-                )
+                resolve_aplano_aw_employee_id(route.calendar_week, route.weekday, route.area)
                 if route.calendar_week is not None
                 else None
             )

@@ -133,9 +133,7 @@ class Route(db.Model):
         # Aplano suggestion for AW tours (for UI reset / override hint)
         if self.area in ("Nord", "Mitte", "Süd") and self.calendar_week is not None:
             if aplano_lookup is not None:
-                payload["aplano_employee_id"] = aplano_lookup.get(
-                    (self.weekday, self.area)
-                )
+                payload["aplano_employee_id"] = aplano_lookup.get((self.weekday, self.area))
             else:
                 from app.services.aw_tour_aplano import resolve_aplano_aw_employee_id
 

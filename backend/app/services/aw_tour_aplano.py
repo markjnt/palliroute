@@ -116,9 +116,7 @@ def serialize_routes(routes: list[Route]) -> list[dict]:
     result: list[dict] = []
     for route in routes:
         if route.calendar_week is not None and route.area in AW_TOUR_AREAS:
-            result.append(
-                route.to_dict(aplano_lookup=lookups.get(route.calendar_week, {}))
-            )
+            result.append(route.to_dict(aplano_lookup=lookups.get(route.calendar_week, {})))
         else:
             result.append(route.to_dict())
     return result
@@ -163,9 +161,7 @@ def reset_aw_tour_employee_to_aplano(route: Route) -> int | None:
     if route.calendar_week is None:
         route.employee_id = None
         return None
-    aplano_id = resolve_aplano_aw_employee_id(
-        route.calendar_week, route.weekday, route.area
-    )
+    aplano_id = resolve_aplano_aw_employee_id(route.calendar_week, route.weekday, route.area)
     route.employee_id = aplano_id
     route.updated_at = datetime.utcnow()
     return aplano_id
