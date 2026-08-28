@@ -9,7 +9,7 @@ import { queryClient } from './query/client';
 if ('serviceWorker' in navigator) {
   let updateToast: HTMLDivElement | null = null;
   let isReloading = false;
-  let applyUpdate: (() => void) | null = null;
+  let applyUpdate: ReturnType<typeof registerSW> | null = null;
 
   const showUpdateToast = (onUpdate: () => void) => {
     if (updateToast) {
