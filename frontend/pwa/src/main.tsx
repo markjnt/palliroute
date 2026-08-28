@@ -9,28 +9,57 @@ import { queryClient } from './query/client';
 if ('serviceWorker' in navigator) {
   let updateToast: HTMLDivElement | null = null;
   let isReloading = false;
+  let applyUpdate: (() => void) | null = null;
 
-  const showUpdateToast = () => {
+  const showUpdateToast = (onUpdate: () => void) => {
     if (updateToast) {
       return;
     }
 
     updateToast = document.createElement('div');
-    updateToast.textContent = 'Neue Version verfügbar. Aktualisierung läuft …';
     updateToast.style.cssText = `
       position: fixed;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
       background: #1f2937;
       color: #ffffff;
-      padding: 12px 20px;
-      border-radius: 9999px;
+      padding: 12px 16px 12px 20px;
+      border-radius: 12px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
       z-index: 9999;
     `;
 
+    const message = document.createElement('span');
+    message.textContent = 'Neue Version verfügbar';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Jetzt aktualisieren';
+    button.style.cssText = `
+      background: #007AFF;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    `;
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      button.textContent = 'Aktualisiere …';
+      message.textContent = 'Update wird geladen';
+      onUpdate();
+    });
+
+    updateToast.append(message, button);
     document.body.appendChild(updateToast);
   };
 
@@ -53,11 +82,10 @@ if ('serviceWorker' in navigator) {
     }, 200);
   });
 
-  const triggerUpdate = registerSW({
+  applyUpdate = registerSW({
     immediate: true,
     onNeedRefresh() {
-      showUpdateToast();
-      triggerUpdate(true);
+      showUpdateToast(() => applyUpdate?.(true));
     },
     onOfflineReady() {
       console.log('App ist jetzt offlinefähig!');
