@@ -1,2 +1,2 @@
 # Local tooling (not used in production Docker images).
-pre-commit>=4.0.0
+pre-commit>=4.6.2
