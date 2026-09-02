@@ -65,11 +65,11 @@ export const MainBottomSheet = forwardRef<MainBottomSheetRef, MainBottomSheetPro
                   }}
                 />
               </div>
-              <RouteInfo />
             </Sheet.Header>
             <Sheet.Content>
               <Sheet.Scroller draggableAt="top">
                 <div style={{ paddingBottom: 24 }}>
+                  <RouteInfo />
                   <RouteList onShowAdditionalRoute={onClose} />
                 </div>
               </Sheet.Scroller>
