@@ -413,7 +413,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
                 },
               }}
             >
-              Patient verschieben
+              Patient übernehmen
             </Button>
           ) : null}
         </Box>
@@ -427,7 +427,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
         slotProps={{ paper: { sx: dialogPaperSx } }}
       >
         <DialogTitle sx={{ fontWeight: 600, color: '#1d1d1f', pb: 0.5, pt: 2.5, px: 2.5 }}>
-          Patient verschieben?
+          Patient übernehmen?
         </DialogTitle>
         <DialogContent sx={{ px: 2.5, pb: 1 }}>
           <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
@@ -492,7 +492,7 @@ export const StopPopup: React.FC<StopPopupProps> = ({
               },
             }}
           >
-            {moveAppointment.isPending ? 'Verschiebe…' : 'Verschieben'}
+            {moveAppointment.isPending ? 'Übernehme…' : 'Übernehmen'}
           </Button>
         </DialogActions>
       </Dialog>
